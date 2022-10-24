@@ -3,6 +3,7 @@ module github.com/PanGan21/user-service
 go 1.18
 
 require (
+	github.com/Eun/go-hit v0.5.23
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/gin-gonic/contrib v0.0.0-20201101042839-6a891bf89f19
 	github.com/gin-gonic/gin v1.8.1
@@ -16,7 +17,6 @@ require (
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/Eun/go-convert v1.2.12 // indirect
 	github.com/Eun/go-doppelgangerreader v0.0.0-20220728163552-459d94705224 // indirect
-	github.com/Eun/go-hit v0.5.23 // indirect
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de // indirect
 	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
