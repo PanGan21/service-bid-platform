@@ -1,0 +1,21 @@
+app:
+  name: "user-service"
+  version: "1.0.0"
+
+http:
+  port: "8000"
+  session_secret: "secret"
+
+logger:
+  log_level: "debug"
+  rollbar_env: "user-service"
+
+redis:
+  url: "localhost:6379"
+
+postgres:
+  pool_max: 2
+  url: "postgres://postgres:password@localhost:5432/user"
+
+user:
+  password_salt: "salt"

@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  user-service:
+    build: 
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    image: user-service
+    environment:
+      APP_PORT: 8000
+      APP_DEBUG: 'true'
+      APP_NAME: user-service
+      REDIS_URL: "user-cache:6379"
+      PG_URL: "postgres://postgres:password@user-postgres:5432/user"
+    ports:
+        - "8000:8000"
+    restart: unless-stopped # Change for 'always' in production environment
+    depends_on:
+      - user-migration
+      - user-cache
+
+  user-migration:
+    image: migrate/migrate
+    volumes:
+        - ./user-service/migrations/:/migrations
+    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@user-postgres:5432/user?sslmode=disable", "up"]
+    depends_on:
+      - user-postgres
+    restart: on-failure
+
+  user-postgres:
+    container_name: user-postgres
+    image: postgres
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'user'
+    ports:
+      - 5432:5432
+
+  user-cache:
+    container_name: user-cache
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    volumes: 
+      - cache:/data
+
+  integration:
+    build:
+      context: ./user-service
+      dockerfile: integration-test/Dockerfile
+    container_name: integration
+    image: integration
+    environment:
+      API_HOST: user-service
+      API_PORT: 8000
+    depends_on:
+      - user-service
+
+volumes:
+  pg-data:
+  cache:
+      
