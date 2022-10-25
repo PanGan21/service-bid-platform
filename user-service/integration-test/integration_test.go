@@ -93,7 +93,9 @@ func healethCheck(attempts int) error {
 }
 
 func setSessionForMockUser() error {
-	Do(Post(basePath+"/register"),
+	routePath := basePath + "/register"
+
+	Do(Post(routePath),
 		Send().Headers("Content-Type").Add("application/json"),
 		Send().Body().JSON(testdata.MockUser),
 		Expect().Status().Equal(http.StatusOK),
@@ -118,10 +120,11 @@ func setSessionForMockUser() error {
 // HTTP POST: /register
 func TestHTTPDoRegister(t *testing.T) {
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+	routePath := basePath + "/register"
 
 	Test(t,
-		Description("register; success; already logged in"),
-		Post(basePath+"/register"),
+		Description("register; success; user exists; valid session"),
+		Post(routePath),
 		Send().Headers("Content-Type").Add("application/json"),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Send().Body().JSON(testdata.MockUser),
@@ -130,11 +133,92 @@ func TestHTTPDoRegister(t *testing.T) {
 	)
 
 	Test(t,
-		Description("register; failure; registration failed"),
-		Post(basePath+"/register"),
+		Description("register; failure; user exists; invalid session"),
+		Post(routePath),
 		Send().Headers("Content-Type").Add("application/json"),
 		Send().Body().JSON(testdata.MockUser),
 		Expect().Status().Equal(http.StatusInternalServerError),
 		Expect().Body().String().Contains("Registration failed"),
+	)
+
+	Test(t,
+		Description("register; failure; validation error"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(map[string]interface{}{"username": 123}),
+		Expect().Status().Equal(http.StatusBadRequest),
+		Expect().Body().String().Contains("Validation error"),
+	)
+}
+
+// HTTP POST: /login
+func TestHTTPDoLogin(t *testing.T) {
+	routePath := basePath + "/login"
+
+	Test(t,
+		Description("login; success"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(testdata.MockUser),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().String().Contains("Successfully authenticated user"),
+		Expect().Custom(func(hit Hit) error {
+			var cookies = hit.Response().Cookies()
+
+			var loginSessionId = ""
+			for _, c := range cookies {
+				if c.Name == "s.id" {
+					loginSessionId = c.Value
+				}
+				if loginSessionId == "" {
+					return errors.New("Session is missing")
+				}
+			}
+			return nil
+		}),
+	)
+
+	Test(t,
+		Description("login; failure; validation error"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(map[string]interface{}{"username": "RANDOM", "password": "RANDOM"}),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Authentication failed"),
+	)
+
+	Test(t,
+		Description("login; failure; validation error"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(map[string]interface{}{"username": 123}),
+		Expect().Status().Equal(http.StatusBadRequest),
+		Expect().Body().String().Contains("Validation error"),
+	)
+}
+
+// HTTP POST: /logout
+func TestHTTPDoLogout(t *testing.T) {
+	routePath := basePath + "/logout"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	Test(t,
+		Description("logout; success"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockUser),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().String().Contains("Successfully logged out"),
+	)
+
+	Test(t,
+		Description("logout; failure; invalid session"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Headers("Cookie").Add("s.id=123"),
+		Send().Body().JSON(testdata.MockUser),
+		Expect().Status().Equal(http.StatusBadRequest),
+		Expect().Body().String().Contains("Invalid session token"),
 	)
 }
