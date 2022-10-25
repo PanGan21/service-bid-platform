@@ -10,7 +10,7 @@ import (
 	"time"
 
 	. "github.com/Eun/go-hit"
-	"github.com/google/uuid"
+	"github.com/PanGan21/user-service/integration-test/testdata"
 )
 
 var (
@@ -20,7 +20,8 @@ var (
 	attempts   = 20
 
 	// HTTP REST
-	basePath = "http://" + host
+	basePath  = "http://" + host
+	sessionId = ""
 )
 
 func getHost() string {
@@ -63,6 +64,11 @@ func TestMain(m *testing.M) {
 
 	log.Printf("Integration tests: host %s is available", host)
 
+	err = setSessionForMockUser()
+	if err != nil {
+		log.Fatalf("Integration tests: session not set for mockUser: %s", err)
+	}
+
 	code := m.Run()
 	os.Exit(code)
 }
@@ -86,17 +92,10 @@ func healethCheck(attempts int) error {
 	return err
 }
 
-// HTTP POST: /register
-func TestHTTPDoRegister(t *testing.T) {
-	var mockUser = map[string]interface{}{"username": uuid.New(), "password": uuid.New()}
-
-	var sessionId string = ""
-
-	Test(t,
-		Description("register; success"),
-		Post(basePath+"/register"),
+func setSessionForMockUser() error {
+	Do(Post(basePath+"/register"),
 		Send().Headers("Content-Type").Add("application/json"),
-		Send().Body().JSON(mockUser),
+		Send().Body().JSON(testdata.MockUser),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Body().String().Contains("Successfully registered user"),
 		Expect().Custom(func(hit Hit) error {
@@ -113,12 +112,19 @@ func TestHTTPDoRegister(t *testing.T) {
 		}),
 	)
 
+	return nil
+}
+
+// HTTP POST: /register
+func TestHTTPDoRegister(t *testing.T) {
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
 	Test(t,
 		Description("register; success; already logged in"),
 		Post(basePath+"/register"),
 		Send().Headers("Content-Type").Add("application/json"),
-		Send().Headers("Cookie").Add(fmt.Sprintf(`s.id=%s`, sessionId)),
-		Send().Body().JSON(mockUser),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockUser),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Body().String().Contains("Already logged in"),
 	)
@@ -127,7 +133,7 @@ func TestHTTPDoRegister(t *testing.T) {
 		Description("register; failure; registration failed"),
 		Post(basePath+"/register"),
 		Send().Headers("Content-Type").Add("application/json"),
-		Send().Body().JSON(mockUser),
+		Send().Body().JSON(testdata.MockUser),
 		Expect().Status().Equal(http.StatusInternalServerError),
 		Expect().Body().String().Contains("Registration failed"),
 	)
