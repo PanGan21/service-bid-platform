@@ -21,6 +21,7 @@ services:
 
   user-migration:
     image: migrate/migrate
+    container_name: user-migration
     volumes:
         - ./user-service/migrations/:/migrations
     command: ["-path", "./migrations", "-database",  "postgres://postgres:password@user-postgres:5432/user?sslmode=disable", "up"]
@@ -59,6 +60,17 @@ services:
     environment:
       API_HOST: user-service
       API_PORT: 8000
+    depends_on:
+      - user-service
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf
+    restart: on-failure
     depends_on:
       - user-service
 
