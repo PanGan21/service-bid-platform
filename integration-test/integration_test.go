@@ -10,7 +10,7 @@ import (
 	"time"
 
 	. "github.com/Eun/go-hit"
-	"github.com/PanGan21/user-service/integration-test/testdata"
+	"github.com/PanGan21/integration-test/testdata"
 )
 
 var (

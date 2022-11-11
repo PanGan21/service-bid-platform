@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/PanGan21/packages/postgres"
 	"github.com/PanGan21/user-service/internal/entity"
-	"github.com/PanGan21/user-service/pkg/postgres"
 )
 
 type userRepository struct {

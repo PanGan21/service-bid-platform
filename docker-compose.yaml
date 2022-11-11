@@ -2,8 +2,10 @@ version: "3.9"
 services:
   user-service:
     build: 
-      context: ./user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        service_name: user-service
     container_name: user-service
     image: user-service
     environment:
@@ -53,8 +55,8 @@ services:
 
   integration:
     build:
-      context: ./user-service
-      dockerfile: integration-test/Dockerfile
+      context: .
+      dockerfile: Dockerfile.integration
     container_name: integration
     image: integration
     environment:
@@ -62,10 +64,11 @@ services:
       API_PORT: 8000
     depends_on:
       - user-service
+    restart: on-failure
 
-  nginx:
+  api-gateway:
     image: nginx
-    container_name: nginx
+    container_name: api-gateway
     ports:
       - "8080:80"
     volumes:
