@@ -3,8 +3,8 @@ package user
 import (
 	"net/http"
 
+	"github.com/PanGan21/packages/logger"
 	"github.com/PanGan21/user-service/internal/service"
-	"github.com/PanGan21/user-service/pkg/logger"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
