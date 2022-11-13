@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS requests(
+    id UUID PRIMARY KEY
+);

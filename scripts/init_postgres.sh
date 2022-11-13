@@ -27,8 +27,9 @@ then
       -e POSTGRES_USER=${DB_USER} \
       -e POSTGRES_PASSWORD=${DB_PASSWORD} \
       -e POSTGRES_DB=${DB_NAME} \
+      -e POSTGRES_MULTIPLE_DATABASES=request \
       -p "${DB_PORT}":5432 \
-      -d postgres \
+      -d postgres-local \
       postgres -N 1000
 fi
 
@@ -40,6 +41,7 @@ done
 >&2 echo "Postgres is up and running on port ${DB_PORT} - running migrations now!"
 
 export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
-migrate -path ./user-service/migrations -database "${DATABASE_URL}?sslmode=disable" up
+migrate -path ./user-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/user?sslmode=disable" up
+migrate -path ./request-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/request?sslmode=disable" up
 
 >&2 echo "Postgres has been migrated, ready to go!"

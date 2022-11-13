@@ -13,7 +13,7 @@ services:
       APP_DEBUG: 'true'
       APP_NAME: user-service
       REDIS_URL: "user-cache:6379"
-      PG_URL: "postgres://postgres:password@user-postgres:5432/user"
+      PG_URL: "postgres://postgres:password@postgres:5432/user"
     ports:
         - "8000:8000"
     restart: unless-stopped # Change for 'always' in production environment
@@ -21,25 +21,54 @@ services:
       - user-migration
       - user-cache
 
+  request-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        service_name: request-service
+    container_name: request-service
+    image: request-service
+    environment:
+      APP_PORT: 8000
+      APP_DEBUG: 'true'
+      APP_NAME: request-service
+      PG_URL: "postgres://postgres:password@postgres:5432/request"
+    ports:
+        - "8001:8000"
+    restart: unless-stopped # Change for 'always' in production environment
+
   user-migration:
     image: migrate/migrate
     container_name: user-migration
     volumes:
         - ./user-service/migrations/:/migrations
-    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@user-postgres:5432/user?sslmode=disable", "up"]
+    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/user?sslmode=disable", "up"]
     depends_on:
-      - user-postgres
+      - postgres
     restart: on-failure
 
-  user-postgres:
-    container_name: user-postgres
+  request-migration:
+    image: migrate/migrate
+    container_name: request-migration
+    volumes:
+        - ./request-service/migrations/:/migrations
+    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/request?sslmode=disable", "up"]
+    depends_on:
+      - postgres
+    restart: on-failure
+
+  postgres:
+    container_name: postgres
     image: postgres
     volumes:
+      - ./scripts/db:/docker-entrypoint-initdb.d
       - pg-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'password'
-      POSTGRES_DB: 'user'
+      - POSTGRES_MULTIPLE_DATABASES=request
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user
     ports:
       - 5432:5432
 
