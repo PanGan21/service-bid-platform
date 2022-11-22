@@ -1,8 +1,10 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/PanGan21/packages/auth"
 	"github.com/PanGan21/packages/logger"
 	"github.com/PanGan21/user-service/internal/service"
 	"github.com/gin-gonic/contrib/sessions"
@@ -13,19 +15,22 @@ type UserController interface {
 	Login(c *gin.Context)
 	Logout(c *gin.Context)
 	Register(c *gin.Context)
+	Authenticate(c *gin.Context)
 }
 
 type userController struct {
 	logger      logger.Interface
 	userService service.UserService
+	authService auth.AuthService
 }
 
 const userKey = "userId"
 
-func NewUserController(logger logger.Interface, userServ service.UserService) UserController {
+func NewUserController(logger logger.Interface, userServ service.UserService, authServ auth.AuthService) UserController {
 	return &userController{
 		logger:      logger,
 		userService: userServ,
+		authService: authServ,
 	}
 }
 
@@ -62,8 +67,8 @@ func (controller *userController) Login(c *gin.Context) {
 
 func (controller *userController) Logout(c *gin.Context) {
 	session := sessions.Default(c)
-	user := session.Get(userKey)
-	if user == nil {
+	userId := session.Get(userKey)
+	if userId == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session token"})
 		return
 	}
@@ -85,8 +90,8 @@ func (controller *userController) Register(c *gin.Context) {
 	}
 
 	session := sessions.Default(c)
-	user := session.Get(userKey)
-	if user != nil {
+	userId := session.Get(userKey)
+	if userId != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Already logged in"})
 		return
 	}
@@ -105,4 +110,24 @@ func (controller *userController) Register(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully registered user"})
+}
+
+func (controller *userController) Authenticate(c *gin.Context) {
+	session := sessions.Default(c)
+	userId := session.Get(userKey)
+	if userId == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+		return
+	}
+
+	roles := []string{"", ""}
+	token, err := controller.authService.SignJWT(userId.(string), userId.(string), "", roles...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT signing error"})
+	}
+
+	fmt.Println(token)
+	// controller.logger.Warn("HEREEEEE:", user)
+	// controller.authService.SignJWT()
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully authenticated user"})
 }

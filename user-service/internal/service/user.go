@@ -18,6 +18,7 @@ var (
 type UserService interface {
 	Login(ctx context.Context, username string, password string) (string, error)
 	Register(ctx context.Context, username string, password string) (string, error)
+	Authenticate(ctx context.Context) (string, error)
 }
 type userService struct {
 	userRepo user.UserRepository
@@ -53,8 +54,11 @@ func (s *userService) Register(ctx context.Context, username string, password st
 		return "", fmt.Errorf("UserService - Register - s.userRepo.Create: %w", err)
 	}
 
-	fmt.Println("HERE", user.Id)
 	return user.Id.String(), nil
+}
+
+func (s *userService) Authenticate(ctx context.Context) (string, error) {
+	return "", nil
 }
 
 func (s *userService) hashPassword(password string) string {

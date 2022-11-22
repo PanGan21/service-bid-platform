@@ -197,6 +197,19 @@ func TestHTTPDoLogin(t *testing.T) {
 	)
 }
 
+// HTTP POST: /authenticate
+func TestHTTPDoAuthenticate(t *testing.T) {
+	routePath := basePath + "/authenticate"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	Test(t,
+		Description("authenticate; success"),
+		Get(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+	)
+}
+
 // HTTP POST: /logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := basePath + "/logout"
