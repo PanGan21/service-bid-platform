@@ -10,6 +10,7 @@ import (
 	"github.com/PanGan21/packages/logger"
 	"github.com/PanGan21/packages/postgres"
 	"github.com/PanGan21/request-service/config"
+	routes "github.com/PanGan21/request-service/internal/routes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,6 +30,7 @@ func Run(cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
+	routes.NewRouter(handler, l)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal

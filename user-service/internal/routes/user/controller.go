@@ -119,6 +119,14 @@ func (controller *userController) Authenticate(c *gin.Context) {
 		return
 	}
 
+	// Find user
+	user, err := controller.userService.GetById(c.Request.Context(), userId.(string))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
+		return
+	}
+
 	methodHeader := c.Request.Header.Get("x-forwarded-method")
 	uriHeader := c.Request.Header.Get("x-forwarded-uri")
 	if uriHeader == "" {
@@ -133,14 +141,6 @@ func (controller *userController) Authenticate(c *gin.Context) {
 
 	if method == "" {
 		method = "GET"
-	}
-
-	// Find user
-	user, err := controller.userService.GetById(c.Request.Context(), userId.(string))
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
-		return
 	}
 
 	token, err := controller.authService.SignJWT(userId.(string), user.Id.String(), uriHeader, user.Roles...)
