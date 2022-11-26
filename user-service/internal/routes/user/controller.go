@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/PanGan21/packages/auth"
@@ -120,14 +119,36 @@ func (controller *userController) Authenticate(c *gin.Context) {
 		return
 	}
 
-	roles := []string{"", ""}
-	token, err := controller.authService.SignJWT(userId.(string), userId.(string), "", roles...)
+	methodHeader := c.Request.Header.Get("x-forwarded-method")
+	uriHeader := c.Request.Header.Get("x-forwarded-uri")
+	if uriHeader == "" {
+		uriHeader = "/user/authenticate"
+	}
+
+	var method = methodHeader
+	if method == "OPTIONS" {
+		c.JSON(http.StatusOK, gin.H{})
+		return
+	}
+
+	if method == "" {
+		method = "GET"
+	}
+
+	// Find user
+	user, err := controller.userService.GetById(c.Request.Context(), userId.(string))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
+		return
+	}
+
+	token, err := controller.authService.SignJWT(userId.(string), user.Id.String(), uriHeader, user.Roles...)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT signing error"})
 	}
 
-	fmt.Println(token)
-	// controller.logger.Warn("HEREEEEE:", user)
-	// controller.authService.SignJWT()
+	c.Header("x-internal-jwt", token)
+
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully authenticated user"})
 }

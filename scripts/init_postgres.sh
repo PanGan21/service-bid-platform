@@ -23,6 +23,7 @@ DB_PORT="${POSTGRES_PORT:=5432}"
 # Allow to skip Docker if a dockerized Postgres database is already running
 if [[ -z "${SKIP_DOCKER}" ]]
 then
+  docker build -t postgres-local -f ./scripts/Dockerfile ./scripts
   docker run \
       -e POSTGRES_USER=${DB_USER} \
       -e POSTGRES_PASSWORD=${DB_PASSWORD} \

@@ -18,7 +18,7 @@ var (
 type UserService interface {
 	Login(ctx context.Context, username string, password string) (string, error)
 	Register(ctx context.Context, username string, password string) (string, error)
-	Authenticate(ctx context.Context) (string, error)
+	GetById(ctx context.Context, id string) (*entity.User, error)
 }
 type userService struct {
 	userRepo user.UserRepository
@@ -44,10 +44,12 @@ func (s *userService) Register(ctx context.Context, username string, password st
 	passwordHash := s.hashPassword(password)
 	id := uuid.New()
 
+	var defaultRoles = []string{}
 	user := &entity.User{
 		Id:           id,
 		Username:     username,
 		PasswordHash: passwordHash,
+		Roles:        defaultRoles,
 	}
 	err := s.userRepo.Create(ctx, user)
 	if err != nil {
@@ -57,8 +59,13 @@ func (s *userService) Register(ctx context.Context, username string, password st
 	return user.Id.String(), nil
 }
 
-func (s *userService) Authenticate(ctx context.Context) (string, error) {
-	return "", nil
+func (s *userService) GetById(ctx context.Context, id string) (*entity.User, error) {
+	user, err := s.userRepo.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *userService) hashPassword(password string) string {

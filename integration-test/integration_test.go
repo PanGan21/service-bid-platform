@@ -11,6 +11,7 @@ import (
 
 	. "github.com/Eun/go-hit"
 	"github.com/PanGan21/integration-test/testdata"
+	"github.com/PanGan21/packages/auth"
 )
 
 var (
@@ -207,6 +208,22 @@ func TestHTTPDoAuthenticate(t *testing.T) {
 		Get(routePath),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().String().Contains("Successfully authenticated user"),
+		Expect().Custom(func(hit Hit) error {
+			jwtHeader := hit.Response().Header.Get("X-Internal-Jwt")
+			if jwtHeader == "" {
+				return errors.New("No jwt in X-Internal-Jwt header")
+			}
+
+			var secret = "auth_secret"
+			authService := auth.NewAuthService([]byte(secret))
+			_, err := authService.VerifyJWT(jwtHeader, "/authenticate")
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}),
 	)
 }
 

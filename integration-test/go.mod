@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/Eun/go-hit v0.5.23
+	github.com/PanGan21/packages/auth v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.3.0
 )
 
@@ -11,6 +12,7 @@ require (
 	github.com/Eun/go-convert v1.2.12 // indirect
 	github.com/Eun/go-doppelgangerreader v0.0.0-20220728163552-459d94705224 // indirect
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gookit/color v1.5.2 // indirect
 	github.com/itchyny/gojq v0.12.9 // indirect
@@ -27,3 +29,5 @@ require (
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 )
+
+replace github.com/PanGan21/packages/auth => ../packages/auth

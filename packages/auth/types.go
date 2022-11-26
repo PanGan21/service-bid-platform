@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -26,7 +25,6 @@ func SplitPath(path string) (InternalPath, error) {
 	path = strings.Split(path, "?")[0]
 	regex, err := regexp.Compile("/([^/]*)(.*)")
 	if err != nil {
-		fmt.Println(err)
 		return internalPath, err
 	}
 
