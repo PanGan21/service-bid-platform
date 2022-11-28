@@ -16,6 +16,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
+	github.com/PanGan21/packages/utils v0.0.0-00010101000000-000000000000 // indirect
 	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -66,4 +67,5 @@ replace (
 	github.com/PanGan21/packages/httpserver => ../packages/httpserver
 	github.com/PanGan21/packages/logger => ../packages/logger
 	github.com/PanGan21/packages/postgres => ../packages/postgres
+	github.com/PanGan21/packages/utils => ../packages/utils
 )

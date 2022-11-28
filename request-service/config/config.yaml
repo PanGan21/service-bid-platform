@@ -5,6 +5,7 @@ app:
 http:
   port: "8000"
   session_secret: "secret"
+  auth_secret: "auth_secret"
 
 logger:
   log_level: "debug"

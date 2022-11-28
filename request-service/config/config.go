@@ -22,6 +22,7 @@ type (
 	HTTP struct {
 		Port          string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
 		SessionSecret string `env-required:"true" yaml:"session_secret" env:"SESSION_SECRET"`
+		AuthSecret    string `env-required:"true" yaml:"auth_secret" env:"AUTH_SECRET"`
 	}
 
 	// Log -.
