@@ -17,13 +17,25 @@ import (
 var (
 	// Attempts connection
 	host       = getHost()
-	healthPath = "http://" + host + "/healthz"
+	service    = getService()
+	healthPath = "http://" + host + service + "/healthz"
 	attempts   = 20
 
 	// HTTP REST
-	basePath  = "http://" + host
+	basePath  = "http://" + host + service
 	sessionId = ""
 )
+
+func getService() string {
+	var service = ""
+
+	_, found := os.LookupEnv("API_HOST")
+	if found {
+		service = "/user"
+	}
+
+	return service
+}
 
 func getHost() string {
 	var localHost = "localhost"
@@ -95,6 +107,8 @@ func healethCheck(attempts int) error {
 
 func setSessionForMockUser() error {
 	routePath := basePath + "/register"
+
+	log.Println("routePath", routePath)
 
 	Do(Post(routePath),
 		Send().Headers("Content-Type").Add("application/json"),

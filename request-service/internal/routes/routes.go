@@ -12,10 +12,12 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	// Options
 	handler.Use(gin.Recovery())
 
-	handler.Use(auth.VerifyJWT(authService))
 	// K8s probe
+	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
 
-	var emptyRoles []string
-	handler.GET("/healthz", auth.AuthorizeEndpoint(emptyRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })
-	// handler.Use(auth.VerifyJWT(authService))
+	// JWT Middleware
+	handler.Use(auth.VerifyJWT(authService))
+
+	var requiredRoles []string
+	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })
 }
