@@ -24,14 +24,14 @@ func (repo *userRepository) GetByUsernameAndPassword(ctx context.Context, userna
 	defer c.Release()
 
 	const query = `
-		SELECT id, username, passwordHash FROM users
+		SELECT id, username, passwordHash, roles FROM users
 		WHERE username=$1 AND passwordHash=$2;
 	`
 
 	row := c.QueryRow(ctx, query, username, password)
 	var user entity.User
 
-	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash)
+	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.Roles)
 	if err != nil {
 		return nil, fmt.Errorf("UserRepo - GetByUsernameAndPassword - row.Scan: %w", err)
 	}
@@ -47,12 +47,35 @@ func (repo *userRepository) Create(ctx context.Context, user *entity.User) error
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO users (id, username, passwordHash) 
-  		VALUES ($1, $2, $3);
+  		INSERT INTO users (id, username, passwordHash, roles) 
+  		VALUES ($1, $2, $3, $4);
 	`
-	_, err = c.Exec(ctx, query, user.Id, user.Username, user.PasswordHash)
+	_, err = c.Exec(ctx, query, user.Id, user.Username, user.PasswordHash, user.Roles)
 	if err != nil {
 		return fmt.Errorf("UserRepo - Create - c.Exec: %w", err)
 	}
 	return nil
+}
+
+func (repo *userRepository) GetById(ctx context.Context, id string) (*entity.User, error) {
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT id, username, passwordHash, roles FROM users
+		WHERE id=$1;
+	`
+
+	row := c.QueryRow(ctx, query, id)
+	var user entity.User
+
+	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.Roles)
+	if err != nil {
+		return nil, fmt.Errorf("UserRepo - GetById - row.Scan: %w", err)
+	}
+
+	return &user, nil
 }

@@ -6,10 +6,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/PanGan21/packages/auth"
 	"github.com/PanGan21/packages/httpserver"
 	"github.com/PanGan21/packages/logger"
 	"github.com/PanGan21/packages/postgres"
 	"github.com/PanGan21/request-service/config"
+	routes "github.com/PanGan21/request-service/internal/routes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,10 +27,13 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
+
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
+	routes.NewRouter(handler, l, authService)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal

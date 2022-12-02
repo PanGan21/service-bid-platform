@@ -3,6 +3,7 @@ module github.com/PanGan21/user-service
 go 1.18
 
 require (
+	github.com/PanGan21/packages/auth v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/packages/httpserver v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/packages/logger v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/packages/postgres v0.0.0-00010101000000-000000000000
@@ -15,6 +16,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
+	github.com/PanGan21/packages/utils v0.0.0-00010101000000-000000000000 // indirect
 	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -22,6 +24,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gofrs/uuid v4.3.0+incompatible // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
@@ -60,7 +63,9 @@ require (
 )
 
 replace (
+	github.com/PanGan21/packages/auth => ../packages/auth
 	github.com/PanGan21/packages/httpserver => ../packages/httpserver
 	github.com/PanGan21/packages/logger => ../packages/logger
 	github.com/PanGan21/packages/postgres => ../packages/postgres
+	github.com/PanGan21/packages/utils => ../packages/utils
 )
