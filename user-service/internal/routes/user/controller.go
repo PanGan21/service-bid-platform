@@ -115,6 +115,7 @@ func (controller *userController) Authenticate(c *gin.Context) {
 	session := sessions.Default(c)
 	userId := session.Get(userKey)
 	if userId == nil {
+		controller.logger.Error("Invalid session token")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
 		return
 	}
