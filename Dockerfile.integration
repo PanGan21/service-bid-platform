@@ -1,14 +1,14 @@
 # Build stage
 FROM golang:1.19-alpine3.16 AS builder
-WORKDIR /packages
-COPY /packages .
+WORKDIR /pkg
+COPY /pkg .
 COPY ./integration-test/go.mod ./integration-test/go.sum /modules/
 WORKDIR /modules
 RUN go mod download
 
 # Run stage
 FROM golang:1.19-alpine3.16
-COPY --from=builder /packages /packages
+COPY --from=builder /pkg /pkg
 COPY --from=builder /go/pkg /go/pkg
 COPY ./integration-test /app
 WORKDIR /app

@@ -10,7 +10,7 @@ import (
 
 	. "github.com/Eun/go-hit"
 	"github.com/PanGan21/integration-test/testdata"
-	"github.com/PanGan21/packages/auth"
+	"github.com/PanGan21/pkg/auth"
 	"github.com/google/uuid"
 )
 
