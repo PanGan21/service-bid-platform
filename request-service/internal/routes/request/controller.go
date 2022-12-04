@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -33,7 +34,6 @@ type RequestData struct {
 }
 
 func (controller *requestController) Create(c *gin.Context) {
-	// TODO: validate
 	var requestData RequestData
 	if err := c.BindJSON(&requestData); err != nil {
 		controller.logger.Error(err)
@@ -43,10 +43,17 @@ func (controller *requestController) Create(c *gin.Context) {
 
 	fmt.Println("requestData", requestData)
 
-	_, exists := c.Get("userId")
+	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully created request"})
+	newRequest, err := controller.requestService.Create(context.Background(), userId.(string), requestData.Title, requestData.Postcode, requestData.Info, requestData.Deadline)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, newRequest.Id)
 }

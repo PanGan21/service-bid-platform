@@ -14,6 +14,7 @@ type UserController interface {
 	Login(c *gin.Context)
 	Logout(c *gin.Context)
 	Register(c *gin.Context)
+	GetUserDetails(c *gin.Context)
 	Authenticate(c *gin.Context)
 }
 
@@ -152,4 +153,36 @@ func (controller *userController) Authenticate(c *gin.Context) {
 	c.Header("x-internal-jwt", token)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully authenticated user"})
+}
+
+type UserDetails struct {
+	Id       string   `json:"id"`
+	Username string   `json:"username"`
+	Roles    []string `json:"roles"`
+}
+
+func (controller *userController) GetUserDetails(c *gin.Context) {
+	session := sessions.Default(c)
+	userId := session.Get(userKey)
+	if userId == nil {
+		controller.logger.Error("Invalid session token")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+		return
+	}
+
+	// Find user
+	user, err := controller.userService.GetById(c.Request.Context(), userId.(string))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
+		return
+	}
+
+	userDetails := &UserDetails{
+		Id:       user.Id.String(),
+		Username: user.Username,
+		Roles:    user.Roles,
+	}
+
+	c.JSON(http.StatusOK, userDetails)
 }

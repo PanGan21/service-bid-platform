@@ -72,6 +72,13 @@ services:
     ports:
       - 5432:5432
 
+  adminer:
+    container_name: adminer
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
   user-cache:
     container_name: user-cache
     image: redis:6.2-alpine

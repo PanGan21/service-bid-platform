@@ -25,7 +25,7 @@ func (repo *requestRepository) Create(ctx context.Context, request *entity.Reque
 
 	const query = `
   		INSERT INTO requests (id, creatorId, info, postcode, title, deadline) 
-  		VALUES ($1, $2, $3, $4. $5, $6);
+  		VALUES ($1, $2, $3, $4, $5, $6);
 	`
 	_, err = c.Exec(ctx, query, request.Id, request.CreatorId, request.Info, request.Postcode, request.Title, request.Deadline)
 	if err != nil {
