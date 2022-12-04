@@ -23,6 +23,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, store sessions.RedisStor
 	handler.Use(sessions.Sessions("s.id", store))
 
 	// Routers
+	handler.GET("/", userController.GetUserDetails)
 	handler.POST("/login", userController.Login)
 	handler.POST("/logout", userController.Logout)
 	handler.POST("/register", userController.Register)
