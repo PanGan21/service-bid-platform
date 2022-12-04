@@ -4,14 +4,14 @@ go 1.18
 
 require (
 	github.com/Eun/go-hit v0.5.23
-	github.com/PanGan21/packages/auth v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/auth v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.3.0
 )
 
 require (
 	github.com/Eun/go-convert v1.2.12 // indirect
 	github.com/Eun/go-doppelgangerreader v0.0.0-20220728163552-459d94705224 // indirect
-	github.com/PanGan21/packages/utils v0.0.0-00010101000000-000000000000 // indirect
+	github.com/PanGan21/pkg/utils v0.0.0-00010101000000-000000000000 // indirect
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.8.1 // indirect
@@ -46,6 +46,6 @@ require (
 )
 
 replace (
-	github.com/PanGan21/packages/auth => ../packages/auth
-	github.com/PanGan21/packages/utils => ../packages/utils
+	github.com/PanGan21/pkg/auth => ../pkg/auth
+	github.com/PanGan21/pkg/utils => ../pkg/utils
 )
