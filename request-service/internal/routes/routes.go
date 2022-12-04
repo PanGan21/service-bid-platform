@@ -5,10 +5,13 @@ import (
 
 	"github.com/PanGan21/packages/auth"
 	"github.com/PanGan21/packages/logger"
+	requestController "github.com/PanGan21/request-service/internal/routes/request"
+	"github.com/PanGan21/request-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService) {
+func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, requestService service.RequestService) {
+	requestController := requestController.NewRequestController(l, requestService)
 	// Options
 	handler.Use(gin.Recovery())
 
@@ -17,6 +20,9 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 
 	// JWT Middleware
 	handler.Use(auth.VerifyJWT(authService))
+
+	// Routers
+	handler.POST("/", requestController.Create)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

@@ -11,7 +11,9 @@ import (
 	"github.com/PanGan21/packages/logger"
 	"github.com/PanGan21/packages/postgres"
 	"github.com/PanGan21/request-service/config"
+	requestRepository "github.com/PanGan21/request-service/internal/repository/request"
 	routes "github.com/PanGan21/request-service/internal/routes"
+	"github.com/PanGan21/request-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,13 +29,15 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	requestRepo := requestRepository.NewRequestRepository(*pg)
 	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
+	requestService := service.NewRequestService(requestRepo)
 
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
-	routes.NewRouter(handler, l, authService)
+	routes.NewRouter(handler, l, authService, requestService)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
