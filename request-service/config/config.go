@@ -12,8 +12,6 @@ type (
 		HTTP     `yaml:"http"`
 		Log      `yaml:"logger"`
 		Postgres `yaml:"postgres"`
-		Redis    `yaml:"redis"`
-		User     `yaml:"user"`
 	}
 
 	App struct {
@@ -36,16 +34,6 @@ type (
 	Postgres struct {
 		PoolMax int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
 		URL     string `env-required:"true" yaml:"url" env:"PG_URL"`
-	}
-
-	// Redis -.
-	Redis struct {
-		Url string `env-required:"true" yaml:"url" env:"REDIS_URL"`
-	}
-
-	// User -.
-	User struct {
-		PasswordSalt string `env-required:"true" yaml:"password_salt" env:"PASSWORD_SALT"`
 	}
 )
 

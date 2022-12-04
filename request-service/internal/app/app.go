@@ -10,11 +10,10 @@ import (
 	"github.com/PanGan21/packages/httpserver"
 	"github.com/PanGan21/packages/logger"
 	"github.com/PanGan21/packages/postgres"
-	"github.com/PanGan21/user-service/config"
-	userRepository "github.com/PanGan21/user-service/internal/repository/user"
-	routes "github.com/PanGan21/user-service/internal/routes"
-	"github.com/PanGan21/user-service/internal/service"
-	"github.com/gin-gonic/contrib/sessions"
+	"github.com/PanGan21/request-service/config"
+	requestRepository "github.com/PanGan21/request-service/internal/repository/request"
+	routes "github.com/PanGan21/request-service/internal/routes"
+	"github.com/PanGan21/request-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,21 +29,15 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
-	// Session store
-	store, err := sessions.NewRedisStore(10, "tcp", cfg.Redis.Url, "", []byte(cfg.SessionSecret))
-	if err != nil {
-		l.Fatal(err)
-	}
-
-	userRepo := userRepository.NewUserRepository(*pg)
-	userService := service.NewUserService(userRepo, cfg.User.PasswordSalt)
+	requestRepo := requestRepository.NewRequestRepository(*pg)
 	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
+	requestService := service.NewRequestService(requestRepo)
 
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
-	routes.NewRouter(handler, l, store, userService, authService)
+	routes.NewRouter(handler, l, authService, requestService)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
