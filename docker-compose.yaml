@@ -42,7 +42,7 @@ services:
     image: migrate/migrate
     container_name: user-migration
     volumes:
-        - ./user-service/migrations/:/migrations
+        - ./services/user-service/migrations/:/migrations
     command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/user?sslmode=disable", "up"]
     depends_on:
       - postgres
@@ -52,7 +52,7 @@ services:
     image: migrate/migrate
     container_name: request-migration
     volumes:
-        - ./request-service/migrations/:/migrations
+        - ./services/request-service/migrations/:/migrations
     command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/request?sslmode=disable", "up"]
     depends_on:
       - postgres
