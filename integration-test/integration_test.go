@@ -6,11 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"testing"
 
 	. "github.com/Eun/go-hit"
 	"github.com/PanGan21/integration-test/testdata"
 	"github.com/PanGan21/pkg/auth"
+	"github.com/PanGan21/pkg/entity"
 	"github.com/google/uuid"
 )
 
@@ -229,6 +231,92 @@ func TestHTTPCreateRequest(t *testing.T) {
 			}
 
 			requestId = id
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/
+func TestHTTPGetPaginatedRequests(t *testing.T) {
+	createRoutePath := requestApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	for i := 2; i <= 10; i++ {
+		description := fmt.Sprintf("request; create; success; no %d", i)
+		testRequest := testdata.MockRequest
+		testRequest["deadline"] = i
+
+		fmt.Println("userId", userId)
+
+		Test(t,
+			Description(description),
+			Post(createRoutePath),
+			Send().Headers("Cookie").Add(sessionCookie),
+			Send().Body().JSON(testRequest),
+			Expect().Status().Equal(http.StatusOK),
+		)
+
+	}
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", createRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get requests; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get requests; success; ascending order"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isAscendingOrder {
+				return errors.New("requests are not in descending order")
+			}
 
 			return nil
 		}),

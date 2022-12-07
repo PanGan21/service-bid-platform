@@ -22,6 +22,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.Use(auth.VerifyJWT(authService))
 
 	// Routers
+	handler.GET("/", requestController.GetAll)
 	handler.POST("/", requestController.Create)
 
 	var requiredRoles []string
