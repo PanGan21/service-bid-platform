@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/Eun/go-hit v0.5.23
 	github.com/PanGan21/pkg/auth v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/entity v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.3.0
 )
 
@@ -47,5 +48,6 @@ require (
 
 replace (
 	github.com/PanGan21/pkg/auth => ../pkg/auth
+	github.com/PanGan21/pkg/entity => ../pkg/entity
 	github.com/PanGan21/pkg/utils => ../pkg/utils
 )

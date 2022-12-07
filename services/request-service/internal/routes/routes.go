@@ -22,7 +22,9 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.Use(auth.VerifyJWT(authService))
 
 	// Routers
+	handler.GET("/", requestController.GetAll)
 	handler.POST("/", requestController.Create)
+	handler.GET("/own", requestController.GetOwn)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })
