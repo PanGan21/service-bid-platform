@@ -2,7 +2,6 @@ package request
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/PanGan21/pkg/logger"
@@ -14,6 +13,7 @@ import (
 type RequestController interface {
 	Create(c *gin.Context)
 	GetAll(c *gin.Context)
+	GetOwn(c *gin.Context)
 }
 
 type requestController struct {
@@ -43,8 +43,6 @@ func (controller *requestController) Create(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("requestData", requestData)
-
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
@@ -64,6 +62,25 @@ func (controller *requestController) GetAll(c *gin.Context) {
 	pagination := pagination.GeneratePaginationFromRequest(c)
 
 	requests, err := controller.requestService.GetAll(context.Background(), &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, requests)
+}
+
+func (controller *requestController) GetOwn(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	requests, err := controller.requestService.GetOwn(context.Background(), userId.(string), &pagination)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

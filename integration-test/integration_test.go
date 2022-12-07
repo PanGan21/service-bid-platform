@@ -247,8 +247,6 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 		testRequest := testdata.MockRequest
 		testRequest["deadline"] = i
 
-		fmt.Println("userId", userId)
-
 		Test(t,
 			Description(description),
 			Post(createRoutePath),
@@ -304,6 +302,87 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 			err := hit.Response().Body().JSON().Decode(&requests)
 			if err != nil {
 				return err
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isAscendingOrder {
+				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/own
+func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
+	createRoutePath := requestApiPath + "/own"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", createRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get requests; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, request := range requests {
+				if request.CreatorId != userId {
+					return fmt.Errorf("requests creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get requests; success; ascending order"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, request := range requests {
+				if request.CreatorId != userId {
+					return fmt.Errorf("requests creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
 			}
 
 			if len(requests) != limit10 {

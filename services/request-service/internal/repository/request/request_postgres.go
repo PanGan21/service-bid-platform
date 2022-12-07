@@ -74,3 +74,43 @@ func (repo *requestRepository) GetAll(ctx context.Context, pagination *paginatio
 
 	return &requests, nil
 }
+
+func (repo *requestRepository) FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Release()
+
+	offset := (pagination.Page - 1) * pagination.Limit
+
+	order := "asc"
+	if !pagination.Asc {
+		order = "desc"
+	}
+
+	query := fmt.Sprintf("SELECT id, creatorId, info, title, postcode, deadline FROM requests WHERE creatorId=$1 ORDER BY deadline %s LIMIT $2 OFFSET $3;", order)
+
+	rows, err := c.Query(ctx, query, creatorId, pagination.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("RequestRepo - FindByCreatorId - c.Exec: %w", err)
+	}
+	defer rows.Close()
+
+	var requests []entity.Request
+
+	for rows.Next() {
+		var r entity.Request
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline)
+		if err != nil {
+			return nil, fmt.Errorf("RequestRepo - FindByCreatorId - rows.Scan: %w", err)
+		}
+		requests = append(requests, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("RequestRepo - FindByCreatorId - rows.Err: %w", err)
+	}
+
+	return &requests, nil
+}
