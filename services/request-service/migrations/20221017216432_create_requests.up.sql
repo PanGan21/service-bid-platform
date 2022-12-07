@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS requests(
     postcode VARCHAR(255),
     info VARCHAR(255),
     creatorId VARCHAR(255),
-    deadline BIGINT
+    deadline INTEGER
 );

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/PanGan21/user-service/internal/entity"
+	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/user-service/internal/repository/user"
 	"github.com/google/uuid"
 )

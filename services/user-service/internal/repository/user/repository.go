@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/PanGan21/user-service/internal/entity"
+	"github.com/PanGan21/pkg/entity"
 )
 
 type UserRepository interface {

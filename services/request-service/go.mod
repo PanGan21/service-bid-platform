@@ -4,8 +4,10 @@ go 1.18
 
 require (
 	github.com/PanGan21/pkg/auth v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/entity v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/httpserver v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/logger v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/pagination v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/postgres v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/uuid v1.3.0
@@ -55,8 +57,10 @@ require (
 
 replace (
 	github.com/PanGan21/pkg/auth => ../../pkg/auth
+	github.com/PanGan21/pkg/entity => ../../pkg/entity
 	github.com/PanGan21/pkg/httpserver => ../../pkg/httpserver
 	github.com/PanGan21/pkg/logger => ../../pkg/logger
+	github.com/PanGan21/pkg/pagination => ../../pkg/pagination
 	github.com/PanGan21/pkg/postgres => ../../pkg/postgres
 	github.com/PanGan21/pkg/utils => ../../pkg/utils
 )
