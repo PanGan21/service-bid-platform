@@ -17,22 +17,26 @@ func NewRequestRepository(db postgres.Postgres) *requestRepository {
 	return &requestRepository{db: db}
 }
 
-func (repo *requestRepository) Create(ctx context.Context, request *entity.Request) error {
+func (repo *requestRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (int, error) {
+	var requestId int
+
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
-		return err
+		return requestId, err
 	}
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO requests (id, creatorId, info, postcode, title, deadline) 
-  		VALUES ($1, $2, $3, $4, $5, $6);
+  		INSERT INTO requests (creatorId, info, postcode, title, deadline) 
+  		VALUES ($1, $2, $3, $4, $5) RETURNING id;
 	`
-	_, err = c.Exec(ctx, query, request.Id, request.CreatorId, request.Info, request.Postcode, request.Title, request.Deadline)
+
+	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline).Scan(&requestId)
 	if err != nil {
-		return fmt.Errorf("RequestRepo - Create - c.Exec: %w", err)
+		return requestId, fmt.Errorf("RequestRepo - Create - c.Exec: %w", err)
 	}
-	return nil
+
+	return requestId, nil
 }
 
 func (repo *requestRepository) GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error) {
@@ -113,4 +117,25 @@ func (repo *requestRepository) FindByCreatorId(ctx context.Context, creatorId st
 	}
 
 	return &requests, nil
+}
+
+func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.Request, error) {
+	var request entity.Request
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return request, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT * FROM requests WHERE id=$1;
+	`
+
+	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline)
+	if err != nil {
+		return request, fmt.Errorf("RequestRepo - FindOneById - rows.Err: %w", err)
+	}
+
+	return request, nil
 }

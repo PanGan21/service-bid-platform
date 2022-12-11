@@ -38,6 +38,23 @@ services:
         - "8001:8000"
     restart: unless-stopped # Change for 'always' in production environment
 
+  bidding-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        service_name: bidding-service
+    container_name: bidding-service
+    image: bidding-service
+    environment:
+      APP_PORT: 8000
+      APP_DEBUG: 'true'
+      APP_NAME: bidding-service
+      PG_URL: "postgres://postgres:password@postgres:5432/bidding"
+    ports:
+        - "8002:8000"
+    restart: unless-stopped # Change for 'always' in production environment
+
   user-migration:
     image: migrate/migrate
     container_name: user-migration
@@ -58,6 +75,16 @@ services:
       - postgres
     restart: on-failure
 
+  bidding-migration:
+    image: migrate/migrate
+    container_name: bidding-migration
+    volumes:
+        - ./services/bidding-service/migrations/:/migrations
+    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/bidding?sslmode=disable", "up"]
+    depends_on:
+      - postgres
+    restart: on-failure
+
   postgres:
     container_name: postgres
     image: postgres
@@ -65,7 +92,7 @@ services:
       - ./scripts/db:/docker-entrypoint-initdb.d
       - pg-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_MULTIPLE_DATABASES=request
+      - POSTGRES_MULTIPLE_DATABASES=request, bidding
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=user
@@ -114,6 +141,8 @@ services:
     restart: on-failure
     depends_on:
       - user-service
+      - request-service
+      - bidding-service
 
 volumes:
   pg-data:

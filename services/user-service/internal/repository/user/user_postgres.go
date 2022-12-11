@@ -16,10 +16,12 @@ func NewUserRepository(db postgres.Postgres) *userRepository {
 	return &userRepository{db: db}
 }
 
-func (repo *userRepository) GetByUsernameAndPassword(ctx context.Context, username string, password string) (*entity.User, error) {
+func (repo *userRepository) GetByUsernameAndPassword(ctx context.Context, username string, password string) (entity.User, error) {
+	var user entity.User
+
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return user, err
 	}
 	defer c.Release()
 
@@ -29,38 +31,42 @@ func (repo *userRepository) GetByUsernameAndPassword(ctx context.Context, userna
 	`
 
 	row := c.QueryRow(ctx, query, username, password)
-	var user entity.User
 
 	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.Roles)
 	if err != nil {
-		return nil, fmt.Errorf("UserRepo - GetByUsernameAndPassword - row.Scan: %w", err)
+		return user, fmt.Errorf("UserRepo - GetByUsernameAndPassword - row.Scan: %w", err)
 	}
 
-	return &user, nil
+	return user, nil
 }
 
-func (repo *userRepository) Create(ctx context.Context, user *entity.User) error {
+func (repo *userRepository) Create(ctx context.Context, username string, passwordHash string, roles []string) (int, error) {
+	var userId int
+
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
-		return err
+		return userId, err
 	}
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO users (id, username, passwordHash, roles) 
-  		VALUES ($1, $2, $3, $4);
+  		INSERT INTO users (username, passwordHash, roles) 
+  		VALUES ($1, $2, $3) RETURNING id;
 	`
-	_, err = c.Exec(ctx, query, user.Id, user.Username, user.PasswordHash, user.Roles)
+
+	err = c.QueryRow(ctx, query, username, passwordHash, roles).Scan(&userId)
 	if err != nil {
-		return fmt.Errorf("UserRepo - Create - c.Exec: %w", err)
+		return userId, fmt.Errorf("UserRepo - Create - c.Exec: %w", err)
 	}
-	return nil
+	return userId, nil
 }
 
-func (repo *userRepository) GetById(ctx context.Context, id string) (*entity.User, error) {
+func (repo *userRepository) GetById(ctx context.Context, id int) (entity.User, error) {
+	var user entity.User
+
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return user, err
 	}
 	defer c.Release()
 
@@ -70,12 +76,11 @@ func (repo *userRepository) GetById(ctx context.Context, id string) (*entity.Use
 	`
 
 	row := c.QueryRow(ctx, query, id)
-	var user entity.User
 
 	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.Roles)
 	if err != nil {
-		return nil, fmt.Errorf("UserRepo - GetById - row.Scan: %w", err)
+		return user, fmt.Errorf("UserRepo - GetById - row.Scan: %w", err)
 	}
 
-	return &user, nil
+	return user, nil
 }
