@@ -13,7 +13,6 @@ import (
 	"github.com/PanGan21/integration-test/testdata"
 	"github.com/PanGan21/pkg/auth"
 	"github.com/PanGan21/pkg/entity"
-	"github.com/google/uuid"
 )
 
 var userService = "user"
@@ -93,7 +92,7 @@ func TestHTTPDoGetDetails(t *testing.T) {
 				return err
 			}
 
-			if userDetails["username"].(string) != testdata.MockUser["username"].(uuid.UUID).String() {
+			if userDetails["username"].(string) != testdata.MockUser["username"].(string) {
 				return errors.New("username does not match")
 			}
 
@@ -293,7 +292,7 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get requests; success; ascending order"),
+		Description("get requests; success; descending order"),
 		Get(routePathDescendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
@@ -321,7 +320,7 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 	)
 }
 
-// HTTP GET: /request/own
+// // HTTP GET: /request/own
 func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	createRoutePath := requestApiPath + "/own"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
@@ -332,7 +331,7 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", createRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get requests; success; ascending order"),
+		Description("get owned requests; success; ascending order"),
 		Get(routePathAscendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
@@ -368,7 +367,7 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get requests; success; ascending order"),
+		Description("get owned requests; success; ascending order"),
 		Get(routePathDescendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),

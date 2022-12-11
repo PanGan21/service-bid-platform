@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/PanGan21/pkg/auth"
 	"github.com/PanGan21/pkg/logger"
@@ -115,14 +116,23 @@ func (controller *userController) Register(c *gin.Context) {
 func (controller *userController) Authenticate(c *gin.Context) {
 	session := sessions.Default(c)
 	userId := session.Get(userKey)
-	if userId == nil {
+
+	id, ok := userId.(string)
+	if userId == nil || !ok {
 		controller.logger.Error("Invalid session token")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
 		return
 	}
 
+	parsedId, err := strconv.Atoi(id)
+	if err != nil {
+		controller.logger.Error("Cannot convert id internally")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+		return
+	}
+
 	// Find user
-	user, err := controller.userService.GetById(c.Request.Context(), userId.(string))
+	user, err := controller.userService.GetById(c.Request.Context(), parsedId)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
@@ -145,7 +155,7 @@ func (controller *userController) Authenticate(c *gin.Context) {
 		method = "GET"
 	}
 
-	token, err := controller.authService.SignJWT(userId.(string), user.Id.String(), uriHeader, user.Roles...)
+	token, err := controller.authService.SignJWT(userId.(string), strconv.Itoa(user.Id), uriHeader, user.Roles...)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT signing error"})
 	}
@@ -164,14 +174,22 @@ type UserDetails struct {
 func (controller *userController) GetUserDetails(c *gin.Context) {
 	session := sessions.Default(c)
 	userId := session.Get(userKey)
-	if userId == nil {
+	id, ok := userId.(string)
+	if userId == nil || !ok {
 		controller.logger.Error("Invalid session token")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
 		return
 	}
 
+	parsedId, err := strconv.Atoi(id)
+	if err != nil {
+		controller.logger.Error("Cannot convert id internally")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+		return
+	}
+
 	// Find user
-	user, err := controller.userService.GetById(c.Request.Context(), userId.(string))
+	user, err := controller.userService.GetById(c.Request.Context(), parsedId)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
@@ -179,7 +197,7 @@ func (controller *userController) GetUserDetails(c *gin.Context) {
 	}
 
 	userDetails := &UserDetails{
-		Id:       user.Id.String(),
+		Id:       strconv.Itoa(user.Id),
 		Username: user.Username,
 		Roles:    user.Roles,
 	}

@@ -1,5 +1,3 @@
 package testdata
 
-import "github.com/google/uuid"
-
-var MockRequest = map[string]interface{}{"title": uuid.New(), "postcode": uuid.New(), "info": uuid.New(), "deadline": 1}
+var MockRequest = map[string]interface{}{"title": "mockTitle", "postcode": "mockPostcode", "info": "mockInfo", "deadline": 1}
