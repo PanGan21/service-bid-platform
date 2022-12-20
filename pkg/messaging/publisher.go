@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
@@ -56,7 +55,8 @@ func (k kafkaPublisher) Publish(topic string, msg Message) error {
 		}
 
 		if err != nil {
-			log.Fatalf("unexpected error %v", err)
+			fmt.Printf("unexpected error %v\n", err)
+			return err
 		}
 	}
 

@@ -12,6 +12,7 @@ type (
 		HTTP     `yaml:"http"`
 		Log      `yaml:"logger"`
 		Postgres `yaml:"postgres"`
+		Kafka    `yaml:"kafka"`
 	}
 
 	App struct {
@@ -34,6 +35,12 @@ type (
 	Postgres struct {
 		PoolMax int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
 		URL     string `env-required:"true" yaml:"url" env:"PG_URL"`
+	}
+
+	// Kafka -.
+	Kafka struct {
+		Retries int    `env-required:"true" yaml:"retries" env:"KAFKA_RETRIES"`
+		URL     string `env-required:"true" yaml:"url" env:"KAFKA_URL"`
 	}
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/PanGan21/pkg/auth"
 	"github.com/PanGan21/pkg/logger"
-	userController "github.com/PanGan21/user-service/internal/routes/user"
+	userController "github.com/PanGan21/user-service/internal/routes/http/user"
 	"github.com/PanGan21/user-service/internal/service"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"

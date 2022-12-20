@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/PanGan21/pkg/entity"
-	"github.com/PanGan21/user-service/internal/repository/user"
+	userRepo "github.com/PanGan21/user-service/internal/repository/user"
 )
 
 var (
@@ -21,11 +21,11 @@ type UserService interface {
 	GetById(ctx context.Context, id int) (entity.User, error)
 }
 type userService struct {
-	userRepo user.UserRepository
+	userRepo userRepo.UserRepository
 	hashSalt string
 }
 
-func NewUserService(ur user.UserRepository, salt string) UserService {
+func NewUserService(ur userRepo.UserRepository, salt string) UserService {
 	return &userService{userRepo: ur, hashSalt: salt}
 }
 
