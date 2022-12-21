@@ -92,7 +92,7 @@ services:
       - ./scripts/db:/docker-entrypoint-initdb.d
       - pg-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_MULTIPLE_DATABASES=request, bidding
+      - POSTGRES_MULTIPLE_DATABASES=request,bidding
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=user
@@ -116,20 +116,20 @@ services:
     volumes: 
       - cache:/data
 
-  # integration:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.integration
-  #   container_name: integration
-  #   image: integration
-  #   environment:
-  #     API_HOST: api-gateway
-  #     API_PORT: 80
-  #     ENV: DOCKER
-  #   depends_on:
-  #     - api-gateway
-  #     - user-service
-  #   restart: on-failure
+  integration:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration
+    container_name: integration
+    image: integration
+    environment:
+      API_HOST: api-gateway
+      API_PORT: 80
+      ENV: DOCKER
+    depends_on:
+      - api-gateway
+      - user-service
+    restart: on-failure
 
   api-gateway:
     image: nginx

@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/PanGan21/bidding-service/internal/service"
+	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
 )
 
@@ -25,15 +26,13 @@ func NewRequestController(logger logger.Interface, requestServ service.RequestSe
 }
 
 func (controller *requestController) Create(payload interface{}) error {
-	// request, ok := payload.(entity.Request)
-	creatorId, err := payload["creatorId"].(string)
-	// if !ok {
-	// 	fmt.Println("request", request)
-	// 	controller.logger.Error("incorrect payload ", payload)
-	// 	log.Fatal("incorrect payload ", payload)
-	// }
+	request, err := entity.IsRequestType(payload)
+	if err != nil {
+		controller.logger.Error(err)
+		log.Fatal(err)
+	}
 
-	err := controller.requestService.Create(context.Background(), request)
+	err = controller.requestService.Create(context.Background(), request)
 	if err != nil {
 		controller.logger.Error(err)
 		log.Fatal(err)

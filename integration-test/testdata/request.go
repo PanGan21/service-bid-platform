@@ -1,3 +1,3 @@
 package testdata
 
-var MockRequest = map[string]interface{}{"title": "mockTitle", "postcode": "mockPostcode", "info": "mockInfo", "deadline": 1}
+var MockRequest = map[string]interface{}{"Title": "mockTitle", "Postcode": "mockPostcode", "Info": "mockInfo", "Deadline": 1}

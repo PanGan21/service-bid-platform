@@ -26,8 +26,8 @@ func (repo *userRepository) GetByUsernameAndPassword(ctx context.Context, userna
 	defer c.Release()
 
 	const query = `
-		SELECT id, username, passwordHash, roles FROM users
-		WHERE username=$1 AND passwordHash=$2;
+		SELECT Id, Username, PasswordHash, Roles FROM users
+		WHERE Username=$1 AND PasswordHash=$2;
 	`
 
 	row := c.QueryRow(ctx, query, username, password)
@@ -50,8 +50,8 @@ func (repo *userRepository) Create(ctx context.Context, username string, passwor
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO users (username, passwordHash, roles) 
-  		VALUES ($1, $2, $3) RETURNING id;
+  		INSERT INTO users (Username, PasswordHash, Roles) 
+  		VALUES ($1, $2, $3) RETURNING Id;
 	`
 
 	err = c.QueryRow(ctx, query, username, passwordHash, roles).Scan(&userId)
@@ -71,8 +71,8 @@ func (repo *userRepository) GetById(ctx context.Context, id int) (entity.User, e
 	defer c.Release()
 
 	const query = `
-		SELECT id, username, passwordHash, roles FROM users
-		WHERE id=$1;
+		SELECT id, Username, PasswordHash, Roles FROM users
+		WHERE Id=$1;
 	`
 
 	row := c.QueryRow(ctx, query, id)

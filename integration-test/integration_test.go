@@ -92,15 +92,15 @@ func TestHTTPDoGetDetails(t *testing.T) {
 				return err
 			}
 
-			if userDetails["username"].(string) != testdata.MockUser["username"].(string) {
+			if userDetails["Username"].(string) != testdata.MockUser["Username"].(string) {
 				return errors.New("username does not match")
 			}
 
-			if len(userDetails["roles"].([]interface{})) != len(testdata.DefaultRoles) {
+			if len(userDetails["Roles"].([]interface{})) != len(testdata.DefaultRoles) {
 				return errors.New("roles do not match")
 			}
 
-			id, ok := userDetails["id"].(string)
+			id, ok := userDetails["Id"].(string)
 			if !ok {
 				return errors.New("id does not exist")
 			}

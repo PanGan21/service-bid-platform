@@ -44,5 +44,6 @@ done
 export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
 migrate -path ./user-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/user?sslmode=disable" up
 migrate -path ./request-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/request?sslmode=disable" up
+migrate -path ./request-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/bidding?sslmode=disable" up
 
 >&2 echo "Postgres has been migrated, ready to go!"

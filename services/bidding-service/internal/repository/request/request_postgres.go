@@ -26,8 +26,8 @@ func (repo *requestRepository) Create(ctx context.Context, request entity.Reques
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO requests (id, creatorId, info, postcode, title, deadline) 
-  		VALUES ($1, $2, $3, $4, $5) RETURNING id;
+  		INSERT INTO requests (Id, CreatorId, Info, Postcode, Title, Deadline) 
+  		VALUES ($1, $2, $3, $4, $5, $6) RETURNING Id;
 	`
 
 	c.QueryRow(ctx, query, request.Id, request.CreatorId, request.Info, request.Postcode, request.Title, request.Deadline).Scan(&requestId)

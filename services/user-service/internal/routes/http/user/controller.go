@@ -36,8 +36,8 @@ func NewUserController(logger logger.Interface, userServ service.UserService, au
 }
 
 type UserData struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"Username"`
+	Password string `json:"Password"`
 }
 
 func (controller *userController) Login(c *gin.Context) {
@@ -166,9 +166,9 @@ func (controller *userController) Authenticate(c *gin.Context) {
 }
 
 type UserDetails struct {
-	Id       string   `json:"id"`
-	Username string   `json:"username"`
-	Roles    []string `json:"roles"`
+	Id       string   `json:"Id"`
+	Username string   `json:"Username"`
+	Roles    []string `json:"Roles"`
 }
 
 func (controller *userController) GetUserDetails(c *gin.Context) {
