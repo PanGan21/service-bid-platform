@@ -6,7 +6,8 @@ import (
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
-	"github.com/PanGan21/request-service/internal/repository/request"
+	requestEvents "github.com/PanGan21/request-service/internal/events/request"
+	requestRepo "github.com/PanGan21/request-service/internal/repository/request"
 )
 
 type RequestService interface {
@@ -16,11 +17,12 @@ type RequestService interface {
 }
 
 type requestService struct {
-	requestRepo request.RequestRepository
+	requestRepo   requestRepo.RequestRepository
+	requestEvents requestEvents.RequestEvents
 }
 
-func NewRequestService(rr request.RequestRepository) RequestService {
-	return &requestService{requestRepo: rr}
+func NewRequestService(rr requestRepo.RequestRepository, re requestEvents.RequestEvents) RequestService {
+	return &requestService{requestRepo: rr, requestEvents: re}
 }
 
 func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error) {
@@ -34,6 +36,11 @@ func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, 
 	newRequest, err = s.requestRepo.FindOneById(ctx, requestId)
 	if err != nil {
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.FindOneById: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestCreated("request-created", &newRequest)
+	if err != nil {
+		return newRequest, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestCreated: %w", err)
 	}
 
 	return newRequest, nil

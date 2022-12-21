@@ -5,7 +5,7 @@ import (
 
 	"github.com/PanGan21/pkg/auth"
 	"github.com/PanGan21/pkg/logger"
-	requestController "github.com/PanGan21/request-service/internal/routes/request"
+	requestController "github.com/PanGan21/request-service/internal/routes/http/request"
 	"github.com/PanGan21/request-service/internal/service"
 	"github.com/gin-gonic/gin"
 )

@@ -9,10 +9,12 @@ import (
 	"github.com/PanGan21/pkg/auth"
 	"github.com/PanGan21/pkg/httpserver"
 	"github.com/PanGan21/pkg/logger"
+	"github.com/PanGan21/pkg/messaging"
 	"github.com/PanGan21/pkg/postgres"
 	"github.com/PanGan21/request-service/config"
+	requestEvents "github.com/PanGan21/request-service/internal/events/request"
 	requestRepository "github.com/PanGan21/request-service/internal/repository/request"
-	routes "github.com/PanGan21/request-service/internal/routes"
+	routes "github.com/PanGan21/request-service/internal/routes/http"
 	"github.com/PanGan21/request-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -29,9 +31,14 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	// Events
+	pub := messaging.NewPublisher(cfg.Kafka.URL, cfg.Kafka.Retries)
+	defer pub.Close()
+
 	requestRepo := requestRepository.NewRequestRepository(*pg)
+	requestEv := requestEvents.NewRequestEvents(pub)
 	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
-	requestService := service.NewRequestService(requestRepo)
+	requestService := service.NewRequestService(requestRepo, requestEv)
 
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)
