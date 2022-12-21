@@ -14,4 +14,7 @@ migrate-up: ### migration up
 	migrate -path migrations -database '$(PG_URL)?sslmode=disable/bidding' up
 .PHONY: migrate-up
 
+migrate-create: ### migrate create new migration (up and down)
+	migrate create -ext sql -dir migrations -seq bids
+.PHONY: migrate-create
 
