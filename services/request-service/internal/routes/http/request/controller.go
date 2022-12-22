@@ -29,10 +29,10 @@ func NewRequestController(logger logger.Interface, requestServ service.RequestSe
 }
 
 type RequestData struct {
-	Title    string `json:"title"`
-	Postcode string `json:"postcode"`
-	Info     string `json:"info"`
-	Deadline int64  `json:"deadline"`
+	Title    string `json:"Title"`
+	Postcode string `json:"Postcode"`
+	Info     string `json:"Info"`
+	Deadline int64  `json:"Deadline"`
 }
 
 func (controller *requestController) Create(c *gin.Context) {

@@ -33,7 +33,7 @@ func (repo *requestRepository) Create(ctx context.Context, creatorId, info, post
 
 	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline).Scan(&requestId)
 	if err != nil {
-		return requestId, fmt.Errorf("RequestRepo - Create - c.Exec: %w", err)
+		return requestId, fmt.Errorf("RequestRepo - Create - c.QueryRow: %w", err)
 	}
 
 	return requestId, nil
@@ -57,7 +57,7 @@ func (repo *requestRepository) GetAll(ctx context.Context, pagination *paginatio
 
 	rows, err := c.Query(ctx, query, pagination.Limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("RequestRepo - GetAll - c.Exec: %w", err)
+		return nil, fmt.Errorf("RequestRepo - GetAll - c.Query: %w", err)
 	}
 	defer rows.Close()
 
@@ -97,7 +97,7 @@ func (repo *requestRepository) FindByCreatorId(ctx context.Context, creatorId st
 
 	rows, err := c.Query(ctx, query, creatorId, pagination.Limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("RequestRepo - FindByCreatorId - c.Exec: %w", err)
+		return nil, fmt.Errorf("RequestRepo - FindByCreatorId - c.Query: %w", err)
 	}
 	defer rows.Close()
 
@@ -134,7 +134,7 @@ func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.
 
 	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline)
 	if err != nil {
-		return request, fmt.Errorf("RequestRepo - FindOneById - rows.Err: %w", err)
+		return request, fmt.Errorf("RequestRepo - FindOneById - c.QueryRow: %w", err)
 	}
 
 	return request, nil

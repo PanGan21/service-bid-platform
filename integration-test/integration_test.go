@@ -17,11 +17,15 @@ import (
 
 var userService = "user"
 var requestService = "request"
+var biddingService = "bidding"
+
 var sessionId = ""
 var userId = ""
-var requestId = ""
+var requestId = 0
+
 var userApiPath = getBasePath(userService)
 var requestApiPath = getBasePath(requestService)
+var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
 	err := healthCheck(Attempts, userService)
@@ -74,7 +78,7 @@ func TestHTTPDoRegister(t *testing.T) {
 	)
 }
 
-// HTTP POST: /user/
+// HTTP GET: /user/
 func TestHTTPDoGetDetails(t *testing.T) {
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	routePath := userApiPath + "/"
@@ -220,16 +224,14 @@ func TestHTTPCreateRequest(t *testing.T) {
 		Send().Body().JSON(testdata.MockRequest),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			id, err := hit.Response().Body().String()
+			var request entity.Request
+
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			if id == "" {
-				return errors.New("request id is empty")
-			}
-
-			requestId = id
+			requestId = request.Id
 
 			return nil
 		}),
@@ -398,6 +400,45 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 
 			return nil
 		}),
+	)
+}
+
+// HTTP POST: /bidding/
+func TestHTTPCreateBid(t *testing.T) {
+	routePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	testdata.MockBid["RequestId"] = requestId
+
+	Test(t,
+		Description("bid; create; success"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			if bid.Id < 1 {
+				return errors.New("bid id is not correct")
+			}
+
+			return nil
+		}),
+	)
+
+	testdata.MockBid["RequestId"] = 0
+	Test(t,
+		Description("bid; create; failure; RequestId not valid"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusInternalServerError),
 	)
 }
 

@@ -8,5 +8,8 @@ CREATE TABLE IF NOT EXISTS requests(
 );
 
 CREATE TABLE IF NOT EXISTS bids(
-    Id SERIAL PRIMARY KEY
+    Id SERIAL PRIMARY KEY,
+    Amount FLOAT,
+    CreatorId VARCHAR(255),
+    RequestId INTEGER REFERENCES requests (Id)
 );
