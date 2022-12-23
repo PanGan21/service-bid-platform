@@ -6,11 +6,13 @@ import (
 
 	bidRepo "github.com/PanGan21/bidding-service/internal/repository/bid"
 	"github.com/PanGan21/pkg/entity"
+	"github.com/PanGan21/pkg/pagination"
 )
 
 type BidService interface {
 	Create(ctx context.Context, creatorId string, requestId int, amount float64) (entity.Bid, error)
 	FindOneById(ctx context.Context, id int) (entity.Bid, error)
+	GetManyByRequestId(ctx context.Context, requestId int, pagination *pagination.Pagination) (*[]entity.Bid, error)
 }
 
 type bidService struct {
@@ -46,4 +48,13 @@ func (s *bidService) FindOneById(ctx context.Context, id int) (entity.Bid, error
 	}
 
 	return bid, nil
+}
+
+func (s *bidService) GetManyByRequestId(ctx context.Context, requestId int, pagination *pagination.Pagination) (*[]entity.Bid, error) {
+	bids, err := s.bidRepo.FindByRequestId(ctx, requestId, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("BidService - GetManyByRequestId - s.requestRepo.FindByRequestId: %w", err)
+	}
+
+	return bids, nil
 }

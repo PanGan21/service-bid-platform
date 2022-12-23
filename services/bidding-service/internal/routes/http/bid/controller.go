@@ -7,12 +7,14 @@ import (
 
 	"github.com/PanGan21/bidding-service/internal/service"
 	"github.com/PanGan21/pkg/logger"
+	"github.com/PanGan21/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
 
 type BidController interface {
 	Create(c *gin.Context)
 	GetOneById(c *gin.Context)
+	GetManyByRequestId(c *gin.Context)
 }
 
 type bidController struct {
@@ -59,7 +61,7 @@ func (controller *bidController) GetOneById(c *gin.Context) {
 	idParam := c.Request.URL.Query().Get("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
 
@@ -71,4 +73,25 @@ func (controller *bidController) GetOneById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, bid)
+}
+
+func (controller *bidController) GetManyByRequestId(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("requestId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	bids, err := controller.bidService.GetManyByRequestId(c.Request.Context(), id, &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, bids)
 }

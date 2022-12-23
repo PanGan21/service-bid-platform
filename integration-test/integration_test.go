@@ -486,6 +486,84 @@ func TestHTTPGetBidById(t *testing.T) {
 	)
 }
 
+// HTTP GET: /bidding/requestId/?requestId
+func TestHTTPGetPaginatedBidsByRequestId(t *testing.T) {
+	createRoutePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	testdata.MockBid["RequestId"] = requestId
+
+	for i := 2; i <= 10; i++ {
+		description := fmt.Sprintf("bid; create; success; no %d", i)
+
+		testdata.MockBid["Amount"] = i
+
+		Test(t,
+			Description(description),
+			Post(createRoutePath),
+			Send().Headers("Cookie").Add(sessionCookie),
+			Send().Body().JSON(testdata.MockBid),
+			Expect().Status().Equal(http.StatusOK),
+		)
+
+	}
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%srequestId/?limit=%d&page=%d&asc=true&requestId=%s", createRoutePath, limit10, page1, strconv.Itoa(requestId))
+
+	Test(t,
+		Description("get bids; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bids []entity.Bid
+			err := hit.Response().Body().JSON().Decode(&bids)
+			if err != nil {
+				return err
+			}
+
+			if len(bids) != limit10 {
+				return fmt.Errorf("bids should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(bids, func(p, q int) bool {
+				return bids[p].Id < bids[q].Id
+			})
+
+			if !isAscendingOrder {
+				return errors.New("bids are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathIncorrectRequestId := fmt.Sprintf("%srequestId/?limit=%d&page=%d&asc=true&requestId=%s", createRoutePath, limit10, page1, strconv.Itoa(0))
+
+	Test(t,
+		Description("get requests; failure; requestId does not exist"),
+		Get(routePathIncorrectRequestId),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var resp interface{}
+			err := hit.Response().Body().JSON().Decode(&resp)
+			if err != nil {
+				return err
+			}
+
+			if resp != nil {
+				return errors.New("bids shouldn't be returned")
+			}
+
+			return nil
+		}),
+	)
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"

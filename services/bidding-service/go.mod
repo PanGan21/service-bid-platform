@@ -19,6 +19,7 @@ require (
 	github.com/PanGan21/pkg/httpserver v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/logger v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/messaging v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/pagination v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/postgres v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.8.1
 	github.com/ilyakaznacheev/cleanenv v1.4.1
