@@ -3,6 +3,7 @@ package bid
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/PanGan21/bidding-service/internal/service"
 	"github.com/PanGan21/pkg/logger"
@@ -11,6 +12,7 @@ import (
 
 type BidController interface {
 	Create(c *gin.Context)
+	GetOneById(c *gin.Context)
 }
 
 type bidController struct {
@@ -47,6 +49,24 @@ func (controller *bidController) Create(c *gin.Context) {
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, bid)
+}
+
+func (controller *bidController) GetOneById(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
+		return
+	}
+
+	bid, err := controller.bidService.FindOneById(c.Request.Context(), id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to find bid"})
 		return
 	}
 

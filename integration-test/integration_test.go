@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"testing"
 
 	. "github.com/Eun/go-hit"
@@ -22,6 +23,7 @@ var biddingService = "bidding"
 var sessionId = ""
 var userId = ""
 var requestId = 0
+var bidId = 0
 
 var userApiPath = getBasePath(userService)
 var requestApiPath = getBasePath(requestService)
@@ -428,6 +430,8 @@ func TestHTTPCreateBid(t *testing.T) {
 				return errors.New("bid id is not correct")
 			}
 
+			bidId = bid.Id
+
 			return nil
 		}),
 	)
@@ -438,6 +442,46 @@ func TestHTTPCreateBid(t *testing.T) {
 		Post(routePath),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusInternalServerError),
+	)
+}
+
+// HTTP GET: /bidding/?id
+func TestHTTPGetBidById(t *testing.T) {
+	createRoutePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	routePath := fmt.Sprintf("%s?id=%s", createRoutePath, strconv.Itoa(bidId))
+
+	Test(t,
+		Description("bid; get bid by id; success"),
+		Get(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			if bid.Amount != testdata.MockBid["Amount"] || bid.RequestId != requestId || bid.Id != bidId {
+				log.Fatal("bid data do not match")
+			}
+
+			return nil
+		}),
+	)
+
+	var incorrectBidId = 0
+	incorrectRoutePath := fmt.Sprintf("%s?id=%s", createRoutePath, strconv.Itoa(incorrectBidId))
+
+	Test(t,
+		Description("bid; get bid by id; failure"),
+		Get(incorrectRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusInternalServerError),
 	)
 }

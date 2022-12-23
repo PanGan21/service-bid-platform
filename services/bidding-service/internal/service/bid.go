@@ -10,6 +10,7 @@ import (
 
 type BidService interface {
 	Create(ctx context.Context, creatorId string, requestId int, amount float64) (entity.Bid, error)
+	FindOneById(ctx context.Context, id int) (entity.Bid, error)
 }
 
 type bidService struct {
@@ -28,11 +29,21 @@ func (s *bidService) Create(ctx context.Context, creatorId string, requestId int
 		return newBid, fmt.Errorf("BidService - Create - s.bidRepo.Create: %w", err)
 	}
 
-	fmt.Println("bidId", bidId)
 	newBid, err = s.bidRepo.FindOneById(ctx, bidId)
 	if err != nil {
 		return newBid, fmt.Errorf("BidService - Create - s.bidRepo.FindOneById: %w", err)
 	}
 
 	return newBid, nil
+}
+
+func (s *bidService) FindOneById(ctx context.Context, id int) (entity.Bid, error) {
+	var bid entity.Bid
+
+	bid, err := s.bidRepo.FindOneById(ctx, id)
+	if err != nil {
+		return bid, fmt.Errorf("BidService - FindOneById - s.bidRepo.FindOneById: %w", err)
+	}
+
+	return bid, nil
 }

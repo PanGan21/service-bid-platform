@@ -24,4 +24,5 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	// Routers
 	var requiredRoles []string
 	handler.POST("/", auth.AuthorizeEndpoint(requiredRoles...), bidController.Create)
+	handler.GET("/", bidController.GetOneById)
 }
