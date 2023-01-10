@@ -19,6 +19,7 @@ func NewRequestRepository(db postgres.Postgres) *requestRepository {
 
 func (repo *requestRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (int, error) {
 	var requestId int
+	var defaultStatus = entity.Open
 
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
@@ -27,11 +28,11 @@ func (repo *requestRepository) Create(ctx context.Context, creatorId, info, post
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO requests (CreatorId, Info, Postcode, Title, Deadline) 
-  		VALUES ($1, $2, $3, $4, $5) RETURNING Id;
+  		INSERT INTO requests (CreatorId, Info, Postcode, Title, Deadline, Status) 
+  		VALUES ($1, $2, $3, $4, $5, $6) RETURNING Id;
 	`
 
-	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline).Scan(&requestId)
+	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, defaultStatus).Scan(&requestId)
 	if err != nil {
 		return requestId, fmt.Errorf("RequestRepo - Create - c.QueryRow: %w", err)
 	}
@@ -53,7 +54,7 @@ func (repo *requestRepository) GetAll(ctx context.Context, pagination *paginatio
 		order = "desc"
 	}
 
-	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline FROM Requests ORDER BY deadline %s LIMIT $1 OFFSET $2;", order)
+	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline, Status FROM Requests ORDER BY deadline %s LIMIT $1 OFFSET $2;", order)
 
 	rows, err := c.Query(ctx, query, pagination.Limit, offset)
 	if err != nil {
@@ -65,7 +66,7 @@ func (repo *requestRepository) GetAll(ctx context.Context, pagination *paginatio
 
 	for rows.Next() {
 		var r entity.Request
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline)
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status)
 		if err != nil {
 			return nil, fmt.Errorf("RequestRepo - GetAll - rows.Scan: %w", err)
 		}
@@ -93,7 +94,7 @@ func (repo *requestRepository) FindByCreatorId(ctx context.Context, creatorId st
 		order = "desc"
 	}
 
-	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline FROM requests WHERE CreatorId=$1 ORDER BY Deadline %s LIMIT $2 OFFSET $3;", order)
+	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline, Status FROM requests WHERE CreatorId=$1 ORDER BY Deadline %s LIMIT $2 OFFSET $3;", order)
 
 	rows, err := c.Query(ctx, query, creatorId, pagination.Limit, offset)
 	if err != nil {
@@ -105,7 +106,7 @@ func (repo *requestRepository) FindByCreatorId(ctx context.Context, creatorId st
 
 	for rows.Next() {
 		var r entity.Request
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline)
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status)
 		if err != nil {
 			return nil, fmt.Errorf("RequestRepo - FindByCreatorId - rows.Scan: %w", err)
 		}
@@ -132,7 +133,7 @@ func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.
 		SELECT * FROM requests WHERE Id=$1;
 	`
 
-	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline)
+	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status)
 	if err != nil {
 		return request, fmt.Errorf("RequestRepo - FindOneById - c.QueryRow: %w", err)
 	}

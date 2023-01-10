@@ -26,11 +26,11 @@ func (repo *requestRepository) Create(ctx context.Context, request entity.Reques
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO requests (Id, CreatorId, Info, Postcode, Title, Deadline) 
-  		VALUES ($1, $2, $3, $4, $5, $6) RETURNING Id;
+  		INSERT INTO requests (Id, CreatorId, Info, Postcode, Title, Deadline, Status) 
+  		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING Id;
 	`
 
-	c.QueryRow(ctx, query, request.Id, request.CreatorId, request.Info, request.Postcode, request.Title, request.Deadline).Scan(&requestId)
+	c.QueryRow(ctx, query, request.Id, request.CreatorId, request.Info, request.Postcode, request.Title, request.Deadline, request.Status).Scan(&requestId)
 	if err != nil {
 		return fmt.Errorf("RequestRepo - Create - c.Exec: %w", err)
 	}

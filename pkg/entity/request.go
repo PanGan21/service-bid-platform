@@ -3,13 +3,21 @@ package entity
 import "errors"
 
 type Request struct {
-	Id        int    `json:"Id" db:"Id"`
-	Title     string `json:"Title" db:"Title"`
-	Postcode  string `json:"Postcode" db:"Postcode"`
-	Info      string `json:"Info" db:"Info"`
-	CreatorId string `json:"CreatorId" db:"CreatorId"`
-	Deadline  int64  `json:"Deadline" db:"Deadline"`
+	Id        int           `json:"Id" db:"Id"`
+	Title     string        `json:"Title" db:"Title"`
+	Postcode  string        `json:"Postcode" db:"Postcode"`
+	Info      string        `json:"Info" db:"Info"`
+	CreatorId string        `json:"CreatorId" db:"CreatorId"`
+	Deadline  int64         `json:"Deadline" db:"Deadline"`
+	Status    RequestStatus `json:"Status" db:"Status"`
 }
+
+type RequestStatus string
+
+const (
+	Open   RequestStatus = "open"
+	Closed RequestStatus = "closed"
+)
 
 var ErrIncorrectRequestType = errors.New("incorrect request type")
 
@@ -52,6 +60,19 @@ func IsRequestType(unknown interface{}) (Request, error) {
 		return request, ErrIncorrectRequestType
 	}
 	request.Deadline = int64(floatDeadline)
+
+	s, ok := unknownMap["Status"].(string)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+	status := RequestStatus(s)
+
+	switch status {
+	case Open, Closed:
+		request.Status = status
+	default:
+		return request, ErrIncorrectRequestType
+	}
 
 	return request, nil
 }
