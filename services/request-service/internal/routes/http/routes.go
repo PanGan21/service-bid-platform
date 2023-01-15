@@ -34,6 +34,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	// Routers
 	handler.GET("/", requestController.GetAll)
 	handler.POST("/", requestController.Create)
+	handler.GET("/count/own", requestController.CountOwn)
 	handler.GET("/own", requestController.GetOwn)
 
 	var requiredRoles []string

@@ -140,3 +140,24 @@ func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.
 
 	return request, nil
 }
+
+func (repo *requestRepository) CountByCreatorId(ctx context.Context, creatorId string) (int, error) {
+	count := 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*) FROM requests WHERE CreatorId=$1;
+	`
+
+	err = c.QueryRow(ctx, query, creatorId).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("RequestRepo - CountByCreatorId - c.QueryRow: %w", err)
+	}
+
+	return count, nil
+}

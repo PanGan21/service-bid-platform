@@ -405,6 +405,33 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	)
 }
 
+// HTTP GET: /request/count/own
+func TestHTTPCountOwnRequests(t *testing.T) {
+	countOwnRoutePath := requestApiPath + "/count/own"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var ownedRequests = 10
+
+	Test(t, 
+		Description("count owned requests; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != ownedRequests {
+				return fmt.Errorf("requests should be %d", ownedRequests)
+			}
+
+			return nil
+		}))
+}
+
 // HTTP POST: /bidding/
 func TestHTTPCreateBid(t *testing.T) {
 	routePath := biddingApiPath + "/"

@@ -12,4 +12,5 @@ type RequestRepository interface {
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error)
 	FindOneById(ctx context.Context, id int) (entity.Request, error)
 	FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountByCreatorId(ctx context.Context, creatorId string) (int, error)
 }

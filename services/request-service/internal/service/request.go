@@ -14,6 +14,7 @@ type RequestService interface {
 	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountOwn(ctx context.Context, creatorId string) (int, error)
 }
 
 type requestService struct {
@@ -62,4 +63,13 @@ func (s *requestService) GetOwn(ctx context.Context, creatorId string, paginatio
 	}
 
 	return requests, nil
+}
+
+func (s *requestService) CountOwn(ctx context.Context, creatorId string) (int, error) {
+	count, err := s.requestRepo.CountByCreatorId(ctx, creatorId)
+		if err != nil {
+		return 0, fmt.Errorf("RequestService - CountOwn - s.requestRepo.CountByCreatorId: %w", err)
+	}
+
+	return count, nil
 }
