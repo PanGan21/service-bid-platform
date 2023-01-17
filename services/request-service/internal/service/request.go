@@ -67,7 +67,7 @@ func (s *requestService) GetOwn(ctx context.Context, creatorId string, paginatio
 
 func (s *requestService) CountOwn(ctx context.Context, creatorId string) (int, error) {
 	count, err := s.requestRepo.CountByCreatorId(ctx, creatorId)
-		if err != nil {
+	if err != nil {
 		return 0, fmt.Errorf("RequestService - CountOwn - s.requestRepo.CountByCreatorId: %w", err)
 	}
 

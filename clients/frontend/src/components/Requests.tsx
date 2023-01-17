@@ -1,63 +1,98 @@
-import React, { useEffect, useState } from "react";
-import { getMyRequests } from "../services/request";
-import BootstrapTable, { ColumnDescription, PaginationOptions } from 'react-bootstrap-table-next';
-import paginationFactory from "react-bootstrap-table2-paginator"
+import { useState, useEffect } from "react";
+import { AppTable, Column } from "../common/table";
+import { Pagination } from "../common/pagination";
+import { ROWS_PER_TABLE_PAGE } from "../constants";
+import {
+  countMyRequests,
+  formatRequests,
+  getMyRequests,
+} from "../services/request";
+import { PlusButton } from "../common/plus";
+import { FormattedRequest } from "../types/request";
 
+const columns: Column[] = [
+  {
+    Header: "Id",
+    accessor: "Id",
+  },
+  {
+    Header: "Title",
+    accessor: "Title",
+  },
+  {
+    Header: "Postcode",
+    accessor: "Postcode",
+  },
+  {
+    Header: "Info",
+    accessor: "Info",
+  },
+  {
+    Header: "Deadline",
+    accessor: "Deadline",
+  },
+  {
+    Header: "Status",
+    accessor: "Status",
+  },
+];
 
-
-type Props = {}
-
-// Not showing creatorId
-const columns: ColumnDescription[] = [
-    {
-        dataField: "Id",
-        text: "Id",
-        sort: true
-    },
-    {
-        dataField: "Title",
-        text: "Title"
-    },
-    {
-        dataField: "Postcode",
-        text: "Postcode"
-    },
-    {
-        dataField: "Info",
-        text: "Info",
-    },
-    {
-        dataField: "Deadline",
-        text: "Deadline",
-        sort: true
-    },
-    {
-        dataField: "Status",
-        text: "Status"
-    }
-]
+type Props = {};
 
 export const Requests: React.FC<Props> = () => {
-    const [requests, setRequests] = useState<Request[]>([]);
+  const [pageData, setPageData] = useState<{
+    rowData: FormattedRequest[];
+    isLoading: boolean;
+    totalRequests: number;
+  }>({
+    rowData: [],
+    isLoading: false,
+    totalRequests: 0,
+  });
+  const [totalRequests, setTotalRequests] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-    useEffect(() => {
-        getMyRequests().then(
-            (response) => {
-                if (response.data && response.data.length) {
-                    setRequests(response.data);
-                }
+  useEffect(() => {
+    setPageData((prevState) => ({
+      ...prevState,
+      rowData: [],
+      isLoading: true,
+    }));
 
-            },
-            (error) => {
-                // const _content = (error.response.data.error || error.message || JSON.stringify(error))
-                // setContent(_content);
-            }
-        )
-    }, [])
-    return (
-        <div>
-            <BootstrapTable keyField="Id" data={requests} columns={columns} striped hover condensed pagination={paginationFactory({})} />
-        </div>
-    )
+    countMyRequests().then((response) => {
+      if (response.data && response.data) {
+        setTotalRequests(response.data);
+      }
+    });
 
-}
+    getMyRequests(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
+      const requests = formatRequests(response.data) || [];
+      setPageData({
+        isLoading: false,
+        rowData: requests,
+        totalRequests: totalRequests,
+      });
+    });
+  }, [currentPage, totalRequests]);
+
+  return (
+    <div>
+      <div style={{ textAlign: "right" }}>
+        <PlusButton navigation="/new-request" />
+      </div>
+      <div style={{ height: "450px" }}>
+        <AppTable
+          columns={columns}
+          data={pageData.rowData}
+          isLoading={pageData.isLoading}
+        />
+      </div>
+      <Pagination
+        totalRows={pageData.totalRequests}
+        pageChangeHandler={setCurrentPage}
+        rowsPerPage={ROWS_PER_TABLE_PAGE}
+        currentPage={currentPage}
+      />
+    </div>
+  );
+};

@@ -1,16 +1,23 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { Routes, Route, Link, NavigateFunction, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Link,
+  NavigateFunction,
+  useNavigate,
+} from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
 import * as AuthService from "./services/auth";
-import { User } from './types/user';
+import { User } from "./types/user";
 
 import { Login } from "./components/Login";
 // import Register from "./components/Register";
 import { Home } from "./components/Home";
 import { Requests } from "./components/Requests";
+import { CreateRequest } from "./components/CreateRequest";
 // import Profile from "./components/Profile";
 // import BoardUser from "./components/BoardUser";
 // import BoardModerator from "./components/BoardModerator";
@@ -69,7 +76,6 @@ const App: React.FC = () => {
               </Link>
             </li>
           )} */}
-
         </div>
 
         {currentUser ? (
@@ -102,6 +108,7 @@ const App: React.FC = () => {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/requests" element={<Requests />} />
+          <Route path="/new-request" element={<CreateRequest />} />
           {/*<Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user" element={<BoardUser />} />
