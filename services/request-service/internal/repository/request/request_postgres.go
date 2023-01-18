@@ -80,6 +80,27 @@ func (repo *requestRepository) GetAll(ctx context.Context, pagination *paginatio
 	return &requests, nil
 }
 
+func (repo *requestRepository) CountAll(ctx context.Context) (int, error) {
+	count := 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*) FROM requests;
+	`
+
+	err = c.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("RequestRepo - CountAll - c.QueryRow: %w", err)
+	}
+
+	return count, nil
+}
+
 func (repo *requestRepository) FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error) {
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {

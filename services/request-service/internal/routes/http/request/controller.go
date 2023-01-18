@@ -13,8 +13,9 @@ import (
 type RequestController interface {
 	Create(c *gin.Context)
 	GetAll(c *gin.Context)
+	CountAll(c *gin.Context)
 	GetOwn(c *gin.Context)
-	CountOwn(c * gin.Context)
+	CountOwn(c *gin.Context)
 }
 
 type requestController struct {
@@ -71,6 +72,18 @@ func (controller *requestController) GetAll(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, requests)
+}
+
+func (controller *requestController) CountAll(c *gin.Context) {
+	count, err := controller.requestService.CountAll(context.Background())
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
 }
 
 func (controller *requestController) GetOwn(c *gin.Context) {

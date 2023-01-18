@@ -9,6 +9,7 @@ import {
 } from "../services/request";
 import { PlusButton } from "../common/plus";
 import { FormattedRequest } from "../types/request";
+import { useNavigate } from "react-router-dom";
 
 const columns: Column[] = [
   {
@@ -39,7 +40,7 @@ const columns: Column[] = [
 
 type Props = {};
 
-export const Requests: React.FC<Props> = () => {
+export const MyRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
     rowData: FormattedRequest[];
     isLoading: boolean;
@@ -51,6 +52,7 @@ export const Requests: React.FC<Props> = () => {
   });
   const [totalRequests, setTotalRequests] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setPageData((prevState) => ({
@@ -66,14 +68,18 @@ export const Requests: React.FC<Props> = () => {
     });
 
     getMyRequests(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
-      const requests = formatRequests(response.data) || [];
+      const requests = response.data || [];
       setPageData({
         isLoading: false,
-        rowData: requests,
+        rowData: formatRequests(requests),
         totalRequests: totalRequests,
       });
     });
   }, [currentPage, totalRequests]);
+
+  const handleRowSelection = (request: any) => {
+    navigate("/new-bid", { state: request });
+  };
 
   return (
     <div>
@@ -85,6 +91,7 @@ export const Requests: React.FC<Props> = () => {
           columns={columns}
           data={pageData.rowData}
           isLoading={pageData.isLoading}
+          onRowClick={(r) => handleRowSelection(r.values)}
         />
       </div>
       <Pagination

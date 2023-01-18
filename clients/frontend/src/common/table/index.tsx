@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { useTable } from "react-table";
+import { Row, useTable } from "react-table";
 import { Loader } from "../loader/Loader";
+import { TableRow } from "../table-row";
 import "./styles.module.css";
 
 export type Column = {
@@ -12,10 +13,12 @@ export const AppTable = ({
   columns,
   data,
   isLoading,
+  onRowClick,
 }: {
   columns: any;
   data: any;
   isLoading: boolean;
+  onRowClick: (row: Row) => void;
 }) => {
   const columnData = useMemo(() => columns, [columns]);
   const rowData = useMemo(() => data, [data]);
@@ -24,6 +27,7 @@ export const AppTable = ({
       columns: columnData,
       data: rowData,
     });
+
   return (
     <>
       {isLoading ? (
@@ -46,13 +50,16 @@ export const AppTable = ({
               {rows.map((row, i) => {
                 prepareRow(row);
                 return (
-                  <tr {...row.getRowProps()}>
+                  <TableRow
+                    {...row.getRowProps()}
+                    onClick={() => onRowClick(row)}
+                  >
                     {row.cells.map((cell) => {
                       return (
                         <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
                       );
                     })}
-                  </tr>
+                  </TableRow>
                 );
               })}
             </tbody>

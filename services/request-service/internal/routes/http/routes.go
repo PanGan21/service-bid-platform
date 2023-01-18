@@ -19,10 +19,10 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 
 	// Cors
 	handler.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"POST", "GET", "OPTIONS"},
-		AllowHeaders:    []string{"DNT","X-CustomHeader","Keep-Alive","User-Agent","X-Requested-With","If-Modified-Since","Cache-Control","Content-Type"},
-		MaxAge: 12 * time.Hour,
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{"POST", "GET", "OPTIONS"},
+		AllowHeaders: []string{"DNT", "X-CustomHeader", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type"},
+		MaxAge:       12 * time.Hour,
 	}))
 
 	// K8s probe
@@ -33,6 +33,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 
 	// Routers
 	handler.GET("/", requestController.GetAll)
+	handler.GET("/count", requestController.CountAll)
 	handler.POST("/", requestController.Create)
 	handler.GET("/count/own", requestController.CountOwn)
 	handler.GET("/own", requestController.GetOwn)

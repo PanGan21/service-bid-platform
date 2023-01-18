@@ -15,6 +15,10 @@ export const CreateRequest: React.FC<Props> = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
 
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   const initialValues: {
     title: string;
     postcode: string;
@@ -24,7 +28,7 @@ export const CreateRequest: React.FC<Props> = () => {
     title: "",
     postcode: "",
     info: "",
-    deadline: new Date().toLocaleDateString("en-US"),
+    deadline: tomorrow.toLocaleDateString("en-US"),
   };
 
   const validationSchema = Yup.object().shape({
