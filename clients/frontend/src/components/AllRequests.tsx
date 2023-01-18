@@ -3,9 +3,9 @@ import { AppTable, Column } from "../common/table";
 import { Pagination } from "../common/pagination";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
 import {
-  countMyRequests,
+  countAllRequests,
   formatRequests,
-  getMyRequests,
+  getAllRequests,
 } from "../services/request";
 import { PlusButton } from "../common/plus";
 import { FormattedRequest } from "../types/request";
@@ -40,7 +40,7 @@ const columns: Column[] = [
 
 type Props = {};
 
-export const MyRequests: React.FC<Props> = () => {
+export const AllRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
     rowData: FormattedRequest[];
     isLoading: boolean;
@@ -61,13 +61,13 @@ export const MyRequests: React.FC<Props> = () => {
       isLoading: true,
     }));
 
-    countMyRequests().then((response) => {
+    countAllRequests().then((response) => {
       if (response.data && response.data) {
         setTotalRequests(response.data);
       }
     });
 
-    getMyRequests(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
+    getAllRequests(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
       const requests = response.data || [];
       setPageData({
         isLoading: false,

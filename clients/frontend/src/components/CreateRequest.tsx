@@ -69,7 +69,7 @@ export const CreateRequest: React.FC<Props> = () => {
 
     try {
       await createRequest(request);
-      navigate("/requests");
+      navigate("/all-requests");
       window.location.reload();
     } catch (error: any) {
       const resMessage =

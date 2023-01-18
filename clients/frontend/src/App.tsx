@@ -16,7 +16,7 @@ import { User } from "./types/user";
 import { Login } from "./components/Login";
 // import Register from "./components/Register";
 import { Home } from "./components/Home";
-import { MyRequests } from "./components/MyRequests";
+import { AllRequests } from "./components/AllRequests";
 import { CreateRequest } from "./components/CreateRequest";
 // import Profile from "./components/Profile";
 // import BoardUser from "./components/BoardUser";
@@ -81,8 +81,8 @@ const App: React.FC = () => {
         {currentUser ? (
           <div className="navbar-nav ml-auto">
             <li className="nav-item">
-              <a href="/my-requests" className="nav-link">
-                MyRequests
+              <a href="/all-requests" className="nav-link">
+                AllRequests
               </a>
             </li>
             <li className="nav-item">
@@ -107,7 +107,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/my-requests" element={<MyRequests />} />
+          <Route path="/all-requests" element={<AllRequests />} />
           <Route path="/new-request" element={<CreateRequest />} />
           {/*<Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
