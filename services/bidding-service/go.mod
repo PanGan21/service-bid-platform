@@ -29,6 +29,7 @@ require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/PanGan21/pkg/utils v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gin-contrib/cors v1.4.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

@@ -13,7 +13,9 @@ import (
 type RequestController interface {
 	Create(c *gin.Context)
 	GetAll(c *gin.Context)
+	CountAll(c *gin.Context)
 	GetOwn(c *gin.Context)
+	CountOwn(c *gin.Context)
 }
 
 type requestController struct {
@@ -72,6 +74,18 @@ func (controller *requestController) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, requests)
 }
 
+func (controller *requestController) CountAll(c *gin.Context) {
+	count, err := controller.requestService.CountAll(context.Background())
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
+}
+
 func (controller *requestController) GetOwn(c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
@@ -89,4 +103,21 @@ func (controller *requestController) GetOwn(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, requests)
+}
+
+func (controller *requestController) CountOwn(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	count, err := controller.requestService.CountOwn(context.Background(), userId.(string))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
 }

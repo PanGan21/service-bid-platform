@@ -324,6 +324,33 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 	)
 }
 
+// HTTP GET: /request/count
+func TestHTTPCountAllRequests(t *testing.T) {
+	countOwnRoutePath := requestApiPath + "/count"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var allRequests = 10
+
+	Test(t,
+		Description("count all requests; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != allRequests {
+				return fmt.Errorf("requests should be %d", allRequests)
+			}
+
+			return nil
+		}))
+}
+
 // // HTTP GET: /request/own
 func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	createRoutePath := requestApiPath + "/own"
@@ -403,6 +430,33 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 			return nil
 		}),
 	)
+}
+
+// HTTP GET: /request/count/own
+func TestHTTPCountOwnRequests(t *testing.T) {
+	countOwnRoutePath := requestApiPath + "/count/own"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var ownedRequests = 10
+
+	Test(t,
+		Description("count owned requests; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != ownedRequests {
+				return fmt.Errorf("requests should be %d", ownedRequests)
+			}
+
+			return nil
+		}))
 }
 
 // HTTP POST: /bidding/

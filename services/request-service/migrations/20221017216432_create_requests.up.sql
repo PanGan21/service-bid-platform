@@ -4,6 +4,6 @@ CREATE TABLE IF NOT EXISTS requests(
     Postcode VARCHAR(255),
     Info VARCHAR(255),
     CreatorId VARCHAR(255),
-    Deadline INTEGER,
+    Deadline BIGINT,
     Status VARCHAR(255)
 );

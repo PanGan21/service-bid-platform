@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   user-service:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.service
       args:
@@ -10,12 +10,12 @@ services:
     image: user-service
     environment:
       APP_PORT: 8000
-      APP_DEBUG: 'true'
+      APP_DEBUG: "true"
       APP_NAME: user-service
       REDIS_URL: "user-cache:6379"
       PG_URL: "postgres://postgres:password@postgres:5432/user"
     ports:
-        - "8000:8000"
+      - "8000:8000"
     restart: unless-stopped # Change for 'always' in production environment
     depends_on:
       - user-migration
@@ -31,11 +31,11 @@ services:
     image: request-service
     environment:
       APP_PORT: 8000
-      APP_DEBUG: 'true'
+      APP_DEBUG: "true"
       APP_NAME: request-service
       PG_URL: "postgres://postgres:password@postgres:5432/request"
     ports:
-        - "8001:8000"
+      - "8001:8000"
     restart: unless-stopped # Change for 'always' in production environment
 
   bidding-service:
@@ -48,19 +48,26 @@ services:
     image: bidding-service
     environment:
       APP_PORT: 8000
-      APP_DEBUG: 'true'
+      APP_DEBUG: "true"
       APP_NAME: bidding-service
       PG_URL: "postgres://postgres:password@postgres:5432/bidding"
     ports:
-        - "8002:8000"
+      - "8002:8000"
     restart: unless-stopped # Change for 'always' in production environment
 
   user-migration:
     image: migrate/migrate
     container_name: user-migration
     volumes:
-        - ./services/user-service/migrations/:/migrations
-    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/user?sslmode=disable", "up"]
+      - ./services/user-service/migrations/:/migrations
+    command:
+      [
+        "-path",
+        "./migrations",
+        "-database",
+        "postgres://postgres:password@postgres:5432/user?sslmode=disable",
+        "up",
+      ]
     depends_on:
       - postgres
     restart: on-failure
@@ -69,8 +76,15 @@ services:
     image: migrate/migrate
     container_name: request-migration
     volumes:
-        - ./services/request-service/migrations/:/migrations
-    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/request?sslmode=disable", "up"]
+      - ./services/request-service/migrations/:/migrations
+    command:
+      [
+        "-path",
+        "./migrations",
+        "-database",
+        "postgres://postgres:password@postgres:5432/request?sslmode=disable",
+        "up",
+      ]
     depends_on:
       - postgres
     restart: on-failure
@@ -79,8 +93,15 @@ services:
     image: migrate/migrate
     container_name: bidding-migration
     volumes:
-        - ./services/bidding-service/migrations/:/migrations
-    command: ["-path", "./migrations", "-database",  "postgres://postgres:password@postgres:5432/bidding?sslmode=disable", "up"]
+      - ./services/bidding-service/migrations/:/migrations
+    command:
+      [
+        "-path",
+        "./migrations",
+        "-database",
+        "postgres://postgres:password@postgres:5432/bidding?sslmode=disable",
+        "up",
+      ]
     depends_on:
       - postgres
     restart: on-failure
@@ -111,9 +132,9 @@ services:
     image: redis:6.2-alpine
     restart: always
     ports:
-      - '6379:6379'
+      - "6379:6379"
     command: redis-server --save 20 1 --loglevel warning
-    volumes: 
+    volumes:
       - cache:/data
 
   integration:
@@ -129,6 +150,7 @@ services:
     depends_on:
       - api-gateway
       - user-service
+      - bidding-service
     restart: on-failure
 
   api-gateway:
@@ -138,6 +160,7 @@ services:
       - "80:80"
     volumes:
       - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf
+      - ./api-gateway/api_proxy.conf:/etc/nginx/api_proxy.conf
     restart: on-failure
     depends_on:
       - user-service
@@ -166,4 +189,3 @@ services:
 volumes:
   pg-data:
   cache:
-      

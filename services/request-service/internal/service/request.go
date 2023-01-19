@@ -13,7 +13,9 @@ import (
 type RequestService interface {
 	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAll(ctx context.Context) (int, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountOwn(ctx context.Context, creatorId string) (int, error)
 }
 
 type requestService struct {
@@ -55,6 +57,15 @@ func (s *requestService) GetAll(ctx context.Context, pagination *pagination.Pagi
 	return requests, nil
 }
 
+func (s *requestService) CountAll(ctx context.Context) (int, error) {
+	count, err := s.requestRepo.CountAll(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("RequestService - CountAll - s.requestRepo.CountAll: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s *requestService) GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error) {
 	requests, err := s.requestRepo.FindByCreatorId(ctx, creatorId, pagination)
 	if err != nil {
@@ -62,4 +73,13 @@ func (s *requestService) GetOwn(ctx context.Context, creatorId string, paginatio
 	}
 
 	return requests, nil
+}
+
+func (s *requestService) CountOwn(ctx context.Context, creatorId string) (int, error) {
+	count, err := s.requestRepo.CountByCreatorId(ctx, creatorId)
+	if err != nil {
+		return 0, fmt.Errorf("RequestService - CountOwn - s.requestRepo.CountByCreatorId: %w", err)
+	}
+
+	return count, nil
 }

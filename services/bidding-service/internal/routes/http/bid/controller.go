@@ -38,7 +38,7 @@ func (controller *bidController) Create(c *gin.Context) {
 	var bidData BidData
 	if err := c.BindJSON(&bidData); err != nil {
 		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
 
