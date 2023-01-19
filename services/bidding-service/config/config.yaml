@@ -1,0 +1,20 @@
+app:
+  name: "bidding-service"
+  version: "1.0.0"
+
+http:
+  port: "8000"
+  session_secret: "secret"
+  auth_secret: "auth_secret"
+
+logger:
+  log_level: "debug"
+  rollbar_env: "bidding-service"
+
+postgres:
+  pool_max: 2
+  url: "postgres://postgres:password@localhost:5432/bidding"
+
+kafka:
+  retries: 3
+  url: "kafka:9092"

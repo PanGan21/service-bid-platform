@@ -1,0 +1,40 @@
+.pagination {
+    margin: 30px 35px 0;
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+  
+.pageInfo {
+    color: #a0a3bd;
+    font-size: 0.874em;
+    letter-spacing: 0.5px;
+}
+  
+.pageButtons {
+    display: flex;
+}
+  
+.pageBtn {
+    border: 1px solid  #a0a3bd;
+    color:  #a0a3bd;
+    border-radius: 5px;
+    margin: 5px;
+    width: 35px;
+    height: 35px;
+    font-weight: normal;
+    font-size: 15px;
+}
+
+.activeBtn {
+    border: 1px solid blue;
+    color: blue;
+    background-color: transparent;
+}
+  
+.disabledPageBtn {
+    background-color: #a0a3bd;
+    cursor: not-allowed;
+    opacity: 0.5;
+}

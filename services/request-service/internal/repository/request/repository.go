@@ -8,7 +8,10 @@ import (
 )
 
 type RequestRepository interface {
-	Create(ctx context.Context, request *entity.Request) error
+	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (int, error)
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAll(ctx context.Context) (int, error)
+	FindOneById(ctx context.Context, id int) (entity.Request, error)
 	FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountByCreatorId(ctx context.Context, creatorId string) (int, error)
 }

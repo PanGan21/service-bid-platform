@@ -7,22 +7,27 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"testing"
 
 	. "github.com/Eun/go-hit"
 	"github.com/PanGan21/integration-test/testdata"
 	"github.com/PanGan21/pkg/auth"
 	"github.com/PanGan21/pkg/entity"
-	"github.com/google/uuid"
 )
 
 var userService = "user"
 var requestService = "request"
+var biddingService = "bidding"
+
 var sessionId = ""
 var userId = ""
-var requestId = ""
+var requestId = 0
+var bidId = 0
+
 var userApiPath = getBasePath(userService)
 var requestApiPath = getBasePath(requestService)
+var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
 	err := healthCheck(Attempts, userService)
@@ -75,7 +80,7 @@ func TestHTTPDoRegister(t *testing.T) {
 	)
 }
 
-// HTTP POST: /user/
+// HTTP GET: /user/
 func TestHTTPDoGetDetails(t *testing.T) {
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	routePath := userApiPath + "/"
@@ -93,15 +98,15 @@ func TestHTTPDoGetDetails(t *testing.T) {
 				return err
 			}
 
-			if userDetails["username"].(string) != testdata.MockUser["username"].(uuid.UUID).String() {
+			if userDetails["Username"].(string) != testdata.MockUser["Username"].(string) {
 				return errors.New("username does not match")
 			}
 
-			if len(userDetails["roles"].([]interface{})) != len(testdata.DefaultRoles) {
+			if len(userDetails["Roles"].([]interface{})) != len(testdata.DefaultRoles) {
 				return errors.New("roles do not match")
 			}
 
-			id, ok := userDetails["id"].(string)
+			id, ok := userDetails["Id"].(string)
 			if !ok {
 				return errors.New("id does not exist")
 			}
@@ -221,16 +226,14 @@ func TestHTTPCreateRequest(t *testing.T) {
 		Send().Body().JSON(testdata.MockRequest),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			id, err := hit.Response().Body().String()
+			var request entity.Request
+
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			if id == "" {
-				return errors.New("request id is empty")
-			}
-
-			requestId = id
+			requestId = request.Id
 
 			return nil
 		}),
@@ -293,7 +296,7 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get requests; success; ascending order"),
+		Description("get requests; success; descending order"),
 		Get(routePathDescendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
@@ -321,7 +324,34 @@ func TestHTTPGetPaginatedRequests(t *testing.T) {
 	)
 }
 
-// HTTP GET: /request/own
+// HTTP GET: /request/count
+func TestHTTPCountAllRequests(t *testing.T) {
+	countOwnRoutePath := requestApiPath + "/count"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var allRequests = 10
+
+	Test(t,
+		Description("count all requests; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != allRequests {
+				return fmt.Errorf("requests should be %d", allRequests)
+			}
+
+			return nil
+		}))
+}
+
+// // HTTP GET: /request/own
 func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	createRoutePath := requestApiPath + "/own"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
@@ -332,7 +362,7 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", createRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get requests; success; ascending order"),
+		Description("get owned requests; success; ascending order"),
 		Get(routePathAscendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
@@ -368,7 +398,7 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get requests; success; ascending order"),
+		Description("get owned requests; success; ascending order"),
 		Get(routePathDescendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
@@ -395,6 +425,192 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 
 			if isAscendingOrder {
 				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/count/own
+func TestHTTPCountOwnRequests(t *testing.T) {
+	countOwnRoutePath := requestApiPath + "/count/own"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var ownedRequests = 10
+
+	Test(t,
+		Description("count owned requests; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != ownedRequests {
+				return fmt.Errorf("requests should be %d", ownedRequests)
+			}
+
+			return nil
+		}))
+}
+
+// HTTP POST: /bidding/
+func TestHTTPCreateBid(t *testing.T) {
+	routePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	testdata.MockBid["RequestId"] = requestId
+
+	Test(t,
+		Description("bid; create; success"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			if bid.Id < 1 {
+				return errors.New("bid id is not correct")
+			}
+
+			bidId = bid.Id
+
+			return nil
+		}),
+	)
+
+	testdata.MockBid["RequestId"] = 0
+	Test(t,
+		Description("bid; create; failure; RequestId not valid"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusInternalServerError),
+	)
+}
+
+// HTTP GET: /bidding/?id
+func TestHTTPGetBidById(t *testing.T) {
+	createRoutePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	routePath := fmt.Sprintf("%s?id=%s", createRoutePath, strconv.Itoa(bidId))
+
+	Test(t,
+		Description("bid; get bid by id; success"),
+		Get(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Send().Body().JSON(testdata.MockBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			if bid.Amount != testdata.MockBid["Amount"] || bid.RequestId != requestId || bid.Id != bidId {
+				log.Fatal("bid data do not match")
+			}
+
+			return nil
+		}),
+	)
+
+	var incorrectBidId = 0
+	incorrectRoutePath := fmt.Sprintf("%s?id=%s", createRoutePath, strconv.Itoa(incorrectBidId))
+
+	Test(t,
+		Description("bid; get bid by id; failure"),
+		Get(incorrectRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusInternalServerError),
+	)
+}
+
+// HTTP GET: /bidding/requestId/?requestId
+func TestHTTPGetPaginatedBidsByRequestId(t *testing.T) {
+	createRoutePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	testdata.MockBid["RequestId"] = requestId
+
+	for i := 2; i <= 10; i++ {
+		description := fmt.Sprintf("bid; create; success; no %d", i)
+
+		testdata.MockBid["Amount"] = i
+
+		Test(t,
+			Description(description),
+			Post(createRoutePath),
+			Send().Headers("Cookie").Add(sessionCookie),
+			Send().Body().JSON(testdata.MockBid),
+			Expect().Status().Equal(http.StatusOK),
+		)
+
+	}
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%srequestId/?limit=%d&page=%d&asc=true&requestId=%s", createRoutePath, limit10, page1, strconv.Itoa(requestId))
+
+	Test(t,
+		Description("get bids; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bids []entity.Bid
+			err := hit.Response().Body().JSON().Decode(&bids)
+			if err != nil {
+				return err
+			}
+
+			if len(bids) != limit10 {
+				return fmt.Errorf("bids should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(bids, func(p, q int) bool {
+				return bids[p].Id < bids[q].Id
+			})
+
+			if !isAscendingOrder {
+				return errors.New("bids are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathIncorrectRequestId := fmt.Sprintf("%srequestId/?limit=%d&page=%d&asc=true&requestId=%s", createRoutePath, limit10, page1, strconv.Itoa(0))
+
+	Test(t,
+		Description("get requests; failure; requestId does not exist"),
+		Get(routePathIncorrectRequestId),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var resp interface{}
+			err := hit.Response().Body().JSON().Decode(&resp)
+			if err != nil {
+				return err
+			}
+
+			if resp != nil {
+				return errors.New("bids shouldn't be returned")
 			}
 
 			return nil

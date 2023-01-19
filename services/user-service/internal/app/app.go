@@ -12,7 +12,7 @@ import (
 	"github.com/PanGan21/pkg/postgres"
 	"github.com/PanGan21/user-service/config"
 	userRepository "github.com/PanGan21/user-service/internal/repository/user"
-	routes "github.com/PanGan21/user-service/internal/routes"
+	routes "github.com/PanGan21/user-service/internal/routes/http"
 	"github.com/PanGan21/user-service/internal/service"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"

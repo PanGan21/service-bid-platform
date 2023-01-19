@@ -1,12 +1,78 @@
 package entity
 
-import "github.com/google/uuid"
+import "errors"
 
 type Request struct {
-	Id        uuid.UUID `json:"id" db:"id"`
-	Title     string    `json:"title" db:"title"`
-	Postcode  string    `json:"postcode" db:"postcode"`
-	Info      string    `json:"info" db:"info"`
-	CreatorId string    `json:"creatorId" db:"creatorId"`
-	Deadline  int64     `json:"deadline" db:"deadline"`
+	Id        int           `json:"Id" db:"Id"`
+	Title     string        `json:"Title" db:"Title"`
+	Postcode  string        `json:"Postcode" db:"Postcode"`
+	Info      string        `json:"Info" db:"Info"`
+	CreatorId string        `json:"CreatorId" db:"CreatorId"`
+	Deadline  int64         `json:"Deadline" db:"Deadline"`
+	Status    RequestStatus `json:"Status" db:"Status"`
+}
+
+type RequestStatus string
+
+const (
+	Open   RequestStatus = "open"
+	Closed RequestStatus = "closed"
+)
+
+var ErrIncorrectRequestType = errors.New("incorrect request type")
+
+func IsRequestType(unknown interface{}) (Request, error) {
+	var request Request
+
+	unknownMap, ok := unknown.(map[string]interface{})
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+
+	request.CreatorId, ok = unknownMap["CreatorId"].(string)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+
+	request.Info, ok = unknownMap["Info"].(string)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+
+	request.Postcode, ok = unknownMap["Postcode"].(string)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+
+	request.Title, ok = unknownMap["Title"].(string)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+
+	floatId, ok := unknownMap["Id"].(float64)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+	request.Id = int(floatId)
+
+	floatDeadline, ok := unknownMap["Deadline"].(float64)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+	request.Deadline = int64(floatDeadline)
+
+	s, ok := unknownMap["Status"].(string)
+	if !ok {
+		return request, ErrIncorrectRequestType
+	}
+	status := RequestStatus(s)
+
+	switch status {
+	case Open, Closed:
+		request.Status = status
+	default:
+		return request, ErrIncorrectRequestType
+	}
+
+	return request, nil
 }

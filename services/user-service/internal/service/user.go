@@ -5,10 +5,10 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/PanGan21/pkg/entity"
-	"github.com/PanGan21/user-service/internal/repository/user"
-	"github.com/google/uuid"
+	userRepo "github.com/PanGan21/user-service/internal/repository/user"
 )
 
 var (
@@ -18,14 +18,14 @@ var (
 type UserService interface {
 	Login(ctx context.Context, username string, password string) (string, error)
 	Register(ctx context.Context, username string, password string) (string, error)
-	GetById(ctx context.Context, id string) (*entity.User, error)
+	GetById(ctx context.Context, id int) (entity.User, error)
 }
 type userService struct {
-	userRepo user.UserRepository
+	userRepo userRepo.UserRepository
 	hashSalt string
 }
 
-func NewUserService(ur user.UserRepository, salt string) UserService {
+func NewUserService(ur userRepo.UserRepository, salt string) UserService {
 	return &userService{userRepo: ur, hashSalt: salt}
 }
 
@@ -37,32 +37,26 @@ func (s *userService) Login(ctx context.Context, username string, password strin
 		return "", fmt.Errorf("UserService - Login - s.userRepo.GetByUsernameAndPassword: %w", err)
 	}
 
-	return user.Id.String(), nil
+	return strconv.Itoa(user.Id), nil
 }
 
 func (s *userService) Register(ctx context.Context, username string, password string) (string, error) {
 	passwordHash := s.hashPassword(password)
-	id := uuid.New()
 
 	var defaultRoles = []string{}
-	user := &entity.User{
-		Id:           id,
-		Username:     username,
-		PasswordHash: passwordHash,
-		Roles:        defaultRoles,
-	}
-	err := s.userRepo.Create(ctx, user)
+
+	userId, err := s.userRepo.Create(ctx, username, passwordHash, defaultRoles)
 	if err != nil {
 		return "", fmt.Errorf("UserService - Register - s.userRepo.Create: %w", err)
 	}
 
-	return user.Id.String(), nil
+	return strconv.Itoa(userId), nil
 }
 
-func (s *userService) GetById(ctx context.Context, id string) (*entity.User, error) {
+func (s *userService) GetById(ctx context.Context, id int) (entity.User, error) {
 	user, err := s.userRepo.GetById(ctx, id)
 	if err != nil {
-		return nil, err
+		return user, err
 	}
 
 	return user, nil

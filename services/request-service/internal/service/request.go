@@ -6,41 +6,46 @@ import (
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
-	"github.com/PanGan21/request-service/internal/repository/request"
-	"github.com/google/uuid"
+	requestEvents "github.com/PanGan21/request-service/internal/events/request"
+	requestRepo "github.com/PanGan21/request-service/internal/repository/request"
 )
 
 type RequestService interface {
-	Create(ctx context.Context, creatorId string, title string, postcode string, info string, deadline int64) (*entity.Request, error)
+	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAll(ctx context.Context) (int, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountOwn(ctx context.Context, creatorId string) (int, error)
 }
 
 type requestService struct {
-	requestRepo request.RequestRepository
+	requestRepo   requestRepo.RequestRepository
+	requestEvents requestEvents.RequestEvents
 }
 
-func NewRequestService(rr request.RequestRepository) RequestService {
-	return &requestService{requestRepo: rr}
+func NewRequestService(rr requestRepo.RequestRepository, re requestEvents.RequestEvents) RequestService {
+	return &requestService{requestRepo: rr, requestEvents: re}
 }
 
-func (s *requestService) Create(ctx context.Context, creatorId string, title string, postcode string, info string, deadline int64) (*entity.Request, error) {
-	id := uuid.New()
+func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error) {
+	var newRequest entity.Request
 
-	request := &entity.Request{
-		Id:        id,
-		Title:     title,
-		Postcode:  postcode,
-		Info:      info,
-		CreatorId: creatorId,
-		Deadline:  deadline,
-	}
-	err := s.requestRepo.Create(ctx, request)
+	requestId, err := s.requestRepo.Create(ctx, creatorId, info, postcode, title, deadline)
 	if err != nil {
-		return nil, fmt.Errorf("RequestService - Create - s.requestRepo.Create: %w", err)
+		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.Create: %w", err)
 	}
 
-	return request, nil
+	newRequest, err = s.requestRepo.FindOneById(ctx, requestId)
+	if err != nil {
+		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.FindOneById: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestCreated("request-created", &newRequest)
+	if err != nil {
+		return newRequest, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestCreated: %w", err)
+	}
+
+	return newRequest, nil
 }
 
 func (s *requestService) GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error) {
@@ -52,6 +57,15 @@ func (s *requestService) GetAll(ctx context.Context, pagination *pagination.Pagi
 	return requests, nil
 }
 
+func (s *requestService) CountAll(ctx context.Context) (int, error) {
+	count, err := s.requestRepo.CountAll(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("RequestService - CountAll - s.requestRepo.CountAll: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s *requestService) GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error) {
 	requests, err := s.requestRepo.FindByCreatorId(ctx, creatorId, pagination)
 	if err != nil {
@@ -59,4 +73,13 @@ func (s *requestService) GetOwn(ctx context.Context, creatorId string, paginatio
 	}
 
 	return requests, nil
+}
+
+func (s *requestService) CountOwn(ctx context.Context, creatorId string) (int, error) {
+	count, err := s.requestRepo.CountByCreatorId(ctx, creatorId)
+	if err != nil {
+		return 0, fmt.Errorf("RequestService - CountOwn - s.requestRepo.CountByCreatorId: %w", err)
+	}
+
+	return count, nil
 }
