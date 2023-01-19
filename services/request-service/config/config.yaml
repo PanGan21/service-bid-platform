@@ -14,3 +14,7 @@ logger:
 postgres:
   pool_max: 2
   url: "postgres://postgres:password@localhost:5432/request"
+
+kafka:
+  retries: 3
+  url: "kafka:9092"
