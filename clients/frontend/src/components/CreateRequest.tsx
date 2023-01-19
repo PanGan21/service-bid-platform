@@ -10,7 +10,7 @@ import { createRequest } from "../services/request";
 type Props = {};
 
 export const CreateRequest: React.FC<Props> = () => {
-  let navigate: NavigateFunction = useNavigate();
+  const navigate: NavigateFunction = useNavigate();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");

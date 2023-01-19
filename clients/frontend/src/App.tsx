@@ -18,6 +18,7 @@ import { Login } from "./components/Login";
 import { Home } from "./components/Home";
 import { AllRequests } from "./components/AllRequests";
 import { CreateRequest } from "./components/CreateRequest";
+import { CreateBid } from "./components/CreateBid";
 // import Profile from "./components/Profile";
 // import BoardUser from "./components/BoardUser";
 // import BoardModerator from "./components/BoardModerator";
@@ -109,6 +110,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/all-requests" element={<AllRequests />} />
           <Route path="/new-request" element={<CreateRequest />} />
+          <Route path="/new-bid" element={<CreateBid />} />
           {/*<Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user" element={<BoardUser />} />
