@@ -3,6 +3,8 @@ import { Loader } from "../common/loader/Loader";
 import { User } from "../types/user";
 import { MyRequests } from "./MyRequests";
 import request from "../assets/request.png";
+import bid from "../assets/bid.png";
+import { MyBids } from "./MyBids";
 
 export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -65,13 +67,14 @@ export const Home: React.FC = () => {
       <div>
         <img
           style={{ width: "50px", height: "60px" }}
-          src={request}
+          src={bid}
           alt="profile-img"
         />
         <span>
           <strong>MyBids</strong>
         </span>
       </div>
+      <MyBids />
     </div>
   );
 };
