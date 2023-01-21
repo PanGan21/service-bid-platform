@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"sort"
@@ -353,13 +354,13 @@ func TestHTTPCountAllRequests(t *testing.T) {
 
 // // HTTP GET: /request/own
 func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
-	createRoutePath := requestApiPath + "/own"
+	getOwnRoutePath := requestApiPath + "/own"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 
 	limit10 := 10
 	page1 := 1
 
-	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", createRoutePath, limit10, page1)
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", getOwnRoutePath, limit10, page1)
 
 	Test(t,
 		Description("get owned requests; success; ascending order"),
@@ -395,7 +396,7 @@ func TestHTTPGetPaginatedOwnRequests(t *testing.T) {
 		}),
 	)
 
-	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", getOwnRoutePath, limit10, page1)
 
 	Test(t,
 		Description("get owned requests; success; ascending order"),
@@ -500,6 +501,144 @@ func TestHTTPCreateBid(t *testing.T) {
 	)
 }
 
+// HTTP GET: /bidding/count/own
+func TestHTTPCountOwnnBids(t *testing.T) {
+	countOwnRoutePath := biddingApiPath + "/count/own"
+	createRoutePath := biddingApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var newBid = map[string]interface{}{"RequestId": requestId, "Amount": 100.0}
+	for i := 2; i <= 10; i++ {
+		description := fmt.Sprintf("bid; create; success; no %d", i)
+		newBid["Amount"] = rand.Intn(100)
+
+		Test(t,
+			Description(description),
+			Post(createRoutePath),
+			Send().Headers("Cookie").Add(sessionCookie),
+			Send().Body().JSON(newBid),
+			Expect().Status().Equal(http.StatusOK),
+			Expect().Custom(func(hit Hit) error {
+				var bid entity.Bid
+
+				err := hit.Response().Body().JSON().Decode(&bid)
+				if err != nil {
+					return err
+				}
+
+				if bid.Id < 1 {
+					return errors.New("bid id is not correct")
+				}
+
+				return nil
+			}),
+		)
+
+	}
+
+	var ownedBids = 10
+
+	Test(t,
+		Description("count owned bids; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != ownedBids {
+				return fmt.Errorf("bids should be %d", ownedBids)
+			}
+
+			return nil
+		}))
+}
+
+// // HTTP GET: /bidding/own
+func TestHTTPGetPaginatedOwnBids(t *testing.T) {
+	getOwnRoutePath := biddingApiPath + "/own"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", getOwnRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get owned bids; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bids []entity.Bid
+			err := hit.Response().Body().JSON().Decode(&bids)
+			if err != nil {
+				return err
+			}
+
+			for _, bid := range bids {
+				if bid.CreatorId != userId {
+					return fmt.Errorf("bids creatorId: %s is not equal to the userId: %s", bid.CreatorId, userId)
+				}
+			}
+
+			if len(bids) != limit10 {
+				return fmt.Errorf("bids should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(bids, func(p, q int) bool {
+				return bids[p].Amount < bids[q].Amount
+			})
+
+			if !isAscendingOrder {
+				return errors.New("bids are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", getOwnRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get owned bids; success; descending order"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bids []entity.Bid
+			err := hit.Response().Body().JSON().Decode(&bids)
+			if err != nil {
+				return err
+			}
+
+			for _, request := range bids {
+				if request.CreatorId != userId {
+					return fmt.Errorf("bids creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
+			}
+
+			if len(bids) != limit10 {
+				return fmt.Errorf("bids should be %d", limit10)
+			}
+
+			isDescendingOrder := sort.SliceIsSorted(bids, func(p, q int) bool {
+				return bids[p].Amount <= bids[q].Amount
+			})
+
+			if isDescendingOrder {
+				return errors.New("bids are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
 // HTTP GET: /bidding/?id
 func TestHTTPGetBidById(t *testing.T) {
 	createRoutePath := biddingApiPath + "/"
@@ -522,6 +661,11 @@ func TestHTTPGetBidById(t *testing.T) {
 			}
 
 			if bid.Amount != testdata.MockBid["Amount"] || bid.RequestId != requestId || bid.Id != bidId {
+				fmt.Println("YOOOO?")
+				fmt.Println("bid", bid)
+				fmt.Println("Amount", testdata.MockBid["Amount"], bid.Amount)
+				fmt.Println("RequestId", bid.RequestId, requestId)
+				fmt.Println("Id", bid.Id, bidId)
 				log.Fatal("bid data do not match")
 			}
 

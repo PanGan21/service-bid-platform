@@ -15,6 +15,8 @@ type BidController interface {
 	Create(c *gin.Context)
 	GetOneById(c *gin.Context)
 	GetManyByRequestId(c *gin.Context)
+	GetOwn(c *gin.Context)
+	CountOwn(c *gin.Context)
 }
 
 type bidController struct {
@@ -94,4 +96,40 @@ func (controller *bidController) GetManyByRequestId(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, bids)
+}
+
+func (controller *bidController) GetOwn(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	bids, err := controller.bidService.GetOwn(c.Request.Context(), userId.(string), &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, bids)
+}
+
+func (controller *bidController) CountOwn(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	count, err := controller.bidService.CountOwn(context.Background(), userId.(string))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
 }
