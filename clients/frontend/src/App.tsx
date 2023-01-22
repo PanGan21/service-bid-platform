@@ -19,6 +19,7 @@ import { Home } from "./components/Home";
 import { AllRequests } from "./components/AllRequests";
 import { CreateRequest } from "./components/CreateRequest";
 import { CreateBid } from "./components/CreateBid";
+import { Footer } from "./components/Footer";
 // import Profile from "./components/Profile";
 // import BoardUser from "./components/BoardUser";
 // import BoardModerator from "./components/BoardModerator";
@@ -116,27 +117,7 @@ const App: React.FC = () => {
           <Route path="/admin" element={<BoardAdmin />} /> */}
         </Routes>
       </div>
-      <div
-        className="fixed-bottom mt-3"
-        style={{
-          backgroundColor: "rgb(51,51,51)",
-          paddingBottom: "5px",
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
-        <div className="text-white">
-          &copy; {new Date().getFullYear()} Copyright:{" "}
-          <a
-            className="text-white"
-            href="https://github.com/PanGan21/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Panagiotis Ganelis
-          </a>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };
