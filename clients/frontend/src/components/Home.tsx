@@ -8,6 +8,8 @@ import { MyBids } from "./MyBids";
 
 export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
+  const [isMyRequestsOpen, setMyRequestsOpen] = useState(false);
+  const [isMyBidsOpen, setMyBidsOpen] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -28,6 +30,14 @@ export const Home: React.FC = () => {
       </div>
     );
   }
+
+  const toggleMyRequests = () => {
+    setMyRequestsOpen(!isMyRequestsOpen);
+  };
+
+  const toggleMyBids = () => {
+    setMyBidsOpen(!isMyBidsOpen);
+  };
 
   return (
     <div className="container">
@@ -52,7 +62,7 @@ export const Home: React.FC = () => {
         <></>
       )}
       <br />
-      <div>
+      <div onClick={toggleMyRequests} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
           src={request}
@@ -62,9 +72,11 @@ export const Home: React.FC = () => {
           <strong>MyRequests</strong>
         </span>
       </div>
-      <MyRequests />
+      <div style={{ display: isMyRequestsOpen ? "block" : "none" }}>
+        <MyRequests />
+      </div>
       <br />
-      <div>
+      <div onClick={toggleMyBids} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
           src={bid}
@@ -74,7 +86,9 @@ export const Home: React.FC = () => {
           <strong>MyBids</strong>
         </span>
       </div>
-      <MyBids />
+      <div style={{ display: isMyBidsOpen ? "block" : "none" }}>
+        <MyBids />
+      </div>
     </div>
   );
 };

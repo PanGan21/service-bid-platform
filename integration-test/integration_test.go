@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"sort"
@@ -510,7 +509,7 @@ func TestHTTPCountOwnnBids(t *testing.T) {
 	var newBid = map[string]interface{}{"RequestId": requestId, "Amount": 100.0}
 	for i := 2; i <= 10; i++ {
 		description := fmt.Sprintf("bid; create; success; no %d", i)
-		newBid["Amount"] = rand.Intn(100)
+		newBid["Amount"] = i
 
 		Test(t,
 			Description(description),
