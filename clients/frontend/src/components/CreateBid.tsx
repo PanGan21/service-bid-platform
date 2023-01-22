@@ -41,7 +41,6 @@ export const CreateBid: React.FC<Props> = () => {
 
     try {
       await createBid(newBid);
-      // await createRequest(request);
       navigate("/all-requests");
       window.location.reload();
     } catch (error: any) {

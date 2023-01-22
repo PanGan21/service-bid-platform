@@ -36,4 +36,6 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.POST("/", auth.AuthorizeEndpoint(requiredRoles...), bidController.Create)
 	handler.GET("/", bidController.GetOneById)
 	handler.GET("/requestId/", bidController.GetManyByRequestId)
+	handler.GET("/count/own", bidController.CountOwn)
+	handler.GET("/own", bidController.GetOwn)
 }
