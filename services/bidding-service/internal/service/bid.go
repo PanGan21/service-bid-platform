@@ -13,6 +13,8 @@ type BidService interface {
 	Create(ctx context.Context, creatorId string, requestId int, amount float64) (entity.Bid, error)
 	FindOneById(ctx context.Context, id int) (entity.Bid, error)
 	GetManyByRequestId(ctx context.Context, requestId int, pagination *pagination.Pagination) (*[]entity.Bid, error)
+	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Bid, error)
+	CountOwn(ctx context.Context, creatorId string) (int, error)
 }
 
 type bidService struct {
@@ -53,8 +55,26 @@ func (s *bidService) FindOneById(ctx context.Context, id int) (entity.Bid, error
 func (s *bidService) GetManyByRequestId(ctx context.Context, requestId int, pagination *pagination.Pagination) (*[]entity.Bid, error) {
 	bids, err := s.bidRepo.FindByRequestId(ctx, requestId, pagination)
 	if err != nil {
-		return nil, fmt.Errorf("BidService - GetManyByRequestId - s.requestRepo.FindByRequestId: %w", err)
+		return nil, fmt.Errorf("BidService - GetManyByRequestId - s.bidRepo.FindByRequestId: %w", err)
 	}
 
 	return bids, nil
+}
+
+func (s *bidService) GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Bid, error) {
+	bids, err := s.bidRepo.FindByCreatorId(ctx, creatorId, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("BidService - GetOwn - s.bidRepo.FindByCreatorId: %w", err)
+	}
+
+	return bids, nil
+}
+
+func (s *bidService) CountOwn(ctx context.Context, creatorId string) (int, error) {
+	count, err := s.bidRepo.CountByCreatorId(ctx, creatorId)
+	if err != nil {
+		return 0, fmt.Errorf("BidService - CountOwn - s.bidRepo.CountByCreatorId: %w", err)
+	}
+
+	return count, nil
 }

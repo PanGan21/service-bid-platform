@@ -24,8 +24,6 @@ import { CreateBid } from "./components/CreateBid";
 // import BoardModerator from "./components/BoardModerator";
 // import BoardAdmin from "./components/BoardAdmin";
 
-// import { EventBus } from "./common/EventBus";
-
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
   // const [showModeratorBoard, setShowModeratorBoard] = useState<boolean>(false);
