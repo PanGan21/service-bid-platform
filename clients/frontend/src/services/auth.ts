@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_URL } from "../constants";
+import { User } from "../types/user";
 
 export const login = async (username: string, password: string) => {
   return axios.post(
@@ -22,7 +23,7 @@ export const logout = async () => {
   await axios.post(API_URL + "/user/logout", {}, { withCredentials: true });
 };
 
-export const getCurrentUser = () => {
+export const getCurrentUser = (): User | undefined => {
   const userStr = localStorage.getItem("user");
   if (userStr) {
     return JSON.parse(userStr);

@@ -27,8 +27,7 @@ import { Footer } from "./components/Footer";
 
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
-  // const [showModeratorBoard, setShowModeratorBoard] = useState<boolean>(false);
-  // const [showAdminBoard, setShowAdminBoard] = useState<boolean>(false);
+  const [showAdminBoard, setShowAdminBoard] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
 
   useEffect(() => {
@@ -36,8 +35,7 @@ const App: React.FC = () => {
 
     if (user) {
       setCurrentUser(user);
-      // setShowModeratorBoard(user.roles.includes("ROLE_MODERATOR"));
-      // setShowAdminBoard(user.roles.includes("ROLE_ADMIN"));
+      setShowAdminBoard(user.Roles.includes("ADMIN"));
     }
   }, []);
 
@@ -76,6 +74,13 @@ const App: React.FC = () => {
               </Link>
             </li>
           )} */}
+          {showAdminBoard && (
+            <li className="nav-item">
+              <Link to={"/admin"} className="nav-link">
+                Admin Board
+              </Link>
+            </li>
+          )}
         </div>
 
         {currentUser ? (

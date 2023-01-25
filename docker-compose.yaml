@@ -150,7 +150,11 @@ services:
     depends_on:
       - api-gateway
       - user-service
+      - request-service
       - bidding-service
+      - user-migration
+      - request-migration
+      - bidding-migration
     restart: on-failure
 
   api-gateway:
