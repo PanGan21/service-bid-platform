@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/PanGan21/bidding-service/config"
+	bidEvents "github.com/PanGan21/bidding-service/internal/events/bid"
 	bidRepository "github.com/PanGan21/bidding-service/internal/repository/bid"
 	requestRepository "github.com/PanGan21/bidding-service/internal/repository/request"
 	"github.com/PanGan21/bidding-service/internal/routes/events"
@@ -34,13 +35,16 @@ func Run(cfg *config.Config) {
 
 	// Events
 	sub := messaging.NewSubscriber(cfg.Kafka.URL, cfg.App.Name)
+	pub := messaging.NewPublisher(cfg.Kafka.URL, cfg.Kafka.Retries)
+	defer pub.Close()
 
 	requestRepo := requestRepository.NewRequestRepository(*pg)
 	bidRepo := bidRepository.NewBidRepository(*pg)
 
 	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
+	bidEv := bidEvents.NewBidEvents(pub)
 	requestService := service.NewRequestService(requestRepo)
-	bidService := service.NewBidService(bidRepo)
+	bidService := service.NewBidService(bidRepo, bidEv)
 
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)

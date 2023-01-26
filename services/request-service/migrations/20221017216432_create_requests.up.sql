@@ -7,3 +7,10 @@ CREATE TABLE IF NOT EXISTS requests(
     Deadline BIGINT,
     Status VARCHAR(255)
 );
+
+CREATE TABLE IF NOT EXISTS bids(
+    Id INTEGER PRIMARY KEY,
+    Amount FLOAT,
+    CreatorId VARCHAR(255),
+    RequestId INTEGER REFERENCES requests (Id)
+);
