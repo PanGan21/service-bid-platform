@@ -25,6 +25,8 @@ var userId = ""
 var requestId = 0
 var bidId = 0
 
+var adminSessionId = ""
+
 var userApiPath = getBasePath(userService)
 var requestApiPath = getBasePath(requestService)
 var biddingApiPath = getBasePath(biddingService)
@@ -145,9 +147,10 @@ func TestHTTPDoLogin(t *testing.T) {
 				if c.Name == "s.id" {
 					loginSessionId = c.Value
 				}
-				if loginSessionId == "" {
-					return errors.New("Session is missing")
-				}
+			}
+
+			if loginSessionId == "" {
+				return errors.New("Session is missing")
 			}
 			return nil
 		}),
@@ -759,6 +762,118 @@ func TestHTTPGetPaginatedBidsByRequestId(t *testing.T) {
 			return nil
 		}),
 	)
+}
+
+// HTTP POST: /request/update/winner
+func TestHTTPUpdateWinner(t *testing.T) {
+	loginRoutePath := userApiPath + "/login"
+	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+	var yesterdayRequestId = 0
+	var tomorrowRequestId = 0
+
+	Test(t,
+		Description("login admin user; succes"),
+		Post(loginRoutePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(testdata.AdminUser),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().String().Contains("Successfully authenticated user"),
+		Expect().Custom(func(hit Hit) error {
+			var cookies = hit.Response().Cookies()
+
+			for _, c := range cookies {
+				if c.Name == "s.id" {
+					adminSessionId = c.Value
+				}
+			}
+
+			if adminSessionId == "" {
+				return errors.New("Session is missing")
+			}
+			return nil
+		}),
+	)
+
+	createReqeustPath := requestApiPath + "/"
+
+	Test(t,
+		Description("create request with deadline yesterday; success"),
+		Post(createReqeustPath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(testdata.MockRequestYesterday),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			yesterdayRequestId = request.Id
+
+			return nil
+		}),
+	)
+
+	Test(t,
+		Description("create request with deadline tomorrow; success"),
+		Post(createReqeustPath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(testdata.MockRequestTomorrow),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			tomorrowRequestId = request.Id
+
+			return nil
+		}),
+	)
+
+	routePath := requestApiPath + "/update/winner?requestId=1"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	Test(t,
+		Description("non admin user; failure"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("incorrect permissions"),
+	)
+
+	incorrectRoutePath := requestApiPath + "/update/winner?requestId=random"
+	Test(t,
+		Description("admin user; validation error; failure"),
+		Post(incorrectRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusBadRequest),
+		Expect().Body().String().Contains("Validation error"),
+	)
+
+	incorrectRoutePath = requestApiPath + "/update/winner?requestId=100000000"
+	Test(t,
+		Description("admin user; request not found; failure"),
+		Post(incorrectRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusNotFound),
+		Expect().Body().String().Contains("Request not found"),
+	)
+
+	notUpdateableRoutePath := requestApiPath + "/update/winner?requestId=" + strconv.Itoa(tomorrowRequestId)
+	Test(t,
+		Description("admin user; request cannot be update; deadline hasn't passed; failure"),
+		Post(notUpdateableRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Request not allowed to be resolved"),
+	)
+
 }
 
 // HTTP POST: /user/logout

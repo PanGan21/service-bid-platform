@@ -8,4 +8,5 @@ import (
 
 type BidRepository interface {
 	Create(ctx context.Context, bid entity.Bid) error
+	FindManyByRequestIdWithMinAmount(ctx context.Context, requestId string) ([]entity.Bid, error)
 }

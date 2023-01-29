@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, requestService service.RequestService) {
-	requestController := requestController.NewRequestController(l, requestService)
+func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, requestService service.RequestService, bidService service.BidService) {
+	requestController := requestController.NewRequestController(l, requestService, bidService)
 	// Options
 	handler.Use(gin.Recovery())
 
@@ -37,6 +37,9 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.POST("/", requestController.Create)
 	handler.GET("/count/own", requestController.CountOwn)
 	handler.GET("/own", requestController.GetOwn)
+
+	updateRequestRoles := []string{"ADMIN"}
+	handler.POST("/update/winner", auth.AuthorizeEndpoint(updateRequestRoles...), requestController.UpdateWinnerByRequestId)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

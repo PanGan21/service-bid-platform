@@ -10,6 +10,7 @@ import (
 
 type BidService interface {
 	Create(ctx context.Context, bid entity.Bid) error
+	FindWinningBidByRequestId(ctx context.Context, requestId string) (entity.Bid, error)
 }
 
 type bidService struct {
@@ -27,4 +28,22 @@ func (s *bidService) Create(ctx context.Context, bid entity.Bid) error {
 	}
 
 	return nil
+}
+
+func (s *bidService) FindWinningBidByRequestId(ctx context.Context, requestId string) (entity.Bid, error) {
+	var winnigBid entity.Bid
+
+	bids, err := s.bidRepo.FindManyByRequestIdWithMinAmount(ctx, requestId)
+	if err != nil {
+		return winnigBid, fmt.Errorf("BidService - FindWinningBidByRequestId - s.bidRepo.FindOneByRequestIdWithMinAmount: %w", err)
+	}
+
+	if len(bids) != 1 {
+		fmt.Println("Winning bids cannot be more that one")
+		return winnigBid, fmt.Errorf("BidService - FindWinningBidByRequestId - s.bidRepo.FindOneByRequestIdWithMinAmount: %w", err)
+	}
+
+	winnigBid = bids[0]
+
+	return winnigBid, nil
 }

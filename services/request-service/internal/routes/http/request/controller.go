@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/PanGan21/pkg/logger"
 	"github.com/PanGan21/pkg/pagination"
@@ -16,17 +17,20 @@ type RequestController interface {
 	CountAll(c *gin.Context)
 	GetOwn(c *gin.Context)
 	CountOwn(c *gin.Context)
+	UpdateWinnerByRequestId(c *gin.Context)
 }
 
 type requestController struct {
 	logger         logger.Interface
 	requestService service.RequestService
+	bidService     service.BidService
 }
 
-func NewRequestController(logger logger.Interface, requestServ service.RequestService) RequestController {
+func NewRequestController(logger logger.Interface, requestServ service.RequestService, bidServ service.BidService) RequestController {
 	return &requestController{
 		logger:         logger,
 		requestService: requestServ,
+		bidService:     bidServ,
 	}
 }
 
@@ -120,4 +124,34 @@ func (controller *requestController) CountOwn(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, count)
+}
+
+func (controller *requestController) UpdateWinnerByRequestId(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("requestId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	request, err := controller.requestService.GetById(context.Background(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request not found"})
+		return
+	}
+
+	isAllowedToResolve := controller.requestService.IsAllowedToResolve(context.Background(), request)
+	if !isAllowedToResolve {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request not allowed to be resolved"})
+		return
+	}
+
+	winnignBid, err := controller.bidService.FindWinningBidByRequestId(context.Background(), idParam)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Could not find winning bid"})
+		return
+	}
+
+	// Do something with the winning bid
+	c.JSON(http.StatusOK, winnignBid)
 }

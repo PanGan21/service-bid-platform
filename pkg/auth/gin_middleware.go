@@ -37,9 +37,11 @@ func AuthorizeEndpoint(allowedRoles ...string) gin.HandlerFunc {
 		requestRoles := c.Copy().Value("roles").([]string)
 
 		if !utils.Subslice(allowedRoles, requestRoles) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "incorrect permissions"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "incorrect permissions"})
 			return
 		}
+
+		c.Next()
 	}
 
 	return gin.HandlerFunc(fn)

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
@@ -16,6 +17,8 @@ type RequestService interface {
 	CountAll(ctx context.Context) (int, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountOwn(ctx context.Context, creatorId string) (int, error)
+	GetById(ctx context.Context, id int) (entity.Request, error)
+	IsAllowedToResolve(ctx context.Context, request entity.Request) bool
 }
 
 type requestService struct {
@@ -82,4 +85,17 @@ func (s *requestService) CountOwn(ctx context.Context, creatorId string) (int, e
 	}
 
 	return count, nil
+}
+
+func (s *requestService) GetById(ctx context.Context, id int) (entity.Request, error) {
+	request, err := s.requestRepo.FindOneById(ctx, id)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - GetById - s.requestRepo.FindOneById: %w", err)
+	}
+
+	return request, nil
+}
+
+func (s *requestService) IsAllowedToResolve(ctx context.Context, request entity.Request) bool {
+	return (time.Now().Unix() >= request.Deadline) && (request.Status == entity.Open)
 }
