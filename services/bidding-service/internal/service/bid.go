@@ -40,7 +40,7 @@ func (s *bidService) Create(ctx context.Context, creatorId string, requestId int
 		return newBid, fmt.Errorf("BidService - Create - s.bidRepo.FindOneById: %w", err)
 	}
 
-	err = s.bidEvents.PublishBidCreated("bid-created", &newBid)
+	err = s.bidEvents.PublishBidCreated(&newBid)
 	if err != nil {
 		return newBid, fmt.Errorf("BidService - Create - s.bidEvents.PublishBidCreated: %w", err)
 	}

@@ -663,11 +663,6 @@ func TestHTTPGetBidById(t *testing.T) {
 			}
 
 			if bid.Amount != testdata.MockBid["Amount"] || bid.RequestId != requestId || bid.Id != bidId {
-				fmt.Println("YOOOO?")
-				fmt.Println("bid", bid)
-				fmt.Println("Amount", testdata.MockBid["Amount"], bid.Amount)
-				fmt.Println("RequestId", bid.RequestId, requestId)
-				fmt.Println("Id", bid.Id, bidId)
 				log.Fatal("bid data do not match")
 			}
 
@@ -770,6 +765,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	var yesterdayRequestId = 0
 	var tomorrowRequestId = 0
+	var mockBidId = 0
 
 	Test(t,
 		Description("login admin user; succes"),
@@ -836,7 +832,29 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
-	routePath := requestApiPath + "/update/winner?requestId=1"
+	createBidRoutePath := biddingApiPath + "/"
+	var mockBid = map[string]interface{}{"RequestId": yesterdayRequestId, "Amount": 100.0}
+	Test(t,
+		Description("bid; create; success"),
+		Post(createBidRoutePath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(mockBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			mockBidId = bid.Id
+
+			return nil
+		}),
+	)
+
+	routePath := requestApiPath + "/update/winner?requestId=" + strconv.Itoa(yesterdayRequestId)
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 
 	Test(t,
@@ -874,6 +892,36 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		Expect().Body().String().Contains("Request not allowed to be resolved"),
 	)
 
+	Test(
+		t,
+		Description("admin user; request updated; success"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			if bid.RequestId != yesterdayRequestId || bid.Id != mockBidId {
+				return errors.New("returned request is incorrect")
+			}
+
+			return nil
+		}),
+	)
+
+	Test(
+		t,
+		Description("admin user; resolved request cannot be updated; failure"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Request not allowed to be resolved"),
+	)
 }
 
 // HTTP POST: /user/logout

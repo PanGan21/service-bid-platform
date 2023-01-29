@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS requests(
     Info VARCHAR(255),
     CreatorId VARCHAR(255),
     Deadline BIGINT,
-    Status VARCHAR(255)
+    Status VARCHAR(255),
+    WinningBidId VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS bids(

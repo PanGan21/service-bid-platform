@@ -188,7 +188,7 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CREATE_TOPICS: "request-created:2:1,bid-created:2:1"
+      KAFKA_CREATE_TOPICS: "request-created:2:1,bid-created:2:1,request-updated:2:1"
 
 volumes:
   pg-data:

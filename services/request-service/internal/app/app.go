@@ -57,7 +57,7 @@ func Run(cfg *config.Config) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	go events.NewEventsClient(sub, l, bidService)
+	events.NewEventsClient(sub, l, bidService)
 
 	select {
 	case s := <-interrupt:

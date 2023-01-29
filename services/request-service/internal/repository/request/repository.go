@@ -14,4 +14,5 @@ type RequestRepository interface {
 	FindOneById(ctx context.Context, id int) (entity.Request, error)
 	FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountByCreatorId(ctx context.Context, creatorId string) (int, error)
+	UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.RequestStatus) (int, error)
 }

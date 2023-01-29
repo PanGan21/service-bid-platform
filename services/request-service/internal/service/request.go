@@ -19,6 +19,7 @@ type RequestService interface {
 	CountOwn(ctx context.Context, creatorId string) (int, error)
 	GetById(ctx context.Context, id int) (entity.Request, error)
 	IsAllowedToResolve(ctx context.Context, request entity.Request) bool
+	UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error)
 }
 
 type requestService struct {
@@ -43,7 +44,7 @@ func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, 
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.FindOneById: %w", err)
 	}
 
-	err = s.requestEvents.PublishRequestCreated("request-created", &newRequest)
+	err = s.requestEvents.PublishRequestCreated(&newRequest)
 	if err != nil {
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestCreated: %w", err)
 	}
@@ -98,4 +99,25 @@ func (s *requestService) GetById(ctx context.Context, id int) (entity.Request, e
 
 func (s *requestService) IsAllowedToResolve(ctx context.Context, request entity.Request) bool {
 	return (time.Now().Unix() >= request.Deadline) && (request.Status == entity.Open)
+}
+
+func (s *requestService) UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error) {
+	if winningBidId == "" {
+		return request, fmt.Errorf("RequestService - UpdateWinningBid: winningBid cannot be empty")
+	}
+
+	request.WinningBidId = winningBidId
+	request.Status = entity.Assigned
+
+	_, err := s.requestRepo.UpdateWinningBidIdAndStatusById(ctx, request.Id, winningBidId, request.Status)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateWinningBid - s.requestRepo.UpdateWinningBidIdAndStatusById: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestUpdated(&request)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateWinningBid - s.requestEvents.UpdateWinningBidIdAndStatusById: %w", err)
+	}
+
+	return request, nil
 }

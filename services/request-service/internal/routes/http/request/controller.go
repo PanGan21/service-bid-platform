@@ -130,25 +130,36 @@ func (controller *requestController) UpdateWinnerByRequestId(c *gin.Context) {
 	idParam := c.Request.URL.Query().Get("requestId")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
+		controller.logger.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
 
 	request, err := controller.requestService.GetById(context.Background(), id)
 	if err != nil {
+		controller.logger.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Request not found"})
 		return
 	}
 
 	isAllowedToResolve := controller.requestService.IsAllowedToResolve(context.Background(), request)
 	if !isAllowedToResolve {
+		controller.logger.Error(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request not allowed to be resolved"})
 		return
 	}
 
 	winnignBid, err := controller.bidService.FindWinningBidByRequestId(context.Background(), idParam)
 	if err != nil {
+		controller.logger.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Could not find winning bid"})
+		return
+	}
+
+	_, err = controller.requestService.UpdateWinningBid(context.Background(), request, strconv.Itoa(winnignBid.Id))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Could not update request"})
 		return
 	}
 

@@ -14,5 +14,5 @@ const (
 func NewEventsClient(subscriber messaging.Subscriber, l logger.Interface, bidService service.BidService) {
 	bidController := bidController.NewBidController(l, bidService)
 
-	subscriber.Subscribe(BID_CREATED_TOPIC, bidController.Create)
+	go subscriber.Subscribe(BID_CREATED_TOPIC, bidController.Create)
 }
