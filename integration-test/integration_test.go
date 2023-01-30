@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+	"time"
 
 	. "github.com/Eun/go-hit"
 	"github.com/PanGan21/integration-test/testdata"
@@ -43,6 +44,10 @@ func TestMain(m *testing.M) {
 	if err != nil || sessionId == "" {
 		log.Fatalf("Integration tests: session not set for mockUser: %s", err)
 	}
+
+	fmt.Println("Sleep for 20 seconds to allow services and kafka stabilize")
+	time.Sleep(20 * time.Second)
+	fmt.Println("Start integration tests")
 
 	code := m.Run()
 	os.Exit(code)
@@ -241,6 +246,12 @@ func TestHTTPCreateRequest(t *testing.T) {
 			return nil
 		}),
 	)
+
+	err := waitUntilRequestIsAvailableInBidding(50, requestId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
 }
 
 // HTTP GET: /request/
@@ -499,7 +510,8 @@ func TestHTTPCreateBid(t *testing.T) {
 		Post(routePath),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Send().Body().JSON(testdata.MockBid),
-		Expect().Status().Equal(http.StatusInternalServerError),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Request doesn't receive bids"),
 	)
 }
 
@@ -854,6 +866,12 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
+	err := waitUntilBidIsAvailableInRequest(50, mockBidId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
 	routePath := requestApiPath + "/update/winner?requestId=" + strconv.Itoa(yesterdayRequestId)
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 
@@ -916,7 +934,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 
 	Test(
 		t,
-		Description("admin user; resolved request cannot be updated; failure"),
+		Description("admin user; resolved request cannot be updated again; failure"),
 		Post(routePath),
 		Send().Headers("Cookie").Add(adminSessionCookie),
 		Expect().Status().Equal(http.StatusUnauthorized),

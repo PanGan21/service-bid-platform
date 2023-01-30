@@ -58,3 +58,24 @@ func (repo *requestRepository) UpdateOne(ctx context.Context, request entity.Req
 
 	return nil
 }
+
+func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.Request, error) {
+	var request entity.Request
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return request, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT * FROM requests WHERE Id=$1;
+	`
+
+	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.WinningBidId)
+	if err != nil {
+		return request, fmt.Errorf("RequestRepo - FindOneById - c.Exec: %w", err)
+	}
+
+	return request, nil
+}

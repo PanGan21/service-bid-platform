@@ -11,6 +11,7 @@ import (
 type RequestService interface {
 	Create(ctx context.Context, request entity.Request) error
 	UpdateOne(ctx context.Context, request entity.Request) error
+	IsOpenToBidByRequestId(ctx context.Context, requestId int) bool
 }
 
 type requestService struct {
@@ -37,4 +38,14 @@ func (s *requestService) UpdateOne(ctx context.Context, request entity.Request) 
 	}
 
 	return nil
+}
+
+func (s *requestService) IsOpenToBidByRequestId(ctx context.Context, requestId int) bool {
+	request, err := s.requestRepo.FindOneById(ctx, requestId)
+	if err != nil {
+		fmt.Println("RequestService - IsOpenToBidByRequestId - s.requestRepo.FindOneById: %w", err)
+		return false
+	}
+
+	return request.Status == entity.Open
 }

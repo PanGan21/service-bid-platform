@@ -47,7 +47,9 @@ func (repo *bidRepository) FindManyByRequestIdWithMinAmount(ctx context.Context,
 	}
 	defer c.Release()
 
-	const query = `SELECT DISTINCT ON (Id) * FROM   bids WHERE  RequestId=$1 ORDER  BY Id, Amount;`
+	const query = `
+		SELECT * FROM bids WHERE RequestId=$1 AND Amount = ( SELECT MIN(Amount) FROM bids WHERE RequestId=$1  );
+	`
 
 	rows, err := c.Query(ctx, query, requestId)
 	if err != nil {

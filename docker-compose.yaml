@@ -155,6 +155,8 @@ services:
       - user-migration
       - request-migration
       - bidding-migration
+      - zookeeper
+      - kafka
     restart: on-failure
 
   api-gateway:

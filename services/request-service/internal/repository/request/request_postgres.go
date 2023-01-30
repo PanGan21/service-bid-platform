@@ -194,10 +194,10 @@ func (repo *requestRepository) UpdateWinningBidIdAndStatusById(ctx context.Conte
 	defer c.Release()
 
 	const query = `
-		UPDATE requests SET WinningBidId=$1, Status=$2 RETURNING Id;
+		UPDATE requests SET WinningBidId=$1, Status=$2 WHERE Id=$3 RETURNING Id;
 	`
 
-	err = c.QueryRow(ctx, query, winningBidId, status).Scan(&requestId)
+	err = c.QueryRow(ctx, query, winningBidId, status, id).Scan(&requestId)
 	if err != nil {
 		return requestId, fmt.Errorf("RequestRepo - UpdateWinningBidIdAndStatusById - c.QueryRow: %w", err)
 	}

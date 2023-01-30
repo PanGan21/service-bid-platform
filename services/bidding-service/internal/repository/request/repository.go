@@ -9,4 +9,5 @@ import (
 type RequestRepository interface {
 	Create(ctx context.Context, request entity.Request) error
 	UpdateOne(ctx context.Context, request entity.Request) error
+	FindOneById(ctx context.Context, id int) (entity.Request, error)
 }
