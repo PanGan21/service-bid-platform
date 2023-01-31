@@ -18,6 +18,8 @@ type RequestController interface {
 	GetOwn(c *gin.Context)
 	CountOwn(c *gin.Context)
 	UpdateWinnerByRequestId(c *gin.Context)
+	GetOpenPastDeadline(c *gin.Context)
+	CountOpenPastDeadline(c *gin.Context)
 }
 
 type requestController struct {
@@ -163,6 +165,31 @@ func (controller *requestController) UpdateWinnerByRequestId(c *gin.Context) {
 		return
 	}
 
-	// Do something with the winning bid
 	c.JSON(http.StatusOK, winnignBid)
+}
+
+func (controller *requestController) GetOpenPastDeadline(c *gin.Context) {
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	requests, err := controller.requestService.GetAllOpenPastDeadline(context.Background(), &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, requests)
+}
+
+func (controller *requestController) CountOpenPastDeadline(c *gin.Context) {
+	count, err := controller.requestService.CountAllOpenPastDeadline(context.Background())
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
 }

@@ -942,6 +942,120 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	)
 }
 
+// HTTP GET: /request/open/past-deadline
+func TestHTTPGetOpenPastDeadlineRequests(t *testing.T) {
+	baseRoutePath := requestApiPath + "/open/past-deadline"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", baseRoutePath, limit10, page1)
+
+	now := time.Now().Unix()
+
+	Test(
+		t,
+		Description("get open requests past dealine; asc order; success"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, req := range requests {
+				if req.Status != entity.Open || req.Deadline >= now {
+					return fmt.Errorf("request with id %d is not open or not past the deadline", req.Id)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", baseRoutePath, limit10, page1)
+
+	Test(
+		t,
+		Description("get open requests past dealine; desc order; success"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, req := range requests {
+				if req.Status != entity.Open || req.Deadline >= now {
+					return fmt.Errorf("request with id %d is not open or not past the deadline", req.Id)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isDescendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isDescendingOrder {
+				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/open/past-deadline
+func TestHTTPCountOpenPastDeadlineRequests(t *testing.T) {
+	routePath := requestApiPath + "/open/past-deadline/count"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var pastDeadlineOpenRequests = 10
+
+	Test(
+		t,
+		Description("count open requests past dealine; asc order; success"),
+		Get(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != pastDeadlineOpenRequests {
+				return fmt.Errorf("past deadline open requests should be %d", pastDeadlineOpenRequests)
+			}
+
+			return nil
+		}),
+	)
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"

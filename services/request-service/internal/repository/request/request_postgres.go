@@ -204,3 +204,64 @@ func (repo *requestRepository) UpdateWinningBidIdAndStatusById(ctx context.Conte
 
 	return requestId, nil
 }
+
+func (repo *requestRepository) GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Release()
+
+	offset := (pagination.Page - 1) * pagination.Limit
+
+	order := "asc"
+	if !pagination.Asc {
+		order = "desc"
+	}
+
+	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline, Status, WinningBidId FROM requests WHERE Status=$1 AND Deadline<$2 ORDER BY deadline %s LIMIT $3 OFFSET $4;", order)
+
+	rows, err := c.Query(ctx, query, entity.Open, timestamp, pagination.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("RequestRepo - GetAllOpenPastTime - c.Query: %w", err)
+	}
+	defer rows.Close()
+
+	var requests []entity.Request
+
+	for rows.Next() {
+		var r entity.Request
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId)
+		if err != nil {
+			return nil, fmt.Errorf("RequestRepo - GetAllOpenPastTime - rows.Scan: %w", err)
+		}
+		requests = append(requests, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("RequestRepo - GetAllOpenPastTime - rows.Err: %w", err)
+	}
+
+	return &requests, nil
+}
+
+func (repo *requestRepository) CountAllOpenPastTime(ctx context.Context, timestamp int64) (int, error) {
+	count := 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*) FROM requests WHERE Status=$1 AND Deadline<$2;
+	`
+
+	err = c.QueryRow(ctx, query, entity.Open, timestamp).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("RequestRepo - CountAllOpenPastTime - c.QueryRow: %w", err)
+	}
+
+	return count, nil
+}

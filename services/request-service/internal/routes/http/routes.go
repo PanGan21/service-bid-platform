@@ -38,8 +38,10 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.GET("/count/own", requestController.CountOwn)
 	handler.GET("/own", requestController.GetOwn)
 
-	updateRequestRoles := []string{"ADMIN"}
-	handler.POST("/update/winner", auth.AuthorizeEndpoint(updateRequestRoles...), requestController.UpdateWinnerByRequestId)
+	requireAdminRole := []string{"ADMIN"}
+	handler.GET("/open/past-deadline", auth.AuthorizeEndpoint(requireAdminRole...), requestController.GetOpenPastDeadline)
+	handler.GET("/open/past-deadline/count", auth.AuthorizeEndpoint(requireAdminRole...), requestController.CountOpenPastDeadline)
+	handler.POST("/update/winner", auth.AuthorizeEndpoint(requireAdminRole...), requestController.UpdateWinnerByRequestId)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

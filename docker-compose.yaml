@@ -166,7 +166,7 @@ services:
       - bidding-migration
       - zookeeper
       - kafka
-    restart: on-failure
+    # restart: on-failure
 
   api-gateway:
     image: nginx
