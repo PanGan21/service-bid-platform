@@ -27,11 +27,15 @@ func NewSubscriber(url string, groupId string) Subscriber {
 
 func (k kafkaSubscriber) Subscribe(topic string, fn fnHandler) {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:        []string{k.broker},
-		GroupID:        k.groupId,
-		Topic:          topic,
-		GroupBalancers: []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}},
-		CommitInterval: time.Second,
+		Brokers:           []string{k.broker},
+		GroupID:           k.groupId,
+		Topic:             topic,
+		GroupBalancers:    []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}},
+		CommitInterval:    time.Second,
+		RebalanceTimeout:  time.Second * 30,
+		HeartbeatInterval: time.Second * 9,
+		SessionTimeout:    time.Second * 60,
+		JoinGroupBackoff:  time.Second * 25,
 	})
 
 	defer r.Close()

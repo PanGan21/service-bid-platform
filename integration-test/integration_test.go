@@ -33,6 +33,10 @@ var requestApiPath = getBasePath(requestService)
 var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
+	fmt.Println("Sleep for 30 seconds to allow services and kafka stabilize")
+	time.Sleep(30 * time.Second)
+	fmt.Println("Start integration tests")
+
 	err := healthCheck(Attempts, userService)
 	if err != nil {
 		log.Fatalf("Integration tests: host %s is not available: %s", Host, err)
@@ -44,10 +48,6 @@ func TestMain(m *testing.M) {
 	if err != nil || sessionId == "" {
 		log.Fatalf("Integration tests: session not set for mockUser: %s", err)
 	}
-
-	fmt.Println("Sleep for 20 seconds to allow services and kafka stabilize")
-	time.Sleep(20 * time.Second)
-	fmt.Println("Start integration tests")
 
 	code := m.Run()
 	os.Exit(code)
