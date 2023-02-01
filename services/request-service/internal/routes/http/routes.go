@@ -43,6 +43,8 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.GET("/open/past-deadline/count", auth.AuthorizeEndpoint(requireAdminRole...), requestController.CountOpenPastDeadline)
 	handler.POST("/update/winner", auth.AuthorizeEndpoint(requireAdminRole...), requestController.UpdateWinnerByRequestId)
 	handler.POST("/update/status", auth.AuthorizeEndpoint(requireAdminRole...), requestController.UpdateStatus)
+	handler.GET("/status", auth.AuthorizeEndpoint(requireAdminRole...), requestController.GetByStatus)
+	// handler.GET("/status/count", auth.AuthorizeEndpoint(requireAdminRole...), requestController.CountByStatus)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

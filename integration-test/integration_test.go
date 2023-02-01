@@ -1086,6 +1086,96 @@ func TestHTTPUpdateRequestStatus(t *testing.T) {
 	)
 }
 
+// HTTP GET: /request/status?status
+func TestHTTPGetPaginatedRequestsByStatus(t *testing.T) {
+	baseRoutePath := requestApiPath + "/status"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathIncorrectStatus := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=true", baseRoutePath, "random", limit10, page1)
+
+	Test(t,
+		Description("get requests by status; incorrect status; failure"),
+		Get(routePathIncorrectStatus),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Body().String().Contains("Validation error"),
+	)
+
+	routePathAscendingOrderOpenRequests := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=true", baseRoutePath, "open", limit10, page1)
+
+	Test(t,
+		Description("get requests by status open; success; ascending order"),
+		Get(routePathAscendingOrderOpenRequests),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			if len(requests) > limit10 {
+				return fmt.Errorf("requests should be less than %d", limit10)
+			}
+
+			for _, r := range requests {
+				if r.Status != entity.Open {
+					return fmt.Errorf("request with id: %d is not open", r.Id)
+				}
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrderOpenRequests := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=false", baseRoutePath, entity.Open, limit10, page1)
+
+	Test(t,
+		Description("get requests by status assigned; success; descending order"),
+		Get(routePathDescendingOrderOpenRequests),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			if len(requests) > limit10 {
+				return fmt.Errorf("requests should be less than %d", limit10)
+			}
+
+			for _, r := range requests {
+				if r.Status != entity.Open {
+					return fmt.Errorf("request with id: %d is not open", r.Id)
+				}
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isAscendingOrder {
+				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"

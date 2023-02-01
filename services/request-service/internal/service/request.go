@@ -23,6 +23,7 @@ type RequestService interface {
 	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error)
 	CountAllOpenPastDeadline(ctx context.Context) (int, error)
 	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
+	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
 }
 
 type requestService struct {
@@ -157,4 +158,13 @@ func (s *requestService) UpdateStatusByRequestId(ctx context.Context, status ent
 	}
 
 	return request, nil
+}
+
+func (s *requestService) GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	requests, err := s.requestRepo.GetAllByStatus(ctx, status, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("RequestService - GetAllByStatus - s.requestRepo.GetAllByStatus: %w", err)
+	}
+
+	return requests, nil
 }

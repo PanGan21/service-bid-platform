@@ -292,3 +292,43 @@ func (repo *requestRepository) UpdateStatusByRequestId(ctx context.Context, stat
 
 	return request, nil
 }
+
+func (repo *requestRepository) GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	var requests []entity.Request
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Release()
+
+	offset := (pagination.Page - 1) * pagination.Limit
+
+	order := "asc"
+	if !pagination.Asc {
+		order = "desc"
+	}
+
+	query := fmt.Sprintf("SELECT * FROM requests WHERE Status=$1 ORDER BY Deadline %s LIMIT $2 OFFSET $3;", order)
+
+	rows, err := c.Query(ctx, query, status, pagination.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("RequestRepo - GetAllByStatus - c.Query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r entity.Request
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId)
+		if err != nil {
+			return nil, fmt.Errorf("RequestRepo - GetAllByStatus - rows.Scan: %w", err)
+		}
+		requests = append(requests, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("RequestRepo - GetAllByStatus - rows.Err: %w", err)
+	}
+
+	return &requests, nil
+}

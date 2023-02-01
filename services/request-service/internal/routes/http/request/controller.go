@@ -22,6 +22,7 @@ type RequestController interface {
 	GetOpenPastDeadline(c *gin.Context)
 	CountOpenPastDeadline(c *gin.Context)
 	UpdateStatus(c *gin.Context)
+	GetByStatus(c *gin.Context)
 }
 
 type requestController struct {
@@ -178,7 +179,6 @@ func (controller *requestController) GetOpenPastDeadline(c *gin.Context) {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-
 	}
 
 	c.JSON(http.StatusOK, requests)
@@ -225,4 +225,25 @@ func (controller *requestController) UpdateStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updatedRequest)
+}
+
+func (controller *requestController) GetByStatus(c *gin.Context) {
+	statusParam := c.Request.URL.Query().Get("status")
+	if statusParam == "" || (statusParam != string(entity.Open) && statusParam != string(entity.Assigned) && statusParam != string(entity.Closed) && statusParam != string(entity.InProgress)) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	status := entity.RequestStatus(statusParam)
+
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	requests, err := controller.requestService.GetAllByStatus(context.Background(), status, &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, requests)
 }
