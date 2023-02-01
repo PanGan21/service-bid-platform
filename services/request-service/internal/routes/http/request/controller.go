@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
 	"github.com/PanGan21/pkg/pagination"
 	"github.com/PanGan21/request-service/internal/service"
@@ -20,6 +21,7 @@ type RequestController interface {
 	UpdateWinnerByRequestId(c *gin.Context)
 	GetOpenPastDeadline(c *gin.Context)
 	CountOpenPastDeadline(c *gin.Context)
+	UpdateStatus(c *gin.Context)
 }
 
 type requestController struct {
@@ -192,4 +194,35 @@ func (controller *requestController) CountOpenPastDeadline(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, count)
+}
+
+type UpdateStatusData struct {
+	Status entity.RequestStatus `json:"Status"`
+}
+
+func (controller *requestController) UpdateStatus(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("requestId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	var updateStatusData UpdateStatusData
+	if err := c.BindJSON(&updateStatusData); err != nil || (updateStatusData.Status != entity.InProgress && updateStatusData.Status != entity.Closed) {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	updatedRequest, err := controller.requestService.UpdateStatusByRequestId(context.Background(), updateStatusData.Status, id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, updatedRequest)
 }

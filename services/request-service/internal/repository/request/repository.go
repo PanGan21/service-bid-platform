@@ -17,4 +17,5 @@ type RequestRepository interface {
 	UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.RequestStatus) (int, error)
 	GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error)
 	CountAllOpenPastTime(ctx context.Context, timestamp int64) (int, error)
+	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
 }

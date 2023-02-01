@@ -30,9 +30,10 @@ type ExtendedRequest struct {
 type RequestStatus string
 
 const (
-	Open     RequestStatus = "open"
-	Assigned RequestStatus = "assigned"
-	Closed   RequestStatus = "closed"
+	Open       RequestStatus = "open"
+	Assigned   RequestStatus = "assigned"
+	InProgress RequestStatus = "in progress"
+	Closed     RequestStatus = "closed"
 )
 
 var ErrIncorrectRequestType = errors.New("incorrect request type")
@@ -84,7 +85,7 @@ func IsRequestType(unknown interface{}) (Request, error) {
 	status := RequestStatus(s)
 
 	switch status {
-	case Open, Assigned, Closed:
+	case Open, Assigned, InProgress, Closed:
 		request.Status = status
 	default:
 		return request, ErrIncorrectRequestType

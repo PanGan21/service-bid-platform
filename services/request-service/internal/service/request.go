@@ -22,6 +22,7 @@ type RequestService interface {
 	UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error)
 	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error)
 	CountAllOpenPastDeadline(ctx context.Context) (int, error)
+	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
 }
 
 type requestService struct {
@@ -118,7 +119,7 @@ func (s *requestService) UpdateWinningBid(ctx context.Context, request entity.Re
 
 	err = s.requestEvents.PublishRequestUpdated(&request)
 	if err != nil {
-		return request, fmt.Errorf("RequestService - UpdateWinningBid - s.requestEvents.UpdateWinningBidIdAndStatusById: %w", err)
+		return request, fmt.Errorf("RequestService - UpdateWinningBid - s.requestEvents.PublishRequestUpdated: %w", err)
 	}
 
 	return request, nil
@@ -142,4 +143,18 @@ func (s *requestService) CountAllOpenPastDeadline(ctx context.Context) (int, err
 	}
 
 	return count, nil
+}
+
+func (s *requestService) UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error) {
+	request, err := s.requestRepo.UpdateStatusByRequestId(ctx, status, id)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateStatusByRequestId - s.requestRepo.UpdateStatusByRequestId: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestUpdated(&request)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateStatusByRequestId - s.requestEvents.PublishRequestUpdated: %w", err)
+	}
+
+	return request, nil
 }

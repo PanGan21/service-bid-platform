@@ -271,3 +271,24 @@ func (repo *requestRepository) CountAllOpenPastTime(ctx context.Context, timesta
 
 	return count, nil
 }
+
+func (repo *requestRepository) UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error) {
+	var request entity.Request
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return request, err
+	}
+	defer c.Release()
+
+	const query = `
+		UPDATE requests SET Status=$1 WHERE Id=$2 RETURNING *;
+	`
+
+	err = c.QueryRow(ctx, query, status, id).Scan(&request.Id, &request.CreatorId, &request.Info, &request.Title, &request.Postcode, &request.Deadline, &request.Status, &request.WinningBidId)
+	if err != nil {
+		return request, fmt.Errorf("RequestRepo - UpdateStatusByRequestId - c.QueryRow: %w", err)
+	}
+
+	return request, nil
+}

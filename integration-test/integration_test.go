@@ -1056,6 +1056,36 @@ func TestHTTPCountOpenPastDeadlineRequests(t *testing.T) {
 	)
 }
 
+// HTTP GET: /request/update/status
+func TestHTTPUpdateRequestStatus(t *testing.T) {
+	routePath := requestApiPath + "/update/status?requestId=" + strconv.Itoa(requestId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var updateStatusBody = map[string]interface{}{"Status": entity.InProgress}
+
+	Test(
+		t,
+		Description("update request status; success"),
+		Post(routePath),
+		Send().Body().JSON(updateStatusBody),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			if request.Status != entity.InProgress {
+				return fmt.Errorf("request should have been update to status %s", entity.InProgress)
+			}
+
+			return nil
+		}),
+	)
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"
