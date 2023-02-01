@@ -38,7 +38,7 @@ func (s *bidService) FindWinningBidByRequestId(ctx context.Context, requestId st
 		return winnigBid, fmt.Errorf("BidService - FindWinningBidByRequestId - s.bidRepo.FindOneByRequestIdWithMinAmount: %w", err)
 	}
 
-	if len(bids) != 1 {
+	if len(bids) < 1 {
 		return winnigBid, fmt.Errorf("BidService - FindWinningBidByRequestId - s.bidRepo.FindOneByRequestIdWithMinAmount: Winning bid can only be one")
 	}
 

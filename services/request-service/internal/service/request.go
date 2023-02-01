@@ -20,7 +20,7 @@ type RequestService interface {
 	GetById(ctx context.Context, id int) (entity.Request, error)
 	IsAllowedToResolve(ctx context.Context, request entity.Request) bool
 	UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error)
-	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error)
+	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error)
 	CountAllOpenPastDeadline(ctx context.Context) (int, error)
 }
 
@@ -124,7 +124,7 @@ func (s *requestService) UpdateWinningBid(ctx context.Context, request entity.Re
 	return request, nil
 }
 
-func (s *requestService) GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Request, error) {
+func (s *requestService) GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error) {
 	now := time.Now().Unix()
 	requests, err := s.requestRepo.GetAllOpenPastTime(ctx, now, pagination)
 	if err != nil {

@@ -8,6 +8,10 @@ export interface Request {
   Status: string;
 }
 
+export interface ExtendedRequest extends Request {
+  BidsCount: number;
+}
+
 export interface FormattedRequest {
   Id: Request["Id"];
   Title: Request["Title"];
@@ -16,6 +20,10 @@ export interface FormattedRequest {
   Info: Request["Info"];
   Deadline: string;
   Status: Request["Status"];
+}
+
+export interface ExtendedFormattedRequest extends FormattedRequest {
+  BidsCount: number;
 }
 
 export interface NewRequest {

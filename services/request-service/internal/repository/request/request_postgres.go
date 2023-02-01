@@ -205,7 +205,7 @@ func (repo *requestRepository) UpdateWinningBidIdAndStatusById(ctx context.Conte
 	return requestId, nil
 }
 
-func (repo *requestRepository) GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.Request, error) {
+func (repo *requestRepository) GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error) {
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
@@ -219,7 +219,13 @@ func (repo *requestRepository) GetAllOpenPastTime(ctx context.Context, timestamp
 		order = "desc"
 	}
 
-	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline, Status, WinningBidId FROM requests WHERE Status=$1 AND Deadline<$2 ORDER BY deadline %s LIMIT $3 OFFSET $4;", order)
+	query := fmt.Sprintf(`
+		SELECT *,
+		(SELECT COUNT(*) FROM bids WHERE bids.RequestId = requests.Id) as CountBids
+		FROM requests
+		WHERE Status=$1 AND Deadline<$2 
+		ORDER BY deadline %s LIMIT $3 OFFSET $4;`,
+		order)
 
 	rows, err := c.Query(ctx, query, entity.Open, timestamp, pagination.Limit, offset)
 	if err != nil {
@@ -227,11 +233,11 @@ func (repo *requestRepository) GetAllOpenPastTime(ctx context.Context, timestamp
 	}
 	defer rows.Close()
 
-	var requests []entity.Request
+	var requests []entity.ExtendedRequest
 
 	for rows.Next() {
-		var r entity.Request
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId)
+		var r entity.ExtendedRequest
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId, &r.BidsCount)
 		if err != nil {
 			return nil, fmt.Errorf("RequestRepo - GetAllOpenPastTime - rows.Scan: %w", err)
 		}
