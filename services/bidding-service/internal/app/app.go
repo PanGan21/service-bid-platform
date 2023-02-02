@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/PanGan21/bidding-service/config"
+	bidEvents "github.com/PanGan21/bidding-service/internal/events/bid"
 	bidRepository "github.com/PanGan21/bidding-service/internal/repository/bid"
 	requestRepository "github.com/PanGan21/bidding-service/internal/repository/request"
 	"github.com/PanGan21/bidding-service/internal/routes/events"
@@ -34,26 +35,29 @@ func Run(cfg *config.Config) {
 
 	// Events
 	sub := messaging.NewSubscriber(cfg.Kafka.URL, cfg.App.Name)
+	pub := messaging.NewPublisher(cfg.Kafka.URL, cfg.Kafka.Retries)
+	defer pub.Close()
 
 	requestRepo := requestRepository.NewRequestRepository(*pg)
 	bidRepo := bidRepository.NewBidRepository(*pg)
 
 	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
+	bidEv := bidEvents.NewBidEvents(pub)
 	requestService := service.NewRequestService(requestRepo)
-	bidService := service.NewBidService(bidRepo)
+	bidService := service.NewBidService(bidRepo, bidEv)
 
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
-	routes.NewRouter(handler, l, authService, bidService)
+	routes.NewRouter(handler, l, authService, bidService, requestService)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	go events.NewEventsClient(sub, l, requestService)
+	events.NewEventsClient(sub, l, requestService)
 
 	select {
 	case s := <-interrupt:

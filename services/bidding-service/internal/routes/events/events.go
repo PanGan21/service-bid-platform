@@ -9,10 +9,12 @@ import (
 
 const (
 	REQUEST_CREATED_TOPIC = "request-created"
+	REQUEST_UPDATED_TOPIC = "request-updated"
 )
 
 func NewEventsClient(subscriber messaging.Subscriber, l logger.Interface, requestService service.RequestService) {
 	requestController := requestController.NewRequestController(l, requestService)
 
-	subscriber.Subscribe(REQUEST_CREATED_TOPIC, requestController.Create)
+	go subscriber.Subscribe(REQUEST_CREATED_TOPIC, requestController.Create)
+	go subscriber.Subscribe(REQUEST_UPDATED_TOPIC, requestController.Update)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	bidEvents "github.com/PanGan21/bidding-service/internal/events/bid"
 	bidRepo "github.com/PanGan21/bidding-service/internal/repository/bid"
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
@@ -18,11 +19,12 @@ type BidService interface {
 }
 
 type bidService struct {
-	bidRepo bidRepo.BidRepository
+	bidRepo   bidRepo.BidRepository
+	bidEvents bidEvents.BidEvents
 }
 
-func NewBidService(br bidRepo.BidRepository) BidService {
-	return &bidService{bidRepo: br}
+func NewBidService(br bidRepo.BidRepository, be bidEvents.BidEvents) BidService {
+	return &bidService{bidRepo: br, bidEvents: be}
 }
 
 func (s *bidService) Create(ctx context.Context, creatorId string, requestId int, amount float64) (entity.Bid, error) {
@@ -36,6 +38,11 @@ func (s *bidService) Create(ctx context.Context, creatorId string, requestId int
 	newBid, err = s.bidRepo.FindOneById(ctx, bidId)
 	if err != nil {
 		return newBid, fmt.Errorf("BidService - Create - s.bidRepo.FindOneById: %w", err)
+	}
+
+	err = s.bidEvents.PublishBidCreated(&newBid)
+	if err != nil {
+		return newBid, fmt.Errorf("BidService - Create - s.bidEvents.PublishBidCreated: %w", err)
 	}
 
 	return newBid, nil

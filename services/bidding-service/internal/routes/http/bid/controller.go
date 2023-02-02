@@ -20,14 +20,16 @@ type BidController interface {
 }
 
 type bidController struct {
-	logger     logger.Interface
-	bidService service.BidService
+	logger        logger.Interface
+	bidService    service.BidService
+	requestServce service.RequestService
 }
 
-func NewBidController(logger logger.Interface, bidServ service.BidService) BidController {
+func NewBidController(logger logger.Interface, bidServ service.BidService, reqServ service.RequestService) BidController {
 	return &bidController{
-		logger:     logger,
-		bidService: bidServ,
+		logger:        logger,
+		bidService:    bidServ,
+		requestServce: reqServ,
 	}
 }
 
@@ -40,13 +42,20 @@ func (controller *bidController) Create(c *gin.Context) {
 	var bidData BidData
 	if err := c.BindJSON(&bidData); err != nil {
 		controller.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
 
 	userId, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+		return
+	}
+
+	isAllowedToBeCreated := controller.requestServce.IsOpenToBidByRequestId(context.Background(), bidData.RequestId)
+	if !isAllowedToBeCreated {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Request doesn't receive bids"})
+		return
 	}
 
 	bid, err := controller.bidService.Create(context.Background(), userId.(string), bidData.RequestId, bidData.Amount)

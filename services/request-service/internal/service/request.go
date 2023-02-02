@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
@@ -16,6 +17,14 @@ type RequestService interface {
 	CountAll(ctx context.Context) (int, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountOwn(ctx context.Context, creatorId string) (int, error)
+	GetById(ctx context.Context, id int) (entity.Request, error)
+	IsAllowedToResolve(ctx context.Context, request entity.Request) bool
+	UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error)
+	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error)
+	CountAllOpenPastDeadline(ctx context.Context) (int, error)
+	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
+	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
 }
 
 type requestService struct {
@@ -40,7 +49,7 @@ func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, 
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.FindOneById: %w", err)
 	}
 
-	err = s.requestEvents.PublishRequestCreated("request-created", &newRequest)
+	err = s.requestEvents.PublishRequestCreated(&newRequest)
 	if err != nil {
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestCreated: %w", err)
 	}
@@ -79,6 +88,92 @@ func (s *requestService) CountOwn(ctx context.Context, creatorId string) (int, e
 	count, err := s.requestRepo.CountByCreatorId(ctx, creatorId)
 	if err != nil {
 		return 0, fmt.Errorf("RequestService - CountOwn - s.requestRepo.CountByCreatorId: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *requestService) GetById(ctx context.Context, id int) (entity.Request, error) {
+	request, err := s.requestRepo.FindOneById(ctx, id)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - GetById - s.requestRepo.FindOneById: %w", err)
+	}
+
+	return request, nil
+}
+
+func (s *requestService) IsAllowedToResolve(ctx context.Context, request entity.Request) bool {
+	return (time.Now().Unix() >= request.Deadline) && (request.Status == entity.Open)
+}
+
+func (s *requestService) UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error) {
+	if winningBidId == "" {
+		return request, fmt.Errorf("RequestService - UpdateWinningBid: winningBid cannot be empty")
+	}
+
+	request.WinningBidId = winningBidId
+	request.Status = entity.Assigned
+
+	_, err := s.requestRepo.UpdateWinningBidIdAndStatusById(ctx, request.Id, winningBidId, request.Status)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateWinningBid - s.requestRepo.UpdateWinningBidIdAndStatusById: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestUpdated(&request)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateWinningBid - s.requestEvents.PublishRequestUpdated: %w", err)
+	}
+
+	return request, nil
+}
+
+func (s *requestService) GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error) {
+	now := time.Now().Unix()
+	requests, err := s.requestRepo.GetAllOpenPastTime(ctx, now, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("RequestService - GetAllOpenPastDeadline - s.requestRepo.GetAllOpenPastTime: %w", err)
+	}
+
+	return requests, nil
+}
+
+func (s *requestService) CountAllOpenPastDeadline(ctx context.Context) (int, error) {
+	now := time.Now().Unix()
+	count, err := s.requestRepo.CountAllOpenPastTime(ctx, now)
+	if err != nil {
+		return 0, fmt.Errorf("RequestService - CountAllOpenPastDeadline - s.requestRepo.CountAllOpenPastTime: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *requestService) UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error) {
+	request, err := s.requestRepo.UpdateStatusByRequestId(ctx, status, id)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateStatusByRequestId - s.requestRepo.UpdateStatusByRequestId: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestUpdated(&request)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - UpdateStatusByRequestId - s.requestEvents.PublishRequestUpdated: %w", err)
+	}
+
+	return request, nil
+}
+
+func (s *requestService) GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	requests, err := s.requestRepo.GetAllByStatus(ctx, status, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("RequestService - GetAllByStatus - s.requestRepo.GetAllByStatus: %w", err)
+	}
+
+	return requests, nil
+}
+
+func (s *requestService) CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error) {
+	count, err := s.requestRepo.CountAllByStatus(ctx, status)
+	if err != nil {
+		return count, fmt.Errorf("RequestService - CountAllByStatus - s.requestRepo.CountAllByStatus: %w", err)
 	}
 
 	return count, nil

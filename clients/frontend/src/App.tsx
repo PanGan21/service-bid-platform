@@ -20,6 +20,9 @@ import { AllRequests } from "./components/AllRequests";
 import { CreateRequest } from "./components/CreateRequest";
 import { CreateBid } from "./components/CreateBid";
 import { Footer } from "./components/Footer";
+import { AdminBoard } from "./components/AdminBoard";
+import { AssignRequest } from "./components/AssignRequest";
+import { UpdateRequestStatus } from "./components/UpdateRequestStatus";
 // import Profile from "./components/Profile";
 // import BoardUser from "./components/BoardUser";
 // import BoardModerator from "./components/BoardModerator";
@@ -27,8 +30,7 @@ import { Footer } from "./components/Footer";
 
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
-  // const [showModeratorBoard, setShowModeratorBoard] = useState<boolean>(false);
-  // const [showAdminBoard, setShowAdminBoard] = useState<boolean>(false);
+  const [showAdminBoard, setShowAdminBoard] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
 
   useEffect(() => {
@@ -36,8 +38,7 @@ const App: React.FC = () => {
 
     if (user) {
       setCurrentUser(user);
-      // setShowModeratorBoard(user.roles.includes("ROLE_MODERATOR"));
-      // setShowAdminBoard(user.roles.includes("ROLE_ADMIN"));
+      setShowAdminBoard(user.Roles.includes("ADMIN"));
     }
   }, []);
 
@@ -76,6 +77,13 @@ const App: React.FC = () => {
               </Link>
             </li>
           )} */}
+          {showAdminBoard && (
+            <li className="nav-item">
+              <Link to={"/admin"} className="nav-link">
+                Admin Board
+              </Link>
+            </li>
+          )}
         </div>
 
         {currentUser ? (
@@ -110,6 +118,12 @@ const App: React.FC = () => {
           <Route path="/all-requests" element={<AllRequests />} />
           <Route path="/new-request" element={<CreateRequest />} />
           <Route path="/new-bid" element={<CreateBid />} />
+          <Route path="/admin" element={<AdminBoard />} />
+          <Route path="/assign-request" element={<AssignRequest />} />
+          <Route
+            path="update-request-status"
+            element={<UpdateRequestStatus />}
+          />
           {/*<Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user" element={<BoardUser />} />

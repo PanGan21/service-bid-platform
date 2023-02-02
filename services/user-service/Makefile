@@ -14,4 +14,7 @@ migrate-up: ### migration up
 	migrate -path migrations -database '$(PG_URL)?sslmode=disable/user' up
 .PHONY: migrate-up
 
+# Create migration
+# migrate create -ext sql -dir migrations -seq create_users_table
+
 
