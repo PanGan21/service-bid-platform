@@ -37,6 +37,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.POST("/", requestController.Create)
 	handler.GET("/count/own", requestController.CountOwn)
 	handler.GET("/own", requestController.GetOwn)
+	handler.GET("/own/assigned-bids", requestController.GetOwnAssignedByStatuses)
 
 	requireAdminRole := []string{"ADMIN"}
 	handler.GET("/open/past-deadline", auth.AuthorizeEndpoint(requireAdminRole...), requestController.GetOpenPastDeadline)

@@ -24,6 +24,7 @@ type RequestController interface {
 	UpdateStatus(c *gin.Context)
 	GetByStatus(c *gin.Context)
 	CountByStatus(c *gin.Context)
+	GetOwnAssignedByStatuses(c *gin.Context)
 }
 
 type requestController struct {
@@ -266,4 +267,24 @@ func (controller *requestController) CountByStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, count)
+}
+
+func (controller *requestController) GetOwnAssignedByStatuses(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	statuses := []entity.RequestStatus{entity.Assigned, entity.InProgress}
+
+	populatedRequests, err := controller.requestService.GetOwnAssignedByStatuses(context.Background(), statuses, userId.(string), &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, populatedRequests)
 }
