@@ -1176,6 +1176,35 @@ func TestHTTPGetPaginatedRequestsByStatus(t *testing.T) {
 	)
 }
 
+// HTTP GET: /request/status/count
+func TestHTTPCountAllRequestsByStatus(t *testing.T) {
+	countBaseRoutePath := requestApiPath + "/status/count"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var assignedRequests = 1
+
+	countAssignedRoutePath := fmt.Sprintf("%s?status=%s", countBaseRoutePath, entity.Assigned)
+
+	Test(t,
+		Description("count owned requests; success"),
+		Get(countAssignedRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != assignedRequests {
+				return fmt.Errorf("requests should be %d", assignedRequests)
+			}
+
+			return nil
+		}))
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"

@@ -19,4 +19,5 @@ type RequestRepository interface {
 	CountAllOpenPastTime(ctx context.Context, timestamp int64) (int, error)
 	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
 	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
 }

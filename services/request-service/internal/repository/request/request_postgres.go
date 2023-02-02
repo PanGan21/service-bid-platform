@@ -332,3 +332,24 @@ func (repo *requestRepository) GetAllByStatus(ctx context.Context, status entity
 
 	return &requests, nil
 }
+
+func (repo *requestRepository) CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error) {
+	count := 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*) FROM requests WHERE Status=$1;
+	`
+
+	err = c.QueryRow(ctx, query, status).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("RequestRepo - CountAllByStatus - c.QueryRow: %w", err)
+	}
+
+	return count, nil
+}
