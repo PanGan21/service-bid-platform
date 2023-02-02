@@ -14,4 +14,10 @@ type RequestRepository interface {
 	FindOneById(ctx context.Context, id int) (entity.Request, error)
 	FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountByCreatorId(ctx context.Context, creatorId string) (int, error)
+	UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.RequestStatus) (int, error)
+	GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error)
+	CountAllOpenPastTime(ctx context.Context, timestamp int64) (int, error)
+	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
+	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
 }

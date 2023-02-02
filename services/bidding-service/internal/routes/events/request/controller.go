@@ -11,6 +11,7 @@ import (
 
 type RequestController interface {
 	Create(payload interface{}) error
+	Update(payload interface{}) error
 }
 
 type requestController struct {
@@ -33,6 +34,22 @@ func (controller *requestController) Create(payload interface{}) error {
 	}
 
 	err = controller.requestService.Create(context.Background(), request)
+	if err != nil {
+		controller.logger.Error(err)
+		log.Fatal(err)
+	}
+
+	return nil
+}
+
+func (controller *requestController) Update(payload interface{}) error {
+	request, err := entity.IsRequestType(payload)
+	if err != nil {
+		controller.logger.Error(err)
+		log.Fatal(err)
+	}
+
+	err = controller.requestService.UpdateOne(context.Background(), request)
 	if err != nil {
 		controller.logger.Error(err)
 		log.Fatal(err)

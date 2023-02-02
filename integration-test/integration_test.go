@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+	"time"
 
 	. "github.com/Eun/go-hit"
 	"github.com/PanGan21/integration-test/testdata"
@@ -25,11 +26,17 @@ var userId = ""
 var requestId = 0
 var bidId = 0
 
+var adminSessionId = ""
+
 var userApiPath = getBasePath(userService)
 var requestApiPath = getBasePath(requestService)
 var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
+	fmt.Println("Sleep for 30 seconds to allow services and kafka stabilize")
+	time.Sleep(30 * time.Second)
+	fmt.Println("Start integration tests")
+
 	err := healthCheck(Attempts, userService)
 	if err != nil {
 		log.Fatalf("Integration tests: host %s is not available: %s", Host, err)
@@ -145,9 +152,10 @@ func TestHTTPDoLogin(t *testing.T) {
 				if c.Name == "s.id" {
 					loginSessionId = c.Value
 				}
-				if loginSessionId == "" {
-					return errors.New("Session is missing")
-				}
+			}
+
+			if loginSessionId == "" {
+				return errors.New("Session is missing")
 			}
 			return nil
 		}),
@@ -238,6 +246,12 @@ func TestHTTPCreateRequest(t *testing.T) {
 			return nil
 		}),
 	)
+
+	err := waitUntilRequestIsAvailableInBidding(50, requestId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
 }
 
 // HTTP GET: /request/
@@ -496,7 +510,8 @@ func TestHTTPCreateBid(t *testing.T) {
 		Post(routePath),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Send().Body().JSON(testdata.MockBid),
-		Expect().Status().Equal(http.StatusInternalServerError),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Request doesn't receive bids"),
 	)
 }
 
@@ -660,11 +675,6 @@ func TestHTTPGetBidById(t *testing.T) {
 			}
 
 			if bid.Amount != testdata.MockBid["Amount"] || bid.RequestId != requestId || bid.Id != bidId {
-				fmt.Println("YOOOO?")
-				fmt.Println("bid", bid)
-				fmt.Println("Amount", testdata.MockBid["Amount"], bid.Amount)
-				fmt.Println("RequestId", bid.RequestId, requestId)
-				fmt.Println("Id", bid.Id, bidId)
 				log.Fatal("bid data do not match")
 			}
 
@@ -759,6 +769,440 @@ func TestHTTPGetPaginatedBidsByRequestId(t *testing.T) {
 			return nil
 		}),
 	)
+}
+
+// HTTP POST: /request/update/winner
+func TestHTTPUpdateWinner(t *testing.T) {
+	loginRoutePath := userApiPath + "/login"
+	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+	var yesterdayRequestId = 0
+	var tomorrowRequestId = 0
+	var mockBidId = 0
+
+	Test(t,
+		Description("login admin user; succes"),
+		Post(loginRoutePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(testdata.AdminUser),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().String().Contains("Successfully authenticated user"),
+		Expect().Custom(func(hit Hit) error {
+			var cookies = hit.Response().Cookies()
+
+			for _, c := range cookies {
+				if c.Name == "s.id" {
+					adminSessionId = c.Value
+				}
+			}
+
+			if adminSessionId == "" {
+				return errors.New("Session is missing")
+			}
+			return nil
+		}),
+	)
+
+	createReqeustPath := requestApiPath + "/"
+
+	Test(t,
+		Description("create request with deadline yesterday; success"),
+		Post(createReqeustPath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(testdata.MockRequestYesterday),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			yesterdayRequestId = request.Id
+
+			return nil
+		}),
+	)
+
+	Test(t,
+		Description("create request with deadline tomorrow; success"),
+		Post(createReqeustPath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(testdata.MockRequestTomorrow),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			tomorrowRequestId = request.Id
+
+			return nil
+		}),
+	)
+
+	createBidRoutePath := biddingApiPath + "/"
+	var mockBid = map[string]interface{}{"RequestId": yesterdayRequestId, "Amount": 100.0}
+	Test(t,
+		Description("bid; create; success"),
+		Post(createBidRoutePath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(mockBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			mockBidId = bid.Id
+
+			return nil
+		}),
+	)
+
+	err := waitUntilBidIsAvailableInRequest(50, mockBidId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
+	routePath := requestApiPath + "/update/winner?requestId=" + strconv.Itoa(yesterdayRequestId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	Test(t,
+		Description("non admin user; failure"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("incorrect permissions"),
+	)
+
+	incorrectRoutePath := requestApiPath + "/update/winner?requestId=random"
+	Test(t,
+		Description("admin user; validation error; failure"),
+		Post(incorrectRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusBadRequest),
+		Expect().Body().String().Contains("Validation error"),
+	)
+
+	incorrectRoutePath = requestApiPath + "/update/winner?requestId=100000000"
+	Test(t,
+		Description("admin user; request not found; failure"),
+		Post(incorrectRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusNotFound),
+		Expect().Body().String().Contains("Request not found"),
+	)
+
+	notUpdateableRoutePath := requestApiPath + "/update/winner?requestId=" + strconv.Itoa(tomorrowRequestId)
+	Test(t,
+		Description("admin user; request cannot be update; deadline hasn't passed; failure"),
+		Post(notUpdateableRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Request not allowed to be resolved"),
+	)
+
+	Test(
+		t,
+		Description("admin user; request updated; success"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			if bid.RequestId != yesterdayRequestId || bid.Id != mockBidId {
+				return errors.New("returned request is incorrect")
+			}
+
+			return nil
+		}),
+	)
+
+	Test(
+		t,
+		Description("admin user; resolved request cannot be updated again; failure"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("Request not allowed to be resolved"),
+	)
+}
+
+// HTTP GET: /request/open/past-deadline
+func TestHTTPGetOpenPastDeadlineRequests(t *testing.T) {
+	baseRoutePath := requestApiPath + "/open/past-deadline"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", baseRoutePath, limit10, page1)
+
+	now := time.Now().Unix()
+
+	Test(
+		t,
+		Description("get open requests past dealine; asc order; success"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, req := range requests {
+				if req.Status != entity.Open || req.Deadline >= now {
+					return fmt.Errorf("request with id %d is not open or not past the deadline", req.Id)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", baseRoutePath, limit10, page1)
+
+	Test(
+		t,
+		Description("get open requests past dealine; desc order; success"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, req := range requests {
+				if req.Status != entity.Open || req.Deadline >= now {
+					return fmt.Errorf("request with id %d is not open or not past the deadline", req.Id)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isDescendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isDescendingOrder {
+				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/open/past-deadline
+func TestHTTPCountOpenPastDeadlineRequests(t *testing.T) {
+	routePath := requestApiPath + "/open/past-deadline/count"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var pastDeadlineOpenRequests = 10
+
+	Test(
+		t,
+		Description("count open requests past dealine; asc order; success"),
+		Get(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != pastDeadlineOpenRequests {
+				return fmt.Errorf("past deadline open requests should be %d", pastDeadlineOpenRequests)
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/update/status
+func TestHTTPUpdateRequestStatus(t *testing.T) {
+	routePath := requestApiPath + "/update/status?requestId=" + strconv.Itoa(requestId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var updateStatusBody = map[string]interface{}{"Status": entity.InProgress}
+
+	Test(
+		t,
+		Description("update request status; success"),
+		Post(routePath),
+		Send().Body().JSON(updateStatusBody),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			if request.Status != entity.InProgress {
+				return fmt.Errorf("request should have been update to status %s", entity.InProgress)
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/status?status
+func TestHTTPGetPaginatedRequestsByStatus(t *testing.T) {
+	baseRoutePath := requestApiPath + "/status"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathIncorrectStatus := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=true", baseRoutePath, "random", limit10, page1)
+
+	Test(t,
+		Description("get requests by status; incorrect status; failure"),
+		Get(routePathIncorrectStatus),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Body().String().Contains("Validation error"),
+	)
+
+	routePathAscendingOrderOpenRequests := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=true", baseRoutePath, "open", limit10, page1)
+
+	Test(t,
+		Description("get requests by status open; success; ascending order"),
+		Get(routePathAscendingOrderOpenRequests),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			if len(requests) > limit10 {
+				return fmt.Errorf("requests should be less than %d", limit10)
+			}
+
+			for _, r := range requests {
+				if r.Status != entity.Open {
+					return fmt.Errorf("request with id: %d is not open", r.Id)
+				}
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrderOpenRequests := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=false", baseRoutePath, entity.Open, limit10, page1)
+
+	Test(t,
+		Description("get requests by status assigned; success; descending order"),
+		Get(routePathDescendingOrderOpenRequests),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			if len(requests) > limit10 {
+				return fmt.Errorf("requests should be less than %d", limit10)
+			}
+
+			for _, r := range requests {
+				if r.Status != entity.Open {
+					return fmt.Errorf("request with id: %d is not open", r.Id)
+				}
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isAscendingOrder {
+				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/status/count
+func TestHTTPCountAllRequestsByStatus(t *testing.T) {
+	countBaseRoutePath := requestApiPath + "/status/count"
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var assignedRequests = 1
+
+	countAssignedRoutePath := fmt.Sprintf("%s?status=%s", countBaseRoutePath, entity.Assigned)
+
+	Test(t,
+		Description("count owned requests; success"),
+		Get(countAssignedRoutePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != assignedRequests {
+				return fmt.Errorf("requests should be %d", assignedRequests)
+			}
+
+			return nil
+		}))
 }
 
 // HTTP POST: /user/logout

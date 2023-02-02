@@ -1,22 +1,39 @@
 package entity
 
-import "errors"
+import (
+	"errors"
+)
 
 type Request struct {
-	Id        int           `json:"Id" db:"Id"`
-	Title     string        `json:"Title" db:"Title"`
-	Postcode  string        `json:"Postcode" db:"Postcode"`
-	Info      string        `json:"Info" db:"Info"`
-	CreatorId string        `json:"CreatorId" db:"CreatorId"`
-	Deadline  int64         `json:"Deadline" db:"Deadline"`
-	Status    RequestStatus `json:"Status" db:"Status"`
+	Id           int           `json:"Id" db:"Id"`
+	Title        string        `json:"Title" db:"Title"`
+	Postcode     string        `json:"Postcode" db:"Postcode"`
+	Info         string        `json:"Info" db:"Info"`
+	CreatorId    string        `json:"CreatorId" db:"CreatorId"`
+	Deadline     int64         `json:"Deadline" db:"Deadline"`
+	Status       RequestStatus `json:"Status" db:"Status"`
+	WinningBidId string        `json:"WinningBidId" db:"WinningBidId"`
+}
+
+type ExtendedRequest struct {
+	Id           int           `json:"Id" db:"Id"`
+	Title        string        `json:"Title" db:"Title"`
+	Postcode     string        `json:"Postcode" db:"Postcode"`
+	Info         string        `json:"Info" db:"Info"`
+	CreatorId    string        `json:"CreatorId" db:"CreatorId"`
+	Deadline     int64         `json:"Deadline" db:"Deadline"`
+	Status       RequestStatus `json:"Status" db:"Status"`
+	WinningBidId string        `json:"WinningBidId" db:"WinningBidId"`
+	BidsCount    int           `json:"BidsCount" db:"BidsCount"`
 }
 
 type RequestStatus string
 
 const (
-	Open   RequestStatus = "open"
-	Closed RequestStatus = "closed"
+	Open       RequestStatus = "open"
+	Assigned   RequestStatus = "assigned"
+	InProgress RequestStatus = "in progress"
+	Closed     RequestStatus = "closed"
 )
 
 var ErrIncorrectRequestType = errors.New("incorrect request type")
@@ -68,9 +85,14 @@ func IsRequestType(unknown interface{}) (Request, error) {
 	status := RequestStatus(s)
 
 	switch status {
-	case Open, Closed:
+	case Open, Assigned, InProgress, Closed:
 		request.Status = status
 	default:
+		return request, ErrIncorrectRequestType
+	}
+
+	request.WinningBidId = unknownMap["WinningBidId"].(string)
+	if !ok {
 		return request, ErrIncorrectRequestType
 	}
 

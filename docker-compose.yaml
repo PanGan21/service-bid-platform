@@ -20,6 +20,7 @@ services:
     depends_on:
       - user-migration
       - user-cache
+      
 
   request-service:
     build:
@@ -36,6 +37,10 @@ services:
       PG_URL: "postgres://postgres:password@postgres:5432/request"
     ports:
       - "8001:8000"
+    depends_on:
+      - request-migration
+      - zookeeper
+      - kafka
     restart: unless-stopped # Change for 'always' in production environment
 
   bidding-service:
@@ -53,6 +58,10 @@ services:
       PG_URL: "postgres://postgres:password@postgres:5432/bidding"
     ports:
       - "8002:8000"
+    depends_on:
+      - bidding-migration
+      - zookeeper
+      - kafka
     restart: unless-stopped # Change for 'always' in production environment
 
   user-migration:
@@ -150,7 +159,13 @@ services:
     depends_on:
       - api-gateway
       - user-service
+      - request-service
       - bidding-service
+      - user-migration
+      - request-migration
+      - bidding-migration
+      - zookeeper
+      - kafka
     restart: on-failure
 
   api-gateway:
@@ -184,7 +199,8 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CREATE_TOPICS: "request-created:2:1"
+      KAFKA_CREATE_TOPICS: "request-created:2:1,bid-created:2:1,request-updated:2:1"
+      KAFKA_CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000 # flush faster than normal
 
 volumes:
   pg-data:

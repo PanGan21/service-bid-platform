@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, bidService service.BidService) {
-	bidController := bidController.NewBidController(l, bidService)
+func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, bidService service.BidService, requestService service.RequestService) {
+	bidController := bidController.NewBidController(l, bidService, requestService)
 	// Options
 	handler.Use(gin.Recovery())
 
