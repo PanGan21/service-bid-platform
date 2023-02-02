@@ -9,9 +9,13 @@ export const AssignRequest: React.FC<Props> = () => {
 
   return (
     <div className="col-md-12">
-      <div className="card card-container"></div>
-      <img src={bid} alt="profile-img" className="profile-img-card" />
-      {JSON.stringify(state)}
+      <div className="card card-container">
+        <img src={bid} alt="profile-img" className="profile-img-card" />
+        <h3 style={{ textAlign: "center" }}>Winning bid</h3>
+        <h6>Bidder Id: {state.CreatorId}</h6>
+        <h6>Request Id: {state.RequestId}</h6>
+        <h6>Amount: {state.Amount} €</h6>
+      </div>
     </div>
   );
 };

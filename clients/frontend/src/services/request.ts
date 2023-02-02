@@ -50,10 +50,43 @@ export const countOpenPastDeadlineRequests = async () => {
   });
 };
 
+export const getRequestsByStatus = async (
+  status: string,
+  limit: number,
+  page: number
+) => {
+  return axios.get(
+    API_URL +
+      `/request/status?status=${status}&limit=${limit}&page=${page}&asc=true`,
+    {
+      withCredentials: true,
+    }
+  );
+};
+
+export const countRequestsByStatus = async (status: string) => {
+  return axios.get(API_URL + `/request/status/count?status=${status}`, {
+    withCredentials: true,
+  });
+};
+
 export const updateWinner = async (requestId: string) => {
   return axios.post(
     API_URL + `/request/update/winner?requestId=${requestId}`,
     {},
+    { withCredentials: true }
+  );
+};
+
+export const updateRequestStatus = async (
+  requestId: string,
+  status: string
+) => {
+  return axios.post(
+    API_URL + `/request/update/status?requestId=${requestId}`,
+    {
+      status,
+    },
     { withCredentials: true }
   );
 };
