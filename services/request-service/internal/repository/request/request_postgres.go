@@ -401,3 +401,29 @@ func (repo *requestRepository) GetOwnAssignedByStatuses(ctx context.Context, sta
 
 	return &bidPopulatedRequests, nil
 }
+
+func (repo *requestRepository) CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string) (int, error) {
+	var count = 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*)
+		FROM bids
+		JOIN requests ON requests.WinningBidId = bids.Id::varchar
+		WHERE bids.CreatorId = $1
+		AND requests.WinningBidId IS NOT NULL
+		AND requests.Status = ANY ($2)
+	`
+
+	err = c.QueryRow(ctx, query, userId, statuses).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("RequestRepo - CountOwnAssignedByStatuses - c.Query: %w", err)
+	}
+
+	return count, nil
+}

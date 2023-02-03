@@ -1237,6 +1237,32 @@ func TestHTTPGetOwnAssignedRequests(t *testing.T) {
 		}))
 }
 
+// HTTP GET: /own/assigned-bids/count
+func TestHTTPCountOwnAssignedRequests(t *testing.T) {
+	routePath := requestApiPath + "/own/assigned-bids/count"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	Test(t,
+		Description("count own assigned extended requests; success"),
+		Get(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != 1 {
+				return fmt.Errorf("requests should be %d", 1)
+			}
+
+			return nil
+		}))
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"
