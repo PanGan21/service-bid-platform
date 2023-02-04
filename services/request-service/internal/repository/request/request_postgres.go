@@ -353,3 +353,77 @@ func (repo *requestRepository) CountAllByStatus(ctx context.Context, status enti
 
 	return count, nil
 }
+
+func (repo *requestRepository) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedRequest, error) {
+	var bidPopulatedRequests []entity.BidPopulatedRequest
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Release()
+
+	offset := (pagination.Page - 1) * pagination.Limit
+
+	order := "asc"
+	if !pagination.Asc {
+		order = "desc"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT requests.Id, requests.Title, requests.Postcode, requests.Info, requests.CreatorId, requests.Deadline, requests.Status, bids.Id AS BidId, bids.Amount AS BidAmount
+		FROM bids
+		JOIN requests ON requests.WinningBidId = bids.Id::varchar
+		WHERE bids.CreatorId = $1
+		AND requests.WinningBidId IS NOT NULL
+		AND requests.Status = ANY ($2)
+		ORDER BY deadline %s LIMIT $3 OFFSET $4;
+	`, order)
+
+	rows, err := c.Query(ctx, query, userId, statuses, pagination.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("RequestRepo - GetOwnAssignedByStatuses - c.Query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r entity.BidPopulatedRequest
+		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.BidId, &r.BidAmount)
+		if err != nil {
+			return nil, fmt.Errorf("RequestRepo - GetOwnAssignedByStatuses - rows.Scan: %w", err)
+		}
+		bidPopulatedRequests = append(bidPopulatedRequests, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("RequestRepo - GetOwnAssignedByStatuses - rows.Err: %w", err)
+	}
+
+	return &bidPopulatedRequests, nil
+}
+
+func (repo *requestRepository) CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string) (int, error) {
+	var count = 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*)
+		FROM bids
+		JOIN requests ON requests.WinningBidId = bids.Id::varchar
+		WHERE bids.CreatorId = $1
+		AND requests.WinningBidId IS NOT NULL
+		AND requests.Status = ANY ($2)
+	`
+
+	err = c.QueryRow(ctx, query, userId, statuses).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("RequestRepo - CountOwnAssignedByStatuses - c.Query: %w", err)
+	}
+
+	return count, nil
+}

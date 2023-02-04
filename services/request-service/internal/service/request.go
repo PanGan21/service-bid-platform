@@ -25,6 +25,8 @@ type RequestService interface {
 	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
 	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
+	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedRequest, error)
+	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string) (int, error)
 }
 
 type requestService struct {
@@ -174,6 +176,24 @@ func (s *requestService) CountAllByStatus(ctx context.Context, status entity.Req
 	count, err := s.requestRepo.CountAllByStatus(ctx, status)
 	if err != nil {
 		return count, fmt.Errorf("RequestService - CountAllByStatus - s.requestRepo.CountAllByStatus: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *requestService) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedRequest, error) {
+	bidPopulatedRequests, err := s.requestRepo.GetOwnAssignedByStatuses(ctx, statuses, userId, pagination)
+	if err != nil {
+		return bidPopulatedRequests, fmt.Errorf("RequestService - GetOwnAssignedByStatuses - s.requestRepo.GetOwnAssignedByStatuses: %w", err)
+	}
+
+	return bidPopulatedRequests, nil
+}
+
+func (s *requestService) CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string) (int, error) {
+	count, err := s.requestRepo.CountOwnAssignedByStatuses(ctx, statuses, userId)
+	if err != nil {
+		return count, fmt.Errorf("RequestService - CountOwnAssignedByStatuses - s.requestRepo.CountOwnAssignedByStatuses: %w", err)
 	}
 
 	return count, nil

@@ -1205,6 +1205,64 @@ func TestHTTPCountAllRequestsByStatus(t *testing.T) {
 		}))
 }
 
+// HTTP GET: /own/assigned-bids
+func TestHTTPGetOwnAssignedRequests(t *testing.T) {
+	basePath := requestApiPath + "/own/assigned-bids"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", basePath, limit10, page1)
+
+	Test(t,
+		Description("get own assigned extended requests; success"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var ownBidPopulatedRequests []entity.BidPopulatedRequest
+
+			err := hit.Response().Body().JSON().Decode(&ownBidPopulatedRequests)
+			if err != nil {
+				return err
+			}
+
+			if len(ownBidPopulatedRequests) != 1 {
+				return fmt.Errorf("requests should be %d", 1)
+			}
+
+			return nil
+		}))
+}
+
+// HTTP GET: /own/assigned-bids/count
+func TestHTTPCountOwnAssignedRequests(t *testing.T) {
+	routePath := requestApiPath + "/own/assigned-bids/count"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	Test(t,
+		Description("count own assigned extended requests; success"),
+		Get(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != 1 {
+				return fmt.Errorf("requests should be %d", 1)
+			}
+
+			return nil
+		}))
+}
+
 // HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"

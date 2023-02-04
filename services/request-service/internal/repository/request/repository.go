@@ -20,4 +20,6 @@ type RequestRepository interface {
 	UpdateStatusByRequestId(ctx context.Context, status entity.RequestStatus, id int) (entity.Request, error)
 	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
+	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedRequest, error)
+	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.RequestStatus, userId string) (int, error)
 }
