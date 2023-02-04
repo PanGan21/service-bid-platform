@@ -27,6 +27,18 @@ type ExtendedRequest struct {
 	BidsCount    int           `json:"BidsCount" db:"BidsCount"`
 }
 
+type BidPopulatedRequest struct {
+	Id        int           `json:"Id" db:"Id"`
+	Title     string        `json:"Title" db:"Title"`
+	Postcode  string        `json:"Postcode" db:"Postcode"`
+	Info      string        `json:"Info" db:"Info"`
+	CreatorId string        `json:"CreatorId" db:"CreatorId"`
+	Deadline  int64         `json:"Deadline" db:"Deadline"`
+	Status    RequestStatus `json:"Status" db:"Status"`
+	BidId     int           `json:"BidId" db:"BidId"`
+	BidAmount float64       `json:"BidAmount" db:"BidAmount"`
+}
+
 type RequestStatus string
 
 const (

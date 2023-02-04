@@ -23,6 +23,7 @@ import { Footer } from "./components/Footer";
 import { AdminBoard } from "./components/AdminBoard";
 import { AssignRequest } from "./components/AssignRequest";
 import { UpdateRequestStatus } from "./components/UpdateRequestStatus";
+import { Assignments } from "./components/Assignments";
 // import Profile from "./components/Profile";
 // import BoardUser from "./components/BoardUser";
 // import BoardModerator from "./components/BoardModerator";
@@ -121,9 +122,10 @@ const App: React.FC = () => {
           <Route path="/admin" element={<AdminBoard />} />
           <Route path="/assign-request" element={<AssignRequest />} />
           <Route
-            path="update-request-status"
+            path="/update-request-status"
             element={<UpdateRequestStatus />}
           />
+          <Route path="/assignments" element={<Assignments />} />
           {/*<Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user" element={<BoardUser />} />

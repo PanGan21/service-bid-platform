@@ -1,3 +1,5 @@
+import { Bid } from "./bid";
+
 export interface Request {
   Id: string;
   Title: string;
@@ -24,6 +26,17 @@ export interface FormattedRequest {
 
 export interface ExtendedFormattedRequest extends FormattedRequest {
   BidsCount: number;
+}
+
+export interface Assignment {
+  Id: Request["Id"];
+  Title: Request["Title"];
+  CreatorId: Request["CreatorId"];
+  Postcode: Request["Postcode"];
+  Info: Request["Info"];
+  Status: Request["Status"];
+  BidId: Bid["Id"];
+  BidAmount: Bid["Amount"];
 }
 
 export interface NewRequest {
