@@ -97,6 +97,19 @@ export const createRequest = async (newRequest: NewRequest) => {
   });
 };
 
+export const getOwnAssignments = async (limit: number, page: number) => {
+  return axios.get(
+    API_URL + `/request/own/assigned-bids?limit=${limit}&page=${page}&asc=true`,
+    { withCredentials: true }
+  );
+};
+
+export const countOwnAssignments = async () => {
+  return axios.get(API_URL + "/request/own/assigned-bids/count", {
+    withCredentials: true,
+  });
+};
+
 export const formatRequests = (requests: Request[]): FormattedRequest[] => {
   return requests.map((r) => {
     return {
