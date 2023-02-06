@@ -9,9 +9,12 @@ import {
 } from "../types/request";
 
 export const getAllRequests = async (limit: number, page: number) => {
-  return axios.get(API_URL + `/request/?limit=${limit}&page=${page}&asc=true`, {
-    withCredentials: true,
-  });
+  return axios.get(
+    API_URL + `/request/?limit=${limit}&page=${page}&asc=false`,
+    {
+      withCredentials: true,
+    }
+  );
 };
 
 export const countAllRequests = async () => {
@@ -20,7 +23,7 @@ export const countAllRequests = async () => {
 
 export const getMyRequests = async (limit: number, page: number) => {
   return axios.get(
-    API_URL + `/request/own?limit=${limit}&page=${page}&asc=true`,
+    API_URL + `/request/own?limit=${limit}&page=${page}&asc=false`,
     {
       withCredentials: true,
     }
@@ -37,7 +40,7 @@ export const getOpenPastDeadlineRequests = async (
 ) => {
   return axios.get(
     API_URL +
-      `/request/open/past-deadline?limit=${limit}&page=${page}&asc=true`,
+      `/request/open/past-deadline?limit=${limit}&page=${page}&asc=false`,
     {
       withCredentials: true,
     }
@@ -57,7 +60,7 @@ export const getRequestsByStatus = async (
 ) => {
   return axios.get(
     API_URL +
-      `/request/status?status=${status}&limit=${limit}&page=${page}&asc=true`,
+      `/request/status?status=${status}&limit=${limit}&page=${page}&asc=false`,
     {
       withCredentials: true,
     }
@@ -99,7 +102,8 @@ export const createRequest = async (newRequest: NewRequest) => {
 
 export const getOwnAssignments = async (limit: number, page: number) => {
   return axios.get(
-    API_URL + `/request/own/assigned-bids?limit=${limit}&page=${page}&asc=true`,
+    API_URL +
+      `/request/own/assigned-bids?limit=${limit}&page=${page}&asc=false`,
     { withCredentials: true }
   );
 };
