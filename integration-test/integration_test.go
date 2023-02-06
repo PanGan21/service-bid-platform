@@ -952,7 +952,7 @@ func TestHTTPGetOpenPastDeadlineRequests(t *testing.T) {
 
 	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", baseRoutePath, limit10, page1)
 
-	now := time.Now().Unix()
+	now := time.Now().UTC().UnixMilli()
 
 	Test(
 		t,

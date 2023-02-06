@@ -105,7 +105,7 @@ func (s *requestService) GetById(ctx context.Context, id int) (entity.Request, e
 }
 
 func (s *requestService) IsAllowedToResolve(ctx context.Context, request entity.Request) bool {
-	return (time.Now().Unix() >= request.Deadline) && (request.Status == entity.Open)
+	return (time.Now().UTC().UnixMilli() >= request.Deadline) && (request.Status == entity.Open)
 }
 
 func (s *requestService) UpdateWinningBid(ctx context.Context, request entity.Request, winningBidId string) (entity.Request, error) {
@@ -130,7 +130,7 @@ func (s *requestService) UpdateWinningBid(ctx context.Context, request entity.Re
 }
 
 func (s *requestService) GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedRequest, error) {
-	now := time.Now().Unix()
+	now := time.Now().UTC().UnixMilli()
 	requests, err := s.requestRepo.GetAllOpenPastTime(ctx, now, pagination)
 	if err != nil {
 		return nil, fmt.Errorf("RequestService - GetAllOpenPastDeadline - s.requestRepo.GetAllOpenPastTime: %w", err)
@@ -140,7 +140,7 @@ func (s *requestService) GetAllOpenPastDeadline(ctx context.Context, pagination 
 }
 
 func (s *requestService) CountAllOpenPastDeadline(ctx context.Context) (int, error) {
-	now := time.Now().Unix()
+	now := time.Now().UTC().UnixMilli()
 	count, err := s.requestRepo.CountAllOpenPastTime(ctx, now)
 	if err != nil {
 		return 0, fmt.Errorf("RequestService - CountAllOpenPastDeadline - s.requestRepo.CountAllOpenPastTime: %w", err)

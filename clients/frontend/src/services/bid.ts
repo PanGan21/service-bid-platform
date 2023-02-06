@@ -8,7 +8,7 @@ export const createBid = async (newBid: NewBid) => {
 
 export const getMyBids = async (limit: number, page: number) => {
   return axios.get(
-    API_URL + `/bidding/own?limit=${limit}&page=${page}&asc=true`,
+    API_URL + `/bidding/own?limit=${limit}&page=${page}&asc=false`,
     {
       withCredentials: true,
     }
