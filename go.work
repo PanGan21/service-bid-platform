@@ -1,0 +1,15 @@
+go 1.19
+
+use (
+	./pkg/auth
+	./pkg/entity
+	./pkg/httpserver
+	./pkg/logger
+	./pkg/messaging
+	./pkg/pagination
+	./pkg/postgres
+	./pkg/utils
+	./services/bidding-service
+	./services/request-service
+	./services/user-service
+)
