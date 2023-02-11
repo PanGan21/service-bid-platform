@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS requests(
+CREATE TABLE IF NOT EXISTS auctions(
     Id INTEGER PRIMARY KEY,
     Title VARCHAR(255),
     Postcode VARCHAR(255),
@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS bids(
     Id SERIAL PRIMARY KEY,
     Amount FLOAT,
     CreatorId VARCHAR(255),
-    RequestId INTEGER REFERENCES requests (Id)
+    AuctionId INTEGER REFERENCES auctions (Id)
 );

@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, bidService service.BidService, requestService service.RequestService) {
-	bidController := bidController.NewBidController(l, bidService, requestService)
+func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, bidService service.BidService, auctionService service.AuctionService) {
+	bidController := bidController.NewBidController(l, bidService, auctionService)
 	// Options
 	handler.Use(gin.Recovery())
 
@@ -35,7 +35,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	var requiredRoles []string
 	handler.POST("/", auth.AuthorizeEndpoint(requiredRoles...), bidController.Create)
 	handler.GET("/", bidController.GetOneById)
-	handler.GET("/requestId/", bidController.GetManyByRequestId)
+	handler.GET("/auctionId/", bidController.GetManyByAuctionId)
 	handler.GET("/count/own", bidController.CountOwn)
 	handler.GET("/own", bidController.GetOwn)
 }

@@ -1,5 +1,7 @@
 # service-bid-platform
-A platform for transparent bidding for service requests - Thesis project
+
+A platform for transparent bidding for service auctions - Thesis project
 
 ### Run
-```docker-compose up --build```
+
+`docker-compose up --build`

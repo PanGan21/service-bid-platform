@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
-import { FormattedRequest } from "../types/request";
+import { FormattedAuction } from "../types/auction";
 import * as Yup from "yup";
 import { NewBid } from "../types/bid";
 import { Formik, Field, Form, ErrorMessage } from "formik";
@@ -11,7 +11,7 @@ type Props = {};
 
 export const CreateBid: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
-  const { state }: { state: FormattedRequest } = useLocation();
+  const { state }: { state: FormattedAuction } = useLocation();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
@@ -33,7 +33,7 @@ export const CreateBid: React.FC<Props> = () => {
 
     const newBid: NewBid = {
       Amount: amount,
-      RequestId: state.Id,
+      AuctionId: state.Id,
     };
 
     setMessage("");
@@ -41,7 +41,7 @@ export const CreateBid: React.FC<Props> = () => {
 
     try {
       await createBid(newBid);
-      navigate("/all-requests");
+      navigate("/all-auctions");
       window.location.reload();
     } catch (error: any) {
       const resMessage =
@@ -68,7 +68,7 @@ export const CreateBid: React.FC<Props> = () => {
           <Form>
             <div className="form-group">
               <label htmlFor="amount">
-                Amount in € for request in {state.Postcode}
+                Amount in € for auction in {state.Postcode}
               </label>
               <Field name="amount" type="number" className="form-control" />
               <ErrorMessage

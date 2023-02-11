@@ -6,7 +6,7 @@ type Bid struct {
 	Id        int     `json:"Id" db:"Id"`
 	Amount    float64 `json:"Amount" db:"Amount"`
 	CreatorId string  `json:"CreatorId" db:"CreatorId"`
-	RequestId int     `json:"RequestId" db:"RequestId"`
+	AuctionId int     `json:"AuctionId" db:"AuctionId"`
 }
 
 var ErrIncorrectBidType = errors.New("incorrect bid type")
@@ -36,12 +36,12 @@ func IsBidType(unknown interface{}) (Bid, error) {
 		return bid, ErrIncorrectBidType
 	}
 
-	floatRequestId, ok := unknownMap["RequestId"].(float64)
+	floatAuctionId, ok := unknownMap["AuctionId"].(float64)
 	if !ok {
 		return bid, ErrIncorrectBidType
 	}
 
-	bid.RequestId = int(floatRequestId)
+	bid.AuctionId = int(floatAuctionId)
 
 	return bid, nil
 }

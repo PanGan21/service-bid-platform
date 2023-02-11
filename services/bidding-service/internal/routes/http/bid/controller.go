@@ -14,7 +14,7 @@ import (
 type BidController interface {
 	Create(c *gin.Context)
 	GetOneById(c *gin.Context)
-	GetManyByRequestId(c *gin.Context)
+	GetManyByAuctionId(c *gin.Context)
 	GetOwn(c *gin.Context)
 	CountOwn(c *gin.Context)
 }
@@ -22,20 +22,20 @@ type BidController interface {
 type bidController struct {
 	logger        logger.Interface
 	bidService    service.BidService
-	requestServce service.RequestService
+	auctionServce service.AuctionService
 }
 
-func NewBidController(logger logger.Interface, bidServ service.BidService, reqServ service.RequestService) BidController {
+func NewBidController(logger logger.Interface, bidServ service.BidService, reqServ service.AuctionService) BidController {
 	return &bidController{
 		logger:        logger,
 		bidService:    bidServ,
-		requestServce: reqServ,
+		auctionServce: reqServ,
 	}
 }
 
 type BidData struct {
 	Amount    float64 `json:"Amount"`
-	RequestId int     `json:"RequestId"`
+	AuctionId int     `json:"AuctionId"`
 }
 
 func (controller *bidController) Create(c *gin.Context) {
@@ -52,13 +52,13 @@ func (controller *bidController) Create(c *gin.Context) {
 		return
 	}
 
-	isAllowedToBeCreated := controller.requestServce.IsOpenToBidByRequestId(context.Background(), bidData.RequestId)
+	isAllowedToBeCreated := controller.auctionServce.IsOpenToBidByAuctionId(context.Background(), bidData.AuctionId)
 	if !isAllowedToBeCreated {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Request doesn't receive bids"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Auction doesn't receive bids"})
 		return
 	}
 
-	bid, err := controller.bidService.Create(context.Background(), userId.(string), bidData.RequestId, bidData.Amount)
+	bid, err := controller.bidService.Create(context.Background(), userId.(string), bidData.AuctionId, bidData.Amount)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
@@ -86,8 +86,8 @@ func (controller *bidController) GetOneById(c *gin.Context) {
 	c.JSON(http.StatusOK, bid)
 }
 
-func (controller *bidController) GetManyByRequestId(c *gin.Context) {
-	idParam := c.Request.URL.Query().Get("requestId")
+func (controller *bidController) GetManyByAuctionId(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("auctionId")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
@@ -96,7 +96,7 @@ func (controller *bidController) GetManyByRequestId(c *gin.Context) {
 
 	pagination := pagination.GeneratePaginationFromRequest(c)
 
-	bids, err := controller.bidService.GetManyByRequestId(c.Request.Context(), id, &pagination)
+	bids, err := controller.bidService.GetManyByAuctionId(c.Request.Context(), id, &pagination)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

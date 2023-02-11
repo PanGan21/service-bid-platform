@@ -17,9 +17,9 @@ func NewBidEvents(pub messaging.Publisher) *bidEvents {
 	return &bidEvents{pub: pub}
 }
 
-func (events *bidEvents) PublishBidCreated(request *entity.Bid) error {
+func (events *bidEvents) PublishBidCreated(auction *entity.Bid) error {
 	msg := messaging.Message{
-		Payload: request,
+		Payload: auction,
 	}
 
 	err := events.pub.Publish(BID_CREATED_TOPIC, msg)
