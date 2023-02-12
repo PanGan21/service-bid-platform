@@ -53,7 +53,7 @@ func (repo *auctionRepository) GetAll(ctx context.Context, pagination *paginatio
 		order = "desc"
 	}
 
-	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline, Status, WinningBidId FROM Auctions ORDER BY deadline %s LIMIT $1 OFFSET $2;", order)
+	query := fmt.Sprintf("SELECT * FROM Auctions ORDER BY deadline %s LIMIT $1 OFFSET $2;", order)
 
 	rows, err := c.Query(ctx, query, pagination.Limit, offset)
 	if err != nil {
@@ -65,7 +65,7 @@ func (repo *auctionRepository) GetAll(ctx context.Context, pagination *paginatio
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - GetAll - rows.Scan: %w", err)
 		}
@@ -114,7 +114,7 @@ func (repo *auctionRepository) FindByCreatorId(ctx context.Context, creatorId st
 		order = "desc"
 	}
 
-	query := fmt.Sprintf("SELECT Id, CreatorId, Info, Title, Postcode, Deadline, Status, WinningBidId FROM auctions WHERE CreatorId=$1 ORDER BY Deadline %s LIMIT $2 OFFSET $3;", order)
+	query := fmt.Sprintf("SELECT * FROM auctions WHERE CreatorId=$1 ORDER BY Deadline %s LIMIT $2 OFFSET $3;", order)
 
 	rows, err := c.Query(ctx, query, creatorId, pagination.Limit, offset)
 	if err != nil {
@@ -126,7 +126,7 @@ func (repo *auctionRepository) FindByCreatorId(ctx context.Context, creatorId st
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - FindByCreatorId - rows.Scan: %w", err)
 		}
@@ -317,7 +317,7 @@ func (repo *auctionRepository) GetAllByStatus(ctx context.Context, status entity
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.WinningBidId)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - GetAllByStatus - rows.Scan: %w", err)
 		}
