@@ -83,8 +83,8 @@ export const InProgressAuctions: React.FC<Props> = () => {
     );
   }, [currentPage, totalAuctions]);
 
-  const handleRowSelection = (request: any) => {
-    updateAuctionStatus(request.Id, CLOSED_STATUS).then((response) => {
+  const handleRowSelection = (auction: any) => {
+    updateAuctionStatus(auction.Id, CLOSED_STATUS).then((response) => {
       window.location.reload();
     });
   };

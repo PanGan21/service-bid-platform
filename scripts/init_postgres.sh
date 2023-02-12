@@ -28,7 +28,7 @@ then
       -e POSTGRES_USER=${DB_USER} \
       -e POSTGRES_PASSWORD=${DB_PASSWORD} \
       -e POSTGRES_DB=${DB_NAME} \
-      -e POSTGRES_MULTIPLE_DATABASES=request \
+      -e POSTGRES_MULTIPLE_DATABASES=auction \
       -p "${DB_PORT}":5432 \
       -d postgres-local \
       postgres -N 1000
@@ -43,7 +43,7 @@ done
 
 export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
 migrate -path ./user-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/user?sslmode=disable" up
-migrate -path ./request-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/request?sslmode=disable" up
-migrate -path ./request-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/bidding?sslmode=disable" up
+migrate -path ./auction-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/auction?sslmode=disable" up
+migrate -path ./auction-service/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/bidding?sslmode=disable" up
 
 >&2 echo "Postgres has been migrated, ready to go!"
