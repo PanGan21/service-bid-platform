@@ -3,8 +3,8 @@ import { useLocation } from "react-router-dom";
 import { Pagination } from "../common/pagination";
 import { AppTable, Column } from "../common/table";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
-import { countOwnAssignments, getOwnAssignments } from "../services/request";
-import { Assignment } from "../types/request";
+import { countOwnAssignments, getOwnAssignments } from "../services/auction";
+import { Assignment } from "../types/auction";
 import { User } from "../types/user";
 
 const columns: Column[] = [
@@ -44,7 +44,7 @@ const columns: Column[] = [
 
 type Props = {};
 
-const handleRowSelection = (request: any) => {};
+const handleRowSelection = (auction: any) => {};
 
 export const Assignments: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
@@ -87,7 +87,7 @@ export const Assignments: React.FC<Props> = () => {
     <div>
       <div style={{ textAlign: "center" }}>
         <h3>
-          The following is a list of requests assigned to{" "}
+          The following is a list of auctions assigned to{" "}
           {state.Username !== "" ? state.Username : "you"}
         </h3>
       </div>

@@ -1,3 +1,3 @@
 package testdata
 
-var MockBid = map[string]interface{}{"RequestId": 0, "Amount": 100.0}
+var MockBid = map[string]interface{}{"AuctionId": 0, "Amount": 100.0}

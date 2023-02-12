@@ -8,8 +8,8 @@ import (
 
 	"github.com/PanGan21/bidding-service/config"
 	bidEvents "github.com/PanGan21/bidding-service/internal/events/bid"
+	auctionRepository "github.com/PanGan21/bidding-service/internal/repository/auction"
 	bidRepository "github.com/PanGan21/bidding-service/internal/repository/bid"
-	requestRepository "github.com/PanGan21/bidding-service/internal/repository/request"
 	"github.com/PanGan21/bidding-service/internal/routes/events"
 	routes "github.com/PanGan21/bidding-service/internal/routes/http"
 	"github.com/PanGan21/bidding-service/internal/service"
@@ -38,26 +38,26 @@ func Run(cfg *config.Config) {
 	pub := messaging.NewPublisher(cfg.Kafka.URL, cfg.Kafka.Retries)
 	defer pub.Close()
 
-	requestRepo := requestRepository.NewRequestRepository(*pg)
+	auctionRepo := auctionRepository.NewAuctionRepository(*pg)
 	bidRepo := bidRepository.NewBidRepository(*pg)
 
 	authService := auth.NewAuthService([]byte(cfg.AuthSecret))
 	bidEv := bidEvents.NewBidEvents(pub)
-	requestService := service.NewRequestService(requestRepo)
+	auctionService := service.NewAuctionService(auctionRepo)
 	bidService := service.NewBidService(bidRepo, bidEv)
 
 	// HTTP Server
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
-	routes.NewRouter(handler, l, authService, bidService, requestService)
+	routes.NewRouter(handler, l, authService, bidService, auctionService)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	events.NewEventsClient(sub, l, requestService)
+	events.NewEventsClient(sub, l, auctionService)
 
 	select {
 	case s := <-interrupt:

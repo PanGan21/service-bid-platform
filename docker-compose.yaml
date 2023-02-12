@@ -22,23 +22,23 @@ services:
       - user-cache
       
 
-  request-service:
+  auction-service:
     build:
       context: .
       dockerfile: Dockerfile.service
       args:
-        service_name: request-service
-    container_name: request-service
-    image: request-service
+        service_name: auction-service
+    container_name: auction-service
+    image: auction-service
     environment:
       APP_PORT: 8000
       APP_DEBUG: "true"
-      APP_NAME: request-service
-      PG_URL: "postgres://postgres:password@postgres:5432/request"
+      APP_NAME: auction-service
+      PG_URL: "postgres://postgres:password@postgres:5432/auction"
     ports:
       - "8001:8000"
     depends_on:
-      - request-migration
+      - auction-migration
       - zookeeper
       - kafka
     restart: unless-stopped # Change for 'always' in production environment
@@ -81,17 +81,17 @@ services:
       - postgres
     restart: on-failure
 
-  request-migration:
+  auction-migration:
     image: migrate/migrate
-    container_name: request-migration
+    container_name: auction-migration
     volumes:
-      - ./services/request-service/migrations/:/migrations
+      - ./services/auction-service/migrations/:/migrations
     command:
       [
         "-path",
         "./migrations",
         "-database",
-        "postgres://postgres:password@postgres:5432/request?sslmode=disable",
+        "postgres://postgres:password@postgres:5432/auction?sslmode=disable",
         "up",
       ]
     depends_on:
@@ -122,7 +122,7 @@ services:
       - ./scripts/db:/docker-entrypoint-initdb.d
       - pg-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_MULTIPLE_DATABASES=request,bidding
+      - POSTGRES_MULTIPLE_DATABASES=auction,bidding
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=user
@@ -159,10 +159,10 @@ services:
     depends_on:
       - api-gateway
       - user-service
-      - request-service
+      - auction-service
       - bidding-service
       - user-migration
-      - request-migration
+      - auction-migration
       - bidding-migration
       - zookeeper
       - kafka
@@ -179,7 +179,7 @@ services:
     restart: on-failure
     depends_on:
       - user-service
-      - request-service
+      - auction-service
       - bidding-service
       - zookeeper
       - kafka
@@ -199,7 +199,7 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CREATE_TOPICS: "request-created:2:1,bid-created:2:1,request-updated:2:1"
+      KAFKA_CREATE_TOPICS: "auction-created:2:1,bid-created:2:1,auction-updated:2:1"
       KAFKA_CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000 # flush faster than normal
 
 volumes:

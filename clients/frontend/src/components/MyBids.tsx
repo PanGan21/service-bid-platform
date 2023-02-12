@@ -15,8 +15,8 @@ const columns: Column[] = [
     accessor: "Amount",
   },
   {
-    Header: "RequestId",
-    accessor: "RequestId",
+    Header: "AuctionId",
+    accessor: "AuctionId",
   },
 ];
 
@@ -58,7 +58,7 @@ export const MyBids: React.FC<Props> = () => {
     });
   }, [currentPage, totalBids]);
 
-  const handleRowSelection = (request: any) => {};
+  const handleRowSelection = (auction: any) => {};
 
   return (
     <div>

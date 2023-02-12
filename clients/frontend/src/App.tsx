@@ -12,22 +12,16 @@ import "./App.css";
 
 import * as AuthService from "./services/auth";
 import { User } from "./types/user";
-
 import { Login } from "./components/Login";
-// import Register from "./components/Register";
 import { Home } from "./components/Home";
-import { AllRequests } from "./components/AllRequests";
-import { CreateRequest } from "./components/CreateRequest";
+import { AllAuctions } from "./components/AllAuctions";
+import { CreateAuction } from "./components/CreateAuction";
 import { CreateBid } from "./components/CreateBid";
 import { Footer } from "./components/Footer";
 import { AdminBoard } from "./components/AdminBoard";
-import { AssignRequest } from "./components/AssignRequest";
-import { UpdateRequestStatus } from "./components/UpdateRequestStatus";
+import { AssignAuction } from "./components/AssignAuctions";
+import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
 import { Assignments } from "./components/Assignments";
-// import Profile from "./components/Profile";
-// import BoardUser from "./components/BoardUser";
-// import BoardModerator from "./components/BoardModerator";
-// import BoardAdmin from "./components/BoardAdmin";
 
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
@@ -62,22 +56,6 @@ const App: React.FC = () => {
               Home
             </Link>
           </li>
-
-          {/* {showModeratorBoard && (
-            <li className="nav-item">
-              <Link to={"/mod"} className="nav-link">
-                Moderator Board
-              </Link>
-            </li>
-          )}
-
-          {showAdminBoard && (
-            <li className="nav-item">
-              <Link to={"/admin"} className="nav-link">
-                Admin Board
-              </Link>
-            </li>
-          )} */}
           {showAdminBoard && (
             <li className="nav-item">
               <Link to={"/admin"} className="nav-link">
@@ -90,8 +68,8 @@ const App: React.FC = () => {
         {currentUser ? (
           <div className="navbar-nav ml-auto">
             <li className="nav-item">
-              <a href="/all-requests" className="nav-link">
-                AllRequests
+              <a href="/all-auctions" className="nav-link">
+                AllAuctions
               </a>
             </li>
             <li className="nav-item">
@@ -116,21 +94,16 @@ const App: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/all-requests" element={<AllRequests />} />
-          <Route path="/new-request" element={<CreateRequest />} />
+          <Route path="/all-auctions" element={<AllAuctions />} />
+          <Route path="/new-auction" element={<CreateAuction />} />
           <Route path="/new-bid" element={<CreateBid />} />
           <Route path="/admin" element={<AdminBoard />} />
-          <Route path="/assign-request" element={<AssignRequest />} />
+          <Route path="/assign-auction" element={<AssignAuction />} />
           <Route
-            path="/update-request-status"
-            element={<UpdateRequestStatus />}
+            path="/update-auction-status"
+            element={<UpdateAuctionStatus />}
           />
           <Route path="/assignments" element={<Assignments />} />
-          {/*<Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/user" element={<BoardUser />} />
-          <Route path="/mod" element={<BoardModerator />} />
-          <Route path="/admin" element={<BoardAdmin />} /> */}
         </Routes>
       </div>
       <Footer />
