@@ -162,6 +162,29 @@ func TestHTTPDoLogin(t *testing.T) {
 	)
 
 	Test(t,
+		Description("login admin user; succes"),
+		Post(routePath),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().JSON(testdata.AdminUser),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().String().Contains("Successfully authenticated user"),
+		Expect().Custom(func(hit Hit) error {
+			var cookies = hit.Response().Cookies()
+
+			for _, c := range cookies {
+				if c.Name == "s.id" {
+					adminSessionId = c.Value
+				}
+			}
+
+			if adminSessionId == "" {
+				return errors.New("Session is missing")
+			}
+			return nil
+		}),
+	)
+
+	Test(t,
 		Description("login; failure; validation error"),
 		Post(routePath),
 		Send().Headers("Content-Type").Add("application/json"),
@@ -241,6 +264,10 @@ func TestHTTPCreateAuction(t *testing.T) {
 				return err
 			}
 
+			if auction.Status != entity.New {
+				return fmt.Errorf("created auction status should be %s", entity.New)
+			}
+
 			auctionId = auction.Id
 
 			return nil
@@ -252,6 +279,36 @@ func TestHTTPCreateAuction(t *testing.T) {
 		log.Fatal(err)
 		t.Fail()
 	}
+}
+
+// HTTP POST: /auction/update/status
+func TestHTTPUpdateAuctionStatusToOpen(t *testing.T) {
+	routePath := auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(auctionId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	var updateStatusBody = map[string]interface{}{"Status": entity.Open}
+
+	Test(
+		t,
+		Description("update auction status; open; success"),
+		Post(routePath),
+		Send().Body().JSON(updateStatusBody),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auction entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auction)
+			if err != nil {
+				return err
+			}
+
+			if auction.Status != entity.Open {
+				return fmt.Errorf("auction should have been update to status %s", entity.Open)
+			}
+
+			return nil
+		}),
+	)
 }
 
 // HTTP GET: /auction/
@@ -480,6 +537,8 @@ func TestHTTPCreateBid(t *testing.T) {
 
 	testdata.MockBid["AuctionId"] = auctionId
 
+	waitUntilAuctionIsOpenToBids(50, auctionId)
+
 	Test(t,
 		Description("bid; create; success"),
 		Post(routePath),
@@ -572,7 +631,7 @@ func TestHTTPCountOwnnBids(t *testing.T) {
 		}))
 }
 
-// // HTTP GET: /bidding/own
+// HTTP GET: /bidding/own
 func TestHTTPGetPaginatedOwnBids(t *testing.T) {
 	getOwnRoutePath := biddingApiPath + "/own"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
@@ -773,34 +832,10 @@ func TestHTTPGetPaginatedBidsByAuctionId(t *testing.T) {
 
 // HTTP POST: /auction/update/winner
 func TestHTTPUpdateWinner(t *testing.T) {
-	loginRoutePath := userApiPath + "/login"
 	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	var yesterdayAuctionId = 0
 	var tomorrowAuctionId = 0
 	var mockBidId = 0
-
-	Test(t,
-		Description("login admin user; succes"),
-		Post(loginRoutePath),
-		Send().Headers("Content-Type").Add("application/json"),
-		Send().Body().JSON(testdata.AdminUser),
-		Expect().Status().Equal(http.StatusOK),
-		Expect().Body().String().Contains("Successfully authenticated user"),
-		Expect().Custom(func(hit Hit) error {
-			var cookies = hit.Response().Cookies()
-
-			for _, c := range cookies {
-				if c.Name == "s.id" {
-					adminSessionId = c.Value
-				}
-			}
-
-			if adminSessionId == "" {
-				return errors.New("Session is missing")
-			}
-			return nil
-		}),
-	)
 
 	createReqeustPath := auctionApiPath + "/"
 
@@ -824,6 +859,31 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
+	updateStatusRoutePath := auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(yesterdayAuctionId)
+	var updateStatusBody = map[string]interface{}{"Status": entity.Open}
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+	Test(
+		t,
+		Description("update yesterday auction status; open; success"),
+		Post(updateStatusRoutePath),
+		Send().Body().JSON(updateStatusBody),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auction entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auction)
+			if err != nil {
+				return err
+			}
+
+			if auction.Status != entity.Open {
+				return fmt.Errorf("auction should have been update to status %s", entity.Open)
+			}
+
+			return nil
+		}),
+	)
+
 	Test(t,
 		Description("create auction with deadline tomorrow; success"),
 		Post(createReqeustPath),
@@ -839,6 +899,29 @@ func TestHTTPUpdateWinner(t *testing.T) {
 			}
 
 			tomorrowAuctionId = auction.Id
+
+			return nil
+		}),
+	)
+
+	updateStatusRoutePath = auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(tomorrowAuctionId)
+	Test(
+		t,
+		Description("update yesterday auction status; open; success"),
+		Post(updateStatusRoutePath),
+		Send().Body().JSON(updateStatusBody),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auction entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auction)
+			if err != nil {
+				return err
+			}
+
+			if auction.Status != entity.Open {
+				return fmt.Errorf("auction should have been update to status %s", entity.Open)
+			}
 
 			return nil
 		}),
@@ -873,7 +956,6 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	}
 
 	routePath := auctionApiPath + "/update/winner?auctionId=" + strconv.Itoa(yesterdayAuctionId)
-	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 
 	Test(t,
 		Description("non admin user; failure"),
@@ -973,8 +1055,8 @@ func TestHTTPGetOpenPastDeadlineAuctions(t *testing.T) {
 				}
 			}
 
-			if len(auctions) != limit10 {
-				return fmt.Errorf("auctions should be %d", limit10)
+			if len(auctions) != 1 {
+				return fmt.Errorf("auctions should be %d", 1)
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
@@ -1010,16 +1092,8 @@ func TestHTTPGetOpenPastDeadlineAuctions(t *testing.T) {
 				}
 			}
 
-			if len(auctions) != limit10 {
-				return fmt.Errorf("auctions should be %d", limit10)
-			}
-
-			isDescendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
-				return auctions[p].Deadline < auctions[q].Deadline
-			})
-
-			if isDescendingOrder {
-				return errors.New("auctions are not in descending order")
+			if len(auctions) != 1 {
+				return fmt.Errorf("auctions should be %d", 1)
 			}
 
 			return nil
@@ -1032,7 +1106,7 @@ func TestHTTPCountOpenPastDeadlineAuctions(t *testing.T) {
 	routePath := auctionApiPath + "/open/past-deadline/count"
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 
-	var pastDeadlineOpenAuctions = 10
+	var pastDeadlineOpenAuctions = 1
 
 	Test(
 		t,
@@ -1056,7 +1130,7 @@ func TestHTTPCountOpenPastDeadlineAuctions(t *testing.T) {
 	)
 }
 
-// HTTP GET: /auction/update/status
+// HTTP POST: /auction/update/status
 func TestHTTPUpdateAuctionStatus(t *testing.T) {
 	routePath := auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(auctionId)
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
@@ -1161,14 +1235,6 @@ func TestHTTPGetPaginatedAuctionsByStatus(t *testing.T) {
 				if r.Status != entity.Open {
 					return fmt.Errorf("auction with id: %d is not open", r.Id)
 				}
-			}
-
-			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
-				return auctions[p].Deadline < auctions[q].Deadline
-			})
-
-			if isAscendingOrder {
-				return errors.New("auctions are not in descending order")
 			}
 
 			return nil

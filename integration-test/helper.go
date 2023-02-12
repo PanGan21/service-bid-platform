@@ -212,3 +212,42 @@ func waitUntilBidIsAvailableInAuction(attempts int, bidId int) error {
 
 	return err
 }
+
+func waitUntilAuctionIsOpenToBids(attempts int, auctionId int) error {
+	var err error
+	ctx := context.Background()
+
+	for attempts > 0 {
+		var auction entity.Auction
+
+		pg, err := postgres.New("postgres://postgres:password@postgres:5432/bidding", postgres.MaxPoolSize(2))
+		if err != nil {
+			fmt.Println("Error connecting with the db", err)
+			return err
+		}
+
+		c, err := pg.Pool.Acquire(ctx)
+		if err != nil {
+			return err
+		}
+		defer c.Release()
+
+		const query = `
+			SELECT * FROM auctions WHERE Id=$1;
+		`
+
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId)
+		if err == nil && auction.Id == auctionId && auction.Status == entity.Open {
+			fmt.Println("Auction available and open to bids!", auction)
+			return nil
+		}
+
+		log.Printf("Integration tests: auction with id %d is not available and open to bids, attempts left: %d", auctionId, attempts)
+		time.Sleep(time.Second)
+
+		attempts--
+
+	}
+
+	return err
+}

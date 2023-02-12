@@ -12,4 +12,5 @@ use (
 	./services/bidding-service
 	./services/auction-service
 	./services/user-service
+	./integration-test
 )

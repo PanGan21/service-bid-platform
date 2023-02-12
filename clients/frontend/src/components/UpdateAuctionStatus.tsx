@@ -1,5 +1,5 @@
 import { Formik, Form, Field } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
 import auction from "../assets/auction.png";
 import { updateAuctionStatus } from "../services/auction";
@@ -7,13 +7,26 @@ import { FormattedAuction } from "../types/auction";
 
 type Props = {};
 
-const options = [
+type Option = {
+  value: string;
+  label: string;
+};
+
+const openStatusOptions: Option[] = [
   { value: "closed", label: "closed" },
   { value: "in progress", label: "in progress" },
 ];
 
+const newStatusOptions: Option[] = [
+  { value: "open", label: "open" },
+  { value: "rejected", label: "reject" },
+];
+
+const allOptions: Option[] = [...openStatusOptions, ...newStatusOptions];
+
 export const UpdateAuctionStatus: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
+  const [options, setOptions] = useState<Option[]>(openStatusOptions);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
@@ -24,6 +37,16 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
   } = {
     status: "",
   };
+
+  useEffect(() => {
+    if (state.Status === "new") {
+      setOptions(newStatusOptions);
+    } else if (state.Status === "assigned" || state.Status === "in progress") {
+      setOptions(openStatusOptions);
+    } else {
+      setOptions(allOptions);
+    }
+  }, [state.Status]);
 
   const handleSubmit = async (formValue: { status: string }) => {
     const { status } = formValue;

@@ -42,7 +42,7 @@ export const AdminBoard: React.FC<Props> = () => {
         </span>
       </div>
       <div style={{ display: isPendingAuctionsOpen ? "block" : "none" }}>
-        Choose a auction to resolve the winning bid!
+        Choose an auction to resolve the winning bid!
         <PendingAuctions />
       </div>
       <br />
@@ -57,7 +57,7 @@ export const AdminBoard: React.FC<Props> = () => {
         </span>
       </div>
       <div style={{ display: isAssignedAuctionsOpen ? "block" : "none" }}>
-        Choose a auction to update the status!
+        Choose an auction to update the status!
         <AssignedAuctions />
       </div>
       <br />
@@ -72,7 +72,7 @@ export const AdminBoard: React.FC<Props> = () => {
         </span>
       </div>
       <div style={{ display: isInProgressAuctionsOpen ? "block" : "none" }}>
-        Choose a auction to close it!
+        Choose an auction to close it!
         <InProgressAuctions />
       </div>
       <br />

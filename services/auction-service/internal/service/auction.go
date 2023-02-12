@@ -41,7 +41,10 @@ func NewAuctionService(rr auctionRepo.AuctionRepository, re auctionEvents.Auctio
 func (s *auctionService) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Auction, error) {
 	var newAuction entity.Auction
 
-	auctionId, err := s.auctionRepo.Create(ctx, creatorId, info, postcode, title, deadline)
+	var defaultStatus = entity.New
+	var defaultWinnigBidId = ""
+
+	auctionId, err := s.auctionRepo.Create(ctx, creatorId, info, postcode, title, deadline, defaultStatus, defaultWinnigBidId)
 	if err != nil {
 		return newAuction, fmt.Errorf("AuctionService - Create - s.auctionRepo.Create: %w", err)
 	}

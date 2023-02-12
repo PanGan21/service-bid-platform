@@ -9,6 +9,7 @@ import (
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
 	"github.com/PanGan21/pkg/pagination"
+	"github.com/PanGan21/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -213,7 +214,7 @@ func (controller *auctionController) UpdateStatus(c *gin.Context) {
 	}
 
 	var updateStatusData UpdateStatusData
-	if err := c.BindJSON(&updateStatusData); err != nil || (updateStatusData.Status != entity.InProgress && updateStatusData.Status != entity.Closed) {
+	if err := c.BindJSON(&updateStatusData); err != nil || (updateStatusData.Status != entity.InProgress && updateStatusData.Status != entity.Closed && updateStatusData.Status != entity.Open) {
 		controller.logger.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
@@ -232,7 +233,9 @@ func (controller *auctionController) UpdateStatus(c *gin.Context) {
 
 func (controller *auctionController) GetByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	if statusParam == "" || (statusParam != string(entity.Open) && statusParam != string(entity.Assigned) && statusParam != string(entity.Closed) && statusParam != string(entity.InProgress)) {
+	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+
+	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
@@ -253,7 +256,9 @@ func (controller *auctionController) GetByStatus(c *gin.Context) {
 
 func (controller *auctionController) CountByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	if statusParam == "" || (statusParam != string(entity.Open) && statusParam != string(entity.Assigned) && statusParam != string(entity.Closed) && statusParam != string(entity.InProgress)) {
+	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+
+	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}

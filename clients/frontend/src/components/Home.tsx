@@ -71,7 +71,7 @@ export const Home: React.FC = () => {
         </h4>
         {user.Roles.length > 0 ? (
           <div>
-            <strong>Authorities:</strong>
+            <strong>Roles:</strong>
             <ul>
               {user.Roles &&
                 user.Roles.map((role, index) => <li key={index}>{role}</li>)}

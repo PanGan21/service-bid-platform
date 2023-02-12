@@ -41,7 +41,7 @@ export const CreateBid: React.FC<Props> = () => {
 
     try {
       await createBid(newBid);
-      navigate("/all-auctions");
+      navigate("/open-auctions");
       window.location.reload();
     } catch (error: any) {
       const resMessage =

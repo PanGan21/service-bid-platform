@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { AppTable, Column } from "../common/table";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Column } from "react-table";
 import { Pagination } from "../common/pagination";
+import { AppTable } from "../common/table";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
 import {
-  countAllAuctions,
+  countAuctionsByStatus,
   formatAuctions,
-  getAllAuctions,
+  getAuctionsByStatus,
 } from "../services/auction";
-import { PlusButton } from "../common/plus";
 import { FormattedAuction } from "../types/auction";
-import { useNavigate } from "react-router-dom";
 
 const columns: Column[] = [
   {
@@ -40,7 +40,9 @@ const columns: Column[] = [
 
 type Props = {};
 
-export const AllAuctions: React.FC<Props> = () => {
+const STATUS = "new";
+
+export const NewAuctions: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
     rowData: FormattedAuction[];
     isLoading: boolean;
@@ -61,31 +63,30 @@ export const AllAuctions: React.FC<Props> = () => {
       isLoading: true,
     }));
 
-    countAllAuctions().then((response) => {
+    countAuctionsByStatus(STATUS).then((response) => {
       if (response.data && response.data) {
         setTotalAuctions(response.data);
       }
     });
 
-    getAllAuctions(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
-      const auctions = response.data || [];
-      setPageData({
-        isLoading: false,
-        rowData: formatAuctions(auctions),
-        totalAuctions: totalAuctions,
-      });
-    });
+    getAuctionsByStatus(STATUS, ROWS_PER_TABLE_PAGE, currentPage).then(
+      (response) => {
+        const auctions = response.data || [];
+        setPageData({
+          isLoading: false,
+          rowData: formatAuctions(auctions),
+          totalAuctions: totalAuctions,
+        });
+      }
+    );
   }, [currentPage, totalAuctions]);
 
   const handleRowSelection = (auction: any) => {
-    navigate("/new-bid", { state: auction });
+    navigate("/update-auction-status", { state: auction });
   };
 
   return (
     <div>
-      <div style={{ textAlign: "right" }}>
-        <PlusButton navigation="/new-auction" />
-      </div>
       <div style={{ height: "450px" }}>
         <AppTable
           columns={columns}

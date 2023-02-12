@@ -17,10 +17,8 @@ func NewAuctionRepository(db postgres.Postgres) *auctionRepository {
 	return &auctionRepository{db: db}
 }
 
-func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (int, error) {
+func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.AuctionStatus, winningBidId string) (int, error) {
 	var auctionId int
-	var defaultStatus = entity.Open
-	var defaultWinnigBidId = ""
 
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
@@ -33,7 +31,7 @@ func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, post
   		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING Id;
 	`
 
-	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, defaultStatus, defaultWinnigBidId).Scan(&auctionId)
+	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, status, winningBidId).Scan(&auctionId)
 	if err != nil {
 		return auctionId, fmt.Errorf("AuctionRepo - Create - c.QueryRow: %w", err)
 	}
