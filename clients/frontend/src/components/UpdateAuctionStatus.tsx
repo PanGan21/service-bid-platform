@@ -2,7 +2,7 @@ import { Formik, Form, Field } from "formik";
 import { useEffect, useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
 import auction from "../assets/auction.png";
-import { updateAuctionStatus } from "../services/auction";
+import { rejectAuction, updateAuctionStatus } from "../services/auction";
 import { FormattedAuction } from "../types/auction";
 
 type Props = {};
@@ -28,15 +28,17 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
   const [options, setOptions] = useState<Option[]>(openStatusOptions);
 
+  const initialValues: {
+    status: string;
+    rejectionReason: string;
+  } = {
+    status: "",
+    rejectionReason: "",
+  };
+
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
   const { state }: { state: FormattedAuction } = useLocation();
-
-  const initialValues: {
-    status: string;
-  } = {
-    status: "",
-  };
 
   useEffect(() => {
     if (state.Status === "new") {
@@ -48,14 +50,22 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
     }
   }, [state.Status]);
 
-  const handleSubmit = async (formValue: { status: string }) => {
-    const { status } = formValue;
+  const handleSubmit = async (formValue: {
+    status: string;
+    rejectionReason: string;
+  }) => {
+    const { status, rejectionReason } = formValue;
 
     setMessage("");
     setLoading(true);
 
     try {
-      await updateAuctionStatus(state.Id, status);
+      if (status === "rejected") {
+        await rejectAuction(state.Id, rejectionReason);
+      } else {
+        await updateAuctionStatus(state.Id, status);
+      }
+
       navigate("/admin");
       window.location.reload();
     } catch (error: any) {
@@ -76,7 +86,7 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
       <div className="card card-container">
         <img src={auction} alt="profile-img" className="profile-img-card" />
         <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-          <Form>
+          {/* <Form>
             <div className="form-group">
               <div style={{ textAlign: "center" }}>
                 Current status: {state.Status}
@@ -92,6 +102,7 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
                   </option>
                 ))}
               </Field>
+
               <br />
               <br />
               <div className="form-group">
@@ -114,7 +125,59 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
                 </div>
               )}
             </div>
-          </Form>
+          </Form> */}
+          {({ values }) => (
+            <Form>
+              <div className="form-group">
+                <div style={{ textAlign: "center" }}>
+                  Current status: {state.Status}
+                  <br />
+                  Auction Id: {state.Id}
+                </div>
+                <br />
+                <Field as="select" name="status" type="string">
+                  <option value="">Select an option</option>
+                  {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Field>
+                {values.status === "rejected" && (
+                  <div>
+                    <br />
+                    <Field
+                      name="rejectionReason"
+                      type="text"
+                      placeholder="Enter reason for rejection"
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                )}
+                <br />
+                <br />
+                <div className="form-group">
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-block"
+                    disabled={loading}
+                  >
+                    {loading && (
+                      <span className="spinner-border spinner-border-sm"></span>
+                    )}
+                    <span>Submit</span>
+                  </button>
+                </div>
+                {message && (
+                  <div className="form-group">
+                    <div className="alert alert-danger" role="alert">
+                      {message}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Form>
+          )}
         </Formik>
       </div>
     </div>

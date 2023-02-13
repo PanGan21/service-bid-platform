@@ -158,7 +158,7 @@ func waitUntilAuctionIsAvailableInBidding(attempts int, auctionId int) error {
 			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason)
 		if err == nil && auction.Id == auctionId {
 			fmt.Println("Auction available!", auction)
 			return nil
@@ -236,7 +236,7 @@ func waitUntilAuctionIsOpenToBids(attempts int, auctionId int) error {
 			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason)
 		if err == nil && auction.Id == auctionId && auction.Status == entity.Open {
 			fmt.Println("Auction available and open to bids!", auction)
 			return nil

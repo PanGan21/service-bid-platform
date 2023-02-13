@@ -101,6 +101,19 @@ export const countOwnAssignments = async () => {
   });
 };
 
+export const rejectAuction = async (
+  auctionId: string,
+  rejectionReason: string
+) => {
+  return axios.post(
+    API_URL + `/auction/update/reject?auctionId=${auctionId}`,
+    {
+      rejectionReason,
+    },
+    { withCredentials: true }
+  );
+};
+
 export const formatAuctions = (auctions: Auction[]): FormattedAuction[] => {
   return auctions.map((r) => {
     return {

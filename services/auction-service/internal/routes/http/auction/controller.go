@@ -27,6 +27,7 @@ type AuctionController interface {
 	CountByStatus(c *gin.Context)
 	GetOwnAssignedByStatuses(c *gin.Context)
 	CountOwnAssignedByStatuses(c *gin.Context)
+	RejectAuction(c *gin.Context)
 }
 
 type auctionController struct {
@@ -213,8 +214,10 @@ func (controller *auctionController) UpdateStatus(c *gin.Context) {
 		return
 	}
 
+	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+
 	var updateStatusData UpdateStatusData
-	if err := c.BindJSON(&updateStatusData); err != nil || (updateStatusData.Status != entity.InProgress && updateStatusData.Status != entity.Closed && updateStatusData.Status != entity.Open) {
+	if err := c.BindJSON(&updateStatusData); err != nil || !utils.Contains(allowedStatuses, string(updateStatusData.Status)) {
 		controller.logger.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
@@ -311,4 +314,34 @@ func (controller *auctionController) CountOwnAssignedByStatuses(c *gin.Context) 
 	}
 
 	c.JSON(http.StatusOK, count)
+}
+
+type RejectAuctionData struct {
+	RejectionReason string
+}
+
+func (controller *auctionController) RejectAuction(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("auctionId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	var rejectAuctionData RejectAuctionData
+	if err := c.BindJSON(&rejectAuctionData); err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
+		return
+	}
+
+	auction, err := controller.auctionService.RejectAuction(context.Background(), rejectAuctionData.RejectionReason, id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, auction)
 }

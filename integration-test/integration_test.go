@@ -1330,6 +1330,42 @@ func TestHTTPCountOwnAssignedAuctions(t *testing.T) {
 }
 
 // HTTP POST: /user/logout
+func TestHTTPRejectAuction(t *testing.T) {
+	routePath := auctionApiPath + "/update/reject?auctionId=" + strconv.Itoa(auctionId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	Test(
+		t,
+		Description("reject auction; success"),
+		Post(routePath),
+		Send().Body().JSON(testdata.MockRejectionReason),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auction entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auction)
+			if err != nil {
+				return err
+			}
+
+			if auction.Id != auctionId {
+				return fmt.Errorf("incorrect auction returned")
+			}
+
+			if auction.Status != entity.Rejected {
+				return fmt.Errorf("auction should have been update to status %s", entity.Rejected)
+			}
+
+			if auction.RejectionReason != testdata.MockRejectionReason["RejectionReason"] {
+				return fmt.Errorf("incorrect rejection reason returned")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP POST: /user/logout
 func TestHTTPDoLogout(t *testing.T) {
 	routePath := userApiPath + "/logout"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
