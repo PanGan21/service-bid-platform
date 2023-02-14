@@ -86,46 +86,6 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
       <div className="card card-container">
         <img src={auction} alt="profile-img" className="profile-img-card" />
         <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-          {/* <Form>
-            <div className="form-group">
-              <div style={{ textAlign: "center" }}>
-                Current status: {state.Status}
-                <br />
-                Auction Id: {state.Id}
-              </div>
-              <br />
-              <Field as="select" name="status" type="string">
-                <option value="">Select an option</option>
-                {options.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Field>
-
-              <br />
-              <br />
-              <div className="form-group">
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-block"
-                  disabled={loading}
-                >
-                  {loading && (
-                    <span className="spinner-border spinner-border-sm"></span>
-                  )}
-                  <span>Submit</span>
-                </button>
-              </div>
-              {message && (
-                <div className="form-group">
-                  <div className="alert alert-danger" role="alert">
-                    {message}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Form> */}
           {({ values }) => (
             <Form>
               <div className="form-group">

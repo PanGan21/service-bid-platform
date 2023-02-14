@@ -8,6 +8,7 @@ import { MyBids } from "./MyBids";
 import { ProfileImageBadge } from "./ProfileImageBadge";
 import { countOwnAssignments } from "../services/auction";
 import { useNavigate } from "react-router-dom";
+import { MyRejectedAuctions } from "./MyRejectedAuctions";
 
 export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -126,8 +127,7 @@ export const Home: React.FC = () => {
         </span>
       </div>
       <div style={{ display: isRejectedAuctionsOpen ? "block" : "none" }}>
-        {/* <MyBids /> */}
-        Yo
+        <MyRejectedAuctions />
       </div>
     </div>
   );

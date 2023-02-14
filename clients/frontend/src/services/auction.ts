@@ -114,6 +114,18 @@ export const rejectAuction = async (
   );
 };
 
+export const getOwnRejectedAuctions = async (limit: number, page: number) => {
+  return axios.get( API_URL +
+    `/auction/own/rejected?limit=${limit}&page=${page}&asc=false`,
+  { withCredentials: true })
+}
+
+export const countOwnRejectedAuctions = async () => {
+  return axios.get(API_URL + "/auction/own/rejected/count", {
+    withCredentials: true,
+  });
+};
+
 export const formatAuctions = (auctions: Auction[]): FormattedAuction[] => {
   return auctions.map((r) => {
     return {
