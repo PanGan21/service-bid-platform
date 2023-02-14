@@ -8,11 +8,13 @@ import { MyBids } from "./MyBids";
 import { ProfileImageBadge } from "./ProfileImageBadge";
 import { countOwnAssignments } from "../services/auction";
 import { useNavigate } from "react-router-dom";
+import { MyRejectedAuctions } from "./MyRejectedAuctions";
 
 export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
   const [isMyAuctionsOpen, setMyAuctionsOpen] = useState(false);
   const [isMyBidsOpen, setMyBidsOpen] = useState(false);
+  const [isRejectedAuctionsOpen, setIsRejectedAuctionsOpen] = useState(false);
   const [badgeNumber, setBadgeNumber] = useState(0);
   const navigate = useNavigate();
 
@@ -49,6 +51,10 @@ export const Home: React.FC = () => {
     setMyBidsOpen(!isMyBidsOpen);
   };
 
+  const toggleRejectedAuctions = () => {
+    setIsRejectedAuctionsOpen(!isRejectedAuctionsOpen);
+  };
+
   const handleBadgeClick = () => {
     navigate("/assignments", { state: user });
   };
@@ -71,7 +77,7 @@ export const Home: React.FC = () => {
         </h4>
         {user.Roles.length > 0 ? (
           <div>
-            <strong>Authorities:</strong>
+            <strong>Roles:</strong>
             <ul>
               {user.Roles &&
                 user.Roles.map((role, index) => <li key={index}>{role}</li>)}
@@ -108,6 +114,20 @@ export const Home: React.FC = () => {
       </div>
       <div style={{ display: isMyBidsOpen ? "block" : "none" }}>
         <MyBids />
+      </div>
+      <br />
+      <div onClick={toggleRejectedAuctions} style={{ cursor: "pointer" }}>
+        <img
+          style={{ width: "50px", height: "60px" }}
+          src={auction}
+          alt="profile-img"
+        />
+        <span>
+          <strong>My Rejected Auctions</strong>
+        </span>
+      </div>
+      <div style={{ display: isRejectedAuctionsOpen ? "block" : "none" }}>
+        <MyRejectedAuctions />
       </div>
     </div>
   );

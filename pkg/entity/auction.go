@@ -5,14 +5,15 @@ import (
 )
 
 type Auction struct {
-	Id           int           `json:"Id" db:"Id"`
-	Title        string        `json:"Title" db:"Title"`
-	Postcode     string        `json:"Postcode" db:"Postcode"`
-	Info         string        `json:"Info" db:"Info"`
-	CreatorId    string        `json:"CreatorId" db:"CreatorId"`
-	Deadline     int64         `json:"Deadline" db:"Deadline"`
-	Status       AuctionStatus `json:"Status" db:"Status"`
-	WinningBidId string        `json:"WinningBidId" db:"WinningBidId"`
+	Id              int           `json:"Id" db:"Id"`
+	Title           string        `json:"Title" db:"Title"`
+	Postcode        string        `json:"Postcode" db:"Postcode"`
+	Info            string        `json:"Info" db:"Info"`
+	CreatorId       string        `json:"CreatorId" db:"CreatorId"`
+	Deadline        int64         `json:"Deadline" db:"Deadline"`
+	Status          AuctionStatus `json:"Status" db:"Status"`
+	WinningBidId    string        `json:"WinningBidId" db:"WinningBidId"`
+	RejectionReason string        `json:"RejectionReason" db:"RejectionReason"`
 }
 
 type ExtendedAuction struct {
@@ -42,6 +43,8 @@ type BidPopulatedAuction struct {
 type AuctionStatus string
 
 const (
+	New        AuctionStatus = "new"
+	Rejected   AuctionStatus = "rejected"
 	Open       AuctionStatus = "open"
 	Assigned   AuctionStatus = "assigned"
 	InProgress AuctionStatus = "in progress"
@@ -97,13 +100,18 @@ func IsAuctionType(unknown interface{}) (Auction, error) {
 	status := AuctionStatus(s)
 
 	switch status {
-	case Open, Assigned, InProgress, Closed:
+	case Open, New, Rejected, Assigned, InProgress, Closed:
 		auction.Status = status
 	default:
 		return auction, ErrIncorrectAuctionType
 	}
 
 	auction.WinningBidId = unknownMap["WinningBidId"].(string)
+	if !ok {
+		return auction, ErrIncorrectAuctionType
+	}
+
+	auction.RejectionReason = unknownMap["RejectionReason"].(string)
 	if !ok {
 		return auction, ErrIncorrectAuctionType
 	}

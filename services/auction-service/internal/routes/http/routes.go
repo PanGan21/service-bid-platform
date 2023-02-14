@@ -39,14 +39,17 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.GET("/own", auctionController.GetOwn)
 	handler.GET("/own/assigned-bids", auctionController.GetOwnAssignedByStatuses)
 	handler.GET("/own/assigned-bids/count", auctionController.CountOwnAssignedByStatuses)
+	handler.GET("/own/rejected", auctionController.GetOwnRejected)
+	handler.GET("/own/rejected/count", auctionController.CountOwnRejected)
+	handler.GET("/status", auctionController.GetByStatus)
+	handler.GET("/status/count", auctionController.CountByStatus)
 
 	requireAdminRole := []string{"ADMIN"}
 	handler.GET("/open/past-deadline", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.GetOpenPastDeadline)
 	handler.GET("/open/past-deadline/count", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.CountOpenPastDeadline)
 	handler.POST("/update/winner", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.UpdateWinnerByAuctionId)
 	handler.POST("/update/status", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.UpdateStatus)
-	handler.GET("/status", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.GetByStatus)
-	handler.GET("/status/count", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.CountByStatus)
+	handler.POST("/update/reject", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.RejectAuction)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

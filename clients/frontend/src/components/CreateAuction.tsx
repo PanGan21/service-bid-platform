@@ -69,7 +69,7 @@ export const CreateAuction: React.FC<Props> = () => {
 
     try {
       await createAuction(auction);
-      navigate("/all-auctions");
+      navigate("/open-auctions");
       window.location.reload();
     } catch (error: any) {
       const resMessage =
