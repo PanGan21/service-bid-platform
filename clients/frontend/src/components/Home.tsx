@@ -13,6 +13,7 @@ export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
   const [isMyAuctionsOpen, setMyAuctionsOpen] = useState(false);
   const [isMyBidsOpen, setMyBidsOpen] = useState(false);
+  const [isRejectedAuctionsOpen, setIsRejectedAuctionsOpen] = useState(false);
   const [badgeNumber, setBadgeNumber] = useState(0);
   const navigate = useNavigate();
 
@@ -47,6 +48,10 @@ export const Home: React.FC = () => {
 
   const toggleMyBids = () => {
     setMyBidsOpen(!isMyBidsOpen);
+  };
+
+  const toggleRejectedAuctions = () => {
+    setIsRejectedAuctionsOpen(!isRejectedAuctionsOpen);
   };
 
   const handleBadgeClick = () => {
@@ -108,6 +113,21 @@ export const Home: React.FC = () => {
       </div>
       <div style={{ display: isMyBidsOpen ? "block" : "none" }}>
         <MyBids />
+      </div>
+      <br />
+      <div onClick={toggleRejectedAuctions} style={{ cursor: "pointer" }}>
+        <img
+          style={{ width: "50px", height: "60px" }}
+          src={auction}
+          alt="profile-img"
+        />
+        <span>
+          <strong>My Rejected Auctions</strong>
+        </span>
+      </div>
+      <div style={{ display: isRejectedAuctionsOpen ? "block" : "none" }}>
+        {/* <MyBids /> */}
+        Yo
       </div>
     </div>
   );

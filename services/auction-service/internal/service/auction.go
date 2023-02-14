@@ -28,6 +28,8 @@ type AuctionService interface {
 	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error)
 	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error)
 	RejectAuction(ctx context.Context, rejectionReason string, id int) (entity.Auction, error)
+	GetOwnRejected(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
+	CountOwnRejected(ctx context.Context, creatorId string) (int, error)
 }
 
 type auctionService struct {
@@ -216,4 +218,22 @@ func (s *auctionService) RejectAuction(ctx context.Context, rejectionReason stri
 	}
 
 	return auction, nil
+}
+
+func (s *auctionService) GetOwnRejected(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Auction, error) {
+	auctions, err := s.auctionRepo.FindByCreatorIdAndStatus(ctx, creatorId, entity.Rejected, pagination)
+	if err != nil {
+		return auctions, fmt.Errorf("AuctionService - GetOwnRejected - s.auctionRepo.GetOwnRejected: %w", err)
+	}
+
+	return auctions, nil
+}
+
+func (s *auctionService) CountOwnRejected(ctx context.Context, creatorId string) (int, error) {
+	count, err := s.auctionRepo.CountByCreatorIdAndStatus(ctx, creatorId, entity.Rejected)
+	if err != nil {
+		return count, fmt.Errorf("AuctionService - CountOwnRejected - s.auctionRepo.CountOwnRejected: %w", err)
+	}
+
+	return count, nil
 }

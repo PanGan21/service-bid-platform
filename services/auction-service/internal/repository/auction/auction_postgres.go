@@ -446,3 +446,64 @@ func (repo *auctionRepository) UpdateStatusAndRejectionReasonById(ctx context.Co
 
 	return auction, nil
 }
+
+func (repo *auctionRepository) FindByCreatorIdAndStatus(ctx context.Context, creatorId string, status entity.AuctionStatus, pagination *pagination.Pagination) (*[]entity.Auction, error) {
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Release()
+
+	offset := (pagination.Page - 1) * pagination.Limit
+
+	order := "asc"
+	if !pagination.Asc {
+		order = "desc"
+	}
+
+	query := fmt.Sprintf("SELECT * FROM auctions WHERE CreatorId=$1 AND Status=$2 ORDER BY Deadline %s LIMIT $3 OFFSET $4;", order)
+
+	rows, err := c.Query(ctx, query, creatorId, status, pagination.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("AuctionRepo - FindByCreatorIdAndStatus - c.Query: %w", err)
+	}
+	defer rows.Close()
+
+	var auctions []entity.Auction
+
+	for rows.Next() {
+		var r entity.Auction
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason)
+		if err != nil {
+			return nil, fmt.Errorf("AuctionRepo - FindByCreatorIdAndStatus - rows.Scan: %w", err)
+		}
+		auctions = append(auctions, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("AuctionRepo - FindByCreatorIdAndStatus - rows.Err: %w", err)
+	}
+
+	return &auctions, nil
+}
+
+func (repo *auctionRepository) CountByCreatorIdAndStatus(ctx context.Context, creatorId string, status entity.AuctionStatus) (int, error) {
+	count := 0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return count, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT COUNT(*) FROM auctions WHERE CreatorId=$1 AND Status=$2;
+	`
+
+	err = c.QueryRow(ctx, query, creatorId, status).Scan(&count)
+	if err != nil {
+		return count, fmt.Errorf("AuctionRepo - CountByCreatorIdAndStatus - c.QueryRow: %w", err)
+	}
+
+	return count, nil
+}

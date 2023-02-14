@@ -1329,7 +1329,7 @@ func TestHTTPCountOwnAssignedAuctions(t *testing.T) {
 		}))
 }
 
-// HTTP POST: /user/logout
+// HTTP POST: /auction/update/reject
 func TestHTTPRejectAuction(t *testing.T) {
 	routePath := auctionApiPath + "/update/reject?auctionId=" + strconv.Itoa(auctionId)
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
@@ -1363,6 +1363,106 @@ func TestHTTPRejectAuction(t *testing.T) {
 			return nil
 		}),
 	)
+}
+
+// HTTP POST: /auction/own/rejected
+func TestHTTPGetPaginatedOwnRejectedAuctions(t *testing.T) {
+	getOwnRoutePath := auctionApiPath + "/own/rejected"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", getOwnRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get owned rejected auctions; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auctions []entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auctions)
+			if err != nil {
+				return err
+			}
+
+			for _, auction := range auctions {
+				if auction.CreatorId != userId {
+					return fmt.Errorf("auctions creatorId: %s is not equal to the userId: %s", auction.CreatorId, userId)
+				}
+			}
+
+			if len(auctions) != 1 {
+				return fmt.Errorf("auctions should be %d", 1)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
+				return auctions[p].Deadline < auctions[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("auctions are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", getOwnRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get owned rejected auctions; success; ascending order"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auctions []entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auctions)
+			if err != nil {
+				return err
+			}
+
+			for _, auction := range auctions {
+				if auction.CreatorId != userId {
+					return fmt.Errorf("auctions creatorId: %s is not equal to the userId: %s", auction.CreatorId, userId)
+				}
+			}
+
+			if len(auctions) != 1 {
+				return fmt.Errorf("auctions should be %d", 1)
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP POST: /auction/own/rejected/count
+func TestHTTPCountOwnRejectedAuctions(t *testing.T) {
+	countOwnRoutePath := auctionApiPath + "/own/rejected/count"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var ownedAuctions = 1
+
+	Test(t,
+		Description("count owned rejected auctions; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != ownedAuctions {
+				return fmt.Errorf("auctions should be %d", ownedAuctions)
+			}
+
+			return nil
+		}))
 }
 
 // HTTP POST: /user/logout

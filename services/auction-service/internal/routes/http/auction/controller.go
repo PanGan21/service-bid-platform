@@ -28,6 +28,8 @@ type AuctionController interface {
 	GetOwnAssignedByStatuses(c *gin.Context)
 	CountOwnAssignedByStatuses(c *gin.Context)
 	RejectAuction(c *gin.Context)
+	GetOwnRejected(c *gin.Context)
+	CountOwnRejected(c *gin.Context)
 }
 
 type auctionController struct {
@@ -344,4 +346,40 @@ func (controller *auctionController) RejectAuction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, auction)
+}
+
+func (controller *auctionController) GetOwnRejected(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	pagination := pagination.GeneratePaginationFromRequest(c)
+
+	auctions, err := controller.auctionService.GetOwnRejected(context.Background(), userId.(string), &pagination)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, auctions)
+}
+
+func (controller *auctionController) CountOwnRejected(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
+	}
+
+	count, err := controller.auctionService.CountOwnRejected(context.Background(), userId.(string))
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
 }

@@ -39,6 +39,8 @@ func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthSer
 	handler.GET("/own", auctionController.GetOwn)
 	handler.GET("/own/assigned-bids", auctionController.GetOwnAssignedByStatuses)
 	handler.GET("/own/assigned-bids/count", auctionController.CountOwnAssignedByStatuses)
+	handler.GET("/own/rejected", auctionController.GetOwnRejected)
+	handler.GET("/own/rejected/count", auctionController.CountOwnRejected)
 	handler.GET("/status", auctionController.GetByStatus)
 	handler.GET("/status/count", auctionController.CountByStatus)
 
