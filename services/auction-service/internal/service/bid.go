@@ -11,6 +11,7 @@ import (
 type BidService interface {
 	Create(ctx context.Context, bid entity.Bid) error
 	FindWinningBidByAuctionId(ctx context.Context, auctionId string) (entity.Bid, error)
+	FindSecondWinningBidByAuctionId(ctx context.Context, auctionId string) (float64, error)
 }
 
 type bidService struct {
@@ -45,4 +46,13 @@ func (s *bidService) FindWinningBidByAuctionId(ctx context.Context, auctionId st
 	winnigBid = bids[0]
 
 	return winnigBid, nil
+}
+
+func (s *bidService) FindSecondWinningBidByAuctionId(ctx context.Context, auctionId string) (float64, error) {
+	secondWinningAmount, err := s.bidRepo.FindSecondMinAmountByAuctionId(ctx, auctionId)
+	if err != nil {
+		return secondWinningAmount, fmt.Errorf("BidService - FindSecondWinningBidByAuctionId - s.bidRepo.FindSecondMinAmountByAuctionId: %w", err)
+	}
+
+	return secondWinningAmount, nil
 }

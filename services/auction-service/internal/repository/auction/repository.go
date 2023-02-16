@@ -14,7 +14,7 @@ type AuctionRepository interface {
 	FindOneById(ctx context.Context, id int) (entity.Auction, error)
 	FindByCreatorId(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountByCreatorId(ctx context.Context, creatorId string) (int, error)
-	UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.AuctionStatus) (int, error)
+	UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.AuctionStatus, winnerId string, winningAmount float64) (entity.Auction, error)
 	GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.ExtendedAuction, error)
 	CountAllOpenPastTime(ctx context.Context, timestamp int64) (int, error)
 	UpdateStatusByAuctionId(ctx context.Context, status entity.AuctionStatus, id int) (entity.Auction, error)

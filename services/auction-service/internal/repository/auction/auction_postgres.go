@@ -182,25 +182,25 @@ func (repo *auctionRepository) CountByCreatorId(ctx context.Context, creatorId s
 	return count, nil
 }
 
-func (repo *auctionRepository) UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.AuctionStatus) (int, error) {
-	var auctionId int
+func (repo *auctionRepository) UpdateWinningBidIdAndStatusById(ctx context.Context, id int, winningBidId string, status entity.AuctionStatus, winnerId string, winningAmount float64) (entity.Auction, error) {
+	var auction entity.Auction
 
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
-		return auctionId, err
+		return auction, err
 	}
 	defer c.Release()
 
 	const query = `
-		UPDATE auctions SET WinningBidId=$1, Status=$2 WHERE Id=$3 RETURNING Id;
+		UPDATE auctions SET WinningBidId=$1, Status=$2, WinnerId=$3, WinningAmount=$4 WHERE Id=$5 RETURNING *;
 	`
 
-	err = c.QueryRow(ctx, query, winningBidId, status, id).Scan(&auctionId)
+	err = c.QueryRow(ctx, query, winningBidId, status, winnerId, winningAmount, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
 	if err != nil {
-		return auctionId, fmt.Errorf("AuctionRepo - UpdateWinningBidIdAndStatusById - c.QueryRow: %w", err)
+		return auction, fmt.Errorf("AuctionRepo - UpdateWinningBidIdAndStatusById - c.QueryRow: %w", err)
 	}
 
-	return auctionId, nil
+	return auction, nil
 }
 
 // This will change
@@ -284,7 +284,7 @@ func (repo *auctionRepository) UpdateStatusByAuctionId(ctx context.Context, stat
 		UPDATE auctions SET Status=$1 WHERE Id=$2 RETURNING *;
 	`
 
-	err = c.QueryRow(ctx, query, status, id).Scan(&auction.Id, &auction.CreatorId, &auction.Info, &auction.Title, &auction.Postcode, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
+	err = c.QueryRow(ctx, query, status, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionRepo - UpdateStatusByAuctionId - c.QueryRow: %w", err)
 	}

@@ -170,18 +170,24 @@ func (controller *auctionController) UpdateWinnerByAuctionId(c *gin.Context) {
 	}
 
 	// Find also the secondWinningBid (second smallest amount)
+	secondWinningAmount, err := controller.bidService.FindSecondWinningBidByAuctionId(context.Background(), idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Could not find second winning bid"})
+		return
+	}
 
 	// Update the auction.WinningBidId with winningBidId
 	// Update the auction.WinnerId with winningBidId.CreatorId
 	// Update the auction.WinningAmount with secondWinningBid.Amount
-	_, err = controller.auctionService.UpdateWinningBid(context.Background(), auction, strconv.Itoa(winnignBid.Id))
+	updatedAuction, err := controller.auctionService.UpdateWinningBid(context.Background(), auction, strconv.Itoa(winnignBid.Id), winnignBid.CreatorId, secondWinningAmount)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Could not update auction"})
 		return
 	}
 
-	c.JSON(http.StatusOK, winnignBid)
+	c.JSON(http.StatusOK, updatedAuction)
 }
 
 func (controller *auctionController) GetOpenPastDeadline(c *gin.Context) {

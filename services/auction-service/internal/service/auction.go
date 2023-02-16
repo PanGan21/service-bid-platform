@@ -19,7 +19,7 @@ type AuctionService interface {
 	CountOwn(ctx context.Context, creatorId string) (int, error)
 	GetById(ctx context.Context, id int) (entity.Auction, error)
 	IsAllowedToResolve(ctx context.Context, auction entity.Auction) bool
-	UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string) (entity.Auction, error)
+	UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string, winnerId string, winningAmount float64) (entity.Auction, error)
 	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedAuction, error)
 	CountAllOpenPastDeadline(ctx context.Context) (int, error)
 	UpdateStatusByAuctionId(ctx context.Context, status entity.AuctionStatus, id int) (entity.Auction, error)
@@ -117,7 +117,7 @@ func (s *auctionService) IsAllowedToResolve(ctx context.Context, auction entity.
 	return (time.Now().UTC().UnixMilli() >= auction.Deadline) && (auction.Status == entity.Open)
 }
 
-func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string) (entity.Auction, error) {
+func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string, winnerId string, winningAmount float64) (entity.Auction, error) {
 	if winningBidId == "" {
 		return auction, fmt.Errorf("AuctionService - UpdateWinningBid: winningBid cannot be empty")
 	}
@@ -125,7 +125,7 @@ func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Au
 	auction.WinningBidId = winningBidId
 	auction.Status = entity.Assigned
 
-	_, err := s.auctionRepo.UpdateWinningBidIdAndStatusById(ctx, auction.Id, winningBidId, auction.Status)
+	updatedAuction, err := s.auctionRepo.UpdateWinningBidIdAndStatusById(ctx, auction.Id, winningBidId, auction.Status, winnerId, winningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionRepo.UpdateWinningBidIdAndStatusById: %w", err)
 	}
@@ -135,7 +135,7 @@ func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Au
 		return auction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionEvents.PublishAuctionUpdated: %w", err)
 	}
 
-	return auction, nil
+	return updatedAuction, nil
 }
 
 func (s *auctionService) GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedAuction, error) {

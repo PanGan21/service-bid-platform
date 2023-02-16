@@ -51,9 +51,6 @@ func (repo *bidRepository) FindManyByAuctionIdWithMinAmount(ctx context.Context,
 		SELECT * FROM bids WHERE AuctionId=$1 AND Amount = ( SELECT MIN(Amount) FROM bids WHERE AuctionId=$1  );
 	`
 
-	// 	Select MIN(Amount) From bids
-	// Where AuctionId=1 AND Amount > (Select MIN(Amount) From bids)
-
 	rows, err := c.Query(ctx, query, auctionId)
 	if err != nil {
 		return bids, fmt.Errorf("AuctionRepo - FindManyByAuctionIdWithMinAmount - c.Query: %w", err)
@@ -74,4 +71,25 @@ func (repo *bidRepository) FindManyByAuctionIdWithMinAmount(ctx context.Context,
 	}
 
 	return bids, nil
+}
+
+func (repo *bidRepository) FindSecondMinAmountByAuctionId(ctx context.Context, auctionId string) (float64, error) {
+	var secondMinAmount = 0.0
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return secondMinAmount, err
+	}
+	defer c.Release()
+
+	const query = `
+		SELECT MIN(Amount) FROM bids WHERE AuctionId=$1 AND Amount > (SELECT MIN(Amount) From bids)
+	`
+
+	err = c.QueryRow(ctx, query, auctionId).Scan(&secondMinAmount)
+	if err != nil {
+		return secondMinAmount, fmt.Errorf("AuctionRepo - FindSecondMinAmountByAuctionId - c.Exec: %w", err)
+	}
+
+	return secondMinAmount, nil
 }
