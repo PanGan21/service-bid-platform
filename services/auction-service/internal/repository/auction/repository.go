@@ -8,7 +8,7 @@ import (
 )
 
 type AuctionRepository interface {
-	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.AuctionStatus, winningBidId string, rejectionReason string) (int, error)
+	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.AuctionStatus, winningBidId string, rejectionReason string, winnerId string, winningAmount float64) (int, error)
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountAll(ctx context.Context) (int, error)
 	FindOneById(ctx context.Context, id int) (entity.Auction, error)

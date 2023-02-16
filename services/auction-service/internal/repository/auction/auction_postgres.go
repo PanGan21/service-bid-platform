@@ -17,7 +17,7 @@ func NewAuctionRepository(db postgres.Postgres) *auctionRepository {
 	return &auctionRepository{db: db}
 }
 
-func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.AuctionStatus, winningBidId string, rejectionReason string) (int, error) {
+func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.AuctionStatus, winningBidId string, rejectionReason string, winnerId string, winningAmount float64) (int, error) {
 	var auctionId int
 
 	c, err := repo.db.Pool.Acquire(ctx)
@@ -27,11 +27,11 @@ func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, post
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO auctions (CreatorId, Info, Postcode, Title, Deadline, Status, WinningBidId, RejectionReason) 
-  		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING Id;
+  		INSERT INTO auctions (CreatorId, Info, Postcode, Title, Deadline, Status, WinningBidId, RejectionReason, WinnerId, WinningAmount) 
+  		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING Id;
 	`
 
-	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, status, winningBidId, rejectionReason).Scan(&auctionId)
+	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, status, winningBidId, rejectionReason, winnerId, winningAmount).Scan(&auctionId)
 	if err != nil {
 		return auctionId, fmt.Errorf("AuctionRepo - Create - c.QueryRow: %w", err)
 	}
@@ -65,7 +65,7 @@ func (repo *auctionRepository) GetAll(ctx context.Context, pagination *paginatio
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason, &r.WinnerId, &r.WinningAmount)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - GetAll - rows.Scan: %w", err)
 		}
@@ -126,7 +126,7 @@ func (repo *auctionRepository) FindByCreatorId(ctx context.Context, creatorId st
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason, &r.WinnerId, &r.WinningAmount)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - FindByCreatorId - rows.Scan: %w", err)
 		}
@@ -153,7 +153,7 @@ func (repo *auctionRepository) FindOneById(ctx context.Context, id int) (entity.
 		SELECT * FROM auctions WHERE Id=$1;
 	`
 
-	err = c.QueryRow(ctx, query, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason)
+	err = c.QueryRow(ctx, query, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionRepo - FindOneById - c.QueryRow: %w", err)
 	}
@@ -203,6 +203,7 @@ func (repo *auctionRepository) UpdateWinningBidIdAndStatusById(ctx context.Conte
 	return auctionId, nil
 }
 
+// This will change
 func (repo *auctionRepository) GetAllOpenPastTime(ctx context.Context, timestamp int64, pagination *pagination.Pagination) (*[]entity.ExtendedAuction, error) {
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
@@ -283,7 +284,7 @@ func (repo *auctionRepository) UpdateStatusByAuctionId(ctx context.Context, stat
 		UPDATE auctions SET Status=$1 WHERE Id=$2 RETURNING *;
 	`
 
-	err = c.QueryRow(ctx, query, status, id).Scan(&auction.Id, &auction.CreatorId, &auction.Info, &auction.Title, &auction.Postcode, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason)
+	err = c.QueryRow(ctx, query, status, id).Scan(&auction.Id, &auction.CreatorId, &auction.Info, &auction.Title, &auction.Postcode, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionRepo - UpdateStatusByAuctionId - c.QueryRow: %w", err)
 	}
@@ -317,7 +318,7 @@ func (repo *auctionRepository) GetAllByStatus(ctx context.Context, status entity
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason, &r.WinnerId, &r.WinningAmount)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - GetAllByStatus - rows.Scan: %w", err)
 		}
@@ -352,6 +353,7 @@ func (repo *auctionRepository) CountAllByStatus(ctx context.Context, status enti
 	return count, nil
 }
 
+// It will change
 func (repo *auctionRepository) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error) {
 	var bidPopulatedAuctions []entity.BidPopulatedAuction
 
@@ -439,7 +441,7 @@ func (repo *auctionRepository) UpdateStatusAndRejectionReasonById(ctx context.Co
 		UPDATE auctions SET Status=$1, RejectionReason=$2 WHERE Id=$3 RETURNING *;
 	`
 
-	err = c.QueryRow(ctx, query, status, rejectionReason, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason)
+	err = c.QueryRow(ctx, query, status, rejectionReason, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionRepo - UpdateStatusAndRejectionReasonById - c.QueryRow: %w", err)
 	}
@@ -473,7 +475,7 @@ func (repo *auctionRepository) FindByCreatorIdAndStatus(ctx context.Context, cre
 
 	for rows.Next() {
 		var r entity.Auction
-		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason, &r.WinnerId, &r.WinningAmount)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - FindByCreatorIdAndStatus - rows.Scan: %w", err)
 		}

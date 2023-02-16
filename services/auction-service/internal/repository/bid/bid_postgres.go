@@ -51,6 +51,9 @@ func (repo *bidRepository) FindManyByAuctionIdWithMinAmount(ctx context.Context,
 		SELECT * FROM bids WHERE AuctionId=$1 AND Amount = ( SELECT MIN(Amount) FROM bids WHERE AuctionId=$1  );
 	`
 
+	// 	Select MIN(Amount) From bids
+	// Where AuctionId=1 AND Amount > (Select MIN(Amount) From bids)
+
 	rows, err := c.Query(ctx, query, auctionId)
 	if err != nil {
 		return bids, fmt.Errorf("AuctionRepo - FindManyByAuctionIdWithMinAmount - c.Query: %w", err)

@@ -14,6 +14,8 @@ type Auction struct {
 	Status          AuctionStatus `json:"Status" db:"Status"`
 	WinningBidId    string        `json:"WinningBidId" db:"WinningBidId"`
 	RejectionReason string        `json:"RejectionReason" db:"RejectionReason"`
+	WinnerId        string        `json:"WinnerId" db:"WinnerId"`
+	WinningAmount   float64       `json:"WinningAmount" db:"WinningAmount"`
 }
 
 type ExtendedAuction struct {
@@ -27,6 +29,8 @@ type ExtendedAuction struct {
 	WinningBidId string        `json:"WinningBidId" db:"WinningBidId"`
 	BidsCount    int           `json:"BidsCount" db:"BidsCount"`
 }
+
+// Should be removed
 
 type BidPopulatedAuction struct {
 	Id        int           `json:"Id" db:"Id"`
@@ -112,6 +116,16 @@ func IsAuctionType(unknown interface{}) (Auction, error) {
 	}
 
 	auction.RejectionReason = unknownMap["RejectionReason"].(string)
+	if !ok {
+		return auction, ErrIncorrectAuctionType
+	}
+
+	auction.WinnerId = unknownMap["WinnerId"].(string)
+	if !ok {
+		return auction, ErrIncorrectAuctionType
+	}
+
+	auction.WinningAmount, ok = unknownMap["WinningAmount"].(float64)
 	if !ok {
 		return auction, ErrIncorrectAuctionType
 	}

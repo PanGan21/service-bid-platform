@@ -161,6 +161,7 @@ func (controller *auctionController) UpdateWinnerByAuctionId(c *gin.Context) {
 		return
 	}
 
+	// Needs to find winningBidId (the smallest amount)
 	winnignBid, err := controller.bidService.FindWinningBidByAuctionId(context.Background(), idParam)
 	if err != nil {
 		controller.logger.Error(err)
@@ -168,6 +169,11 @@ func (controller *auctionController) UpdateWinnerByAuctionId(c *gin.Context) {
 		return
 	}
 
+	// Find also the secondWinningBid (second smallest amount)
+
+	// Update the auction.WinningBidId with winningBidId
+	// Update the auction.WinnerId with winningBidId.CreatorId
+	// Update the auction.WinningAmount with secondWinningBid.Amount
 	_, err = controller.auctionService.UpdateWinningBid(context.Background(), auction, strconv.Itoa(winnignBid.Id))
 	if err != nil {
 		controller.logger.Error(err)
