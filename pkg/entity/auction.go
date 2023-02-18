@@ -30,20 +30,6 @@ type ExtendedAuction struct {
 	BidsCount    int           `json:"BidsCount" db:"BidsCount"`
 }
 
-// Should be removed
-
-type BidPopulatedAuction struct {
-	Id        int           `json:"Id" db:"Id"`
-	Title     string        `json:"Title" db:"Title"`
-	Postcode  string        `json:"Postcode" db:"Postcode"`
-	Info      string        `json:"Info" db:"Info"`
-	CreatorId string        `json:"CreatorId" db:"CreatorId"`
-	Deadline  int64         `json:"Deadline" db:"Deadline"`
-	Status    AuctionStatus `json:"Status" db:"Status"`
-	BidId     int           `json:"BidId" db:"BidId"`
-	BidAmount float64       `json:"BidAmount" db:"BidAmount"`
-}
-
 type AuctionStatus string
 
 const (

@@ -354,8 +354,8 @@ func (repo *auctionRepository) CountAllByStatus(ctx context.Context, status enti
 }
 
 // It will change
-func (repo *auctionRepository) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error) {
-	var bidPopulatedAuctions []entity.BidPopulatedAuction
+func (repo *auctionRepository) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.Auction, error) {
+	var auctions []entity.Auction
 
 	c, err := repo.db.Pool.Acquire(ctx)
 	if err != nil {
@@ -371,12 +371,8 @@ func (repo *auctionRepository) GetOwnAssignedByStatuses(ctx context.Context, sta
 	}
 
 	query := fmt.Sprintf(`
-		SELECT auctions.Id, auctions.Title, auctions.Postcode, auctions.Info, auctions.CreatorId, auctions.Deadline, auctions.Status, bids.Id AS BidId, bids.Amount AS BidAmount
-		FROM bids
-		JOIN auctions ON auctions.WinningBidId = bids.Id::varchar
-		WHERE bids.CreatorId = $1
-		AND auctions.WinningBidId IS NOT NULL
-		AND auctions.Status = ANY ($2)
+		SELECT * FROM auctions
+		WHERE WinnerId=$1 AND Status = ANY ($2)
 		ORDER BY deadline %s LIMIT $3 OFFSET $4;
 	`, order)
 
@@ -387,19 +383,19 @@ func (repo *auctionRepository) GetOwnAssignedByStatuses(ctx context.Context, sta
 	defer rows.Close()
 
 	for rows.Next() {
-		var r entity.BidPopulatedAuction
-		err := rows.Scan(&r.Id, &r.CreatorId, &r.Info, &r.Title, &r.Postcode, &r.Deadline, &r.Status, &r.BidId, &r.BidAmount)
+		var r entity.Auction
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.WinningBidId, &r.RejectionReason, &r.WinnerId, &r.WinningAmount)
 		if err != nil {
 			return nil, fmt.Errorf("AuctionRepo - GetOwnAssignedByStatuses - rows.Scan: %w", err)
 		}
-		bidPopulatedAuctions = append(bidPopulatedAuctions, r)
+		auctions = append(auctions, r)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("AuctionRepo - GetOwnAssignedByStatuses - rows.Err: %w", err)
 	}
 
-	return &bidPopulatedAuctions, nil
+	return &auctions, nil
 }
 
 func (repo *auctionRepository) CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error) {
@@ -412,12 +408,8 @@ func (repo *auctionRepository) CountOwnAssignedByStatuses(ctx context.Context, s
 	defer c.Release()
 
 	const query = `
-		SELECT COUNT(*)
-		FROM bids
-		JOIN auctions ON auctions.WinningBidId = bids.Id::varchar
-		WHERE bids.CreatorId = $1
-		AND auctions.WinningBidId IS NOT NULL
-		AND auctions.Status = ANY ($2)
+		SELECT COUNT(*) FROM auctions
+		WHERE WinnerId=$1 AND Status = ANY ($2)
 	`
 
 	err = c.QueryRow(ctx, query, userId, statuses).Scan(&count)

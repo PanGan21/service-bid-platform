@@ -1312,20 +1312,20 @@ func TestHTTPGetOwnAssignedAuctions(t *testing.T) {
 	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", basePath, limit10, page1)
 
 	Test(t,
-		Description("get own assigned extended auctions; success"),
+		Description("get own assigned auctions; success"),
 		Get(routePathAscendingOrder),
 		Send().Headers("Content-Type").Add("application/json"),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var ownBidPopulatedAuctions []entity.BidPopulatedAuction
+			var auctions []entity.Auction
 
-			err := hit.Response().Body().JSON().Decode(&ownBidPopulatedAuctions)
+			err := hit.Response().Body().JSON().Decode(&auctions)
 			if err != nil {
 				return err
 			}
 
-			if len(ownBidPopulatedAuctions) != 1 {
+			if len(auctions) != 1 {
 				return fmt.Errorf("auctions should be %d", 1)
 			}
 

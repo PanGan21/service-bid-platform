@@ -302,14 +302,14 @@ func (controller *auctionController) GetOwnAssignedByStatuses(c *gin.Context) {
 
 	statuses := []entity.AuctionStatus{entity.Assigned, entity.InProgress}
 
-	populatedAuctions, err := controller.auctionService.GetOwnAssignedByStatuses(context.Background(), statuses, userId.(string), &pagination)
+	auctions, err := controller.auctionService.GetOwnAssignedByStatuses(context.Background(), statuses, userId.(string), &pagination)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, populatedAuctions)
+	c.JSON(http.StatusOK, auctions)
 }
 
 func (controller *auctionController) CountOwnAssignedByStatuses(c *gin.Context) {

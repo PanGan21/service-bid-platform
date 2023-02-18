@@ -25,7 +25,7 @@ type AuctionService interface {
 	UpdateStatusByAuctionId(ctx context.Context, status entity.AuctionStatus, id int) (entity.Auction, error)
 	GetAllByStatus(ctx context.Context, status entity.AuctionStatus, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountAllByStatus(ctx context.Context, status entity.AuctionStatus) (int, error)
-	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error)
+	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error)
 	RejectAuction(ctx context.Context, rejectionReason string, id int) (entity.Auction, error)
 	GetOwnRejected(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
@@ -190,13 +190,13 @@ func (s *auctionService) CountAllByStatus(ctx context.Context, status entity.Auc
 	return count, nil
 }
 
-func (s *auctionService) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error) {
-	bidPopulatedAuctions, err := s.auctionRepo.GetOwnAssignedByStatuses(ctx, statuses, userId, pagination)
+func (s *auctionService) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.Auction, error) {
+	auctions, err := s.auctionRepo.GetOwnAssignedByStatuses(ctx, statuses, userId, pagination)
 	if err != nil {
-		return bidPopulatedAuctions, fmt.Errorf("AuctionService - GetOwnAssignedByStatuses - s.auctionRepo.GetOwnAssignedByStatuses: %w", err)
+		return auctions, fmt.Errorf("AuctionService - GetOwnAssignedByStatuses - s.auctionRepo.GetOwnAssignedByStatuses: %w", err)
 	}
 
-	return bidPopulatedAuctions, nil
+	return auctions, nil
 }
 
 func (s *auctionService) CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error) {
