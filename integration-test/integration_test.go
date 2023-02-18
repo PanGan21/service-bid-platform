@@ -835,10 +835,11 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	var yesterdayAuctionId = 0
 	var tomorrowAuctionId = 0
-	var mockBidId = 0
-	var mockSecondBidId = 0
-	var firstLowestAmount = 100.0
-	var secondLowestAmount = 50.0
+
+	var mockFirstLowestBidId = 0
+	var mockSecondLowestBidId = 0
+	var firstLowestAmount = 50.0
+	var secondLowestAmount = 100.0
 
 	createReqeustPath := auctionApiPath + "/"
 
@@ -946,7 +947,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 				return err
 			}
 
-			mockBidId = bid.Id
+			mockFirstLowestBidId = bid.Id
 
 			return nil
 		}),
@@ -967,19 +968,19 @@ func TestHTTPUpdateWinner(t *testing.T) {
 				return err
 			}
 
-			mockSecondBidId = bid.Id
+			mockSecondLowestBidId = bid.Id
 
 			return nil
 		}),
 	)
 
-	err := waitUntilBidIsAvailableInAuction(50, mockBidId)
+	err := waitUntilBidIsAvailableInAuction(50, mockFirstLowestBidId)
 	if err != nil {
 		log.Fatal(err)
 		t.Fail()
 	}
 
-	err = waitUntilBidIsAvailableInAuction(50, mockSecondBidId)
+	err = waitUntilBidIsAvailableInAuction(50, mockSecondLowestBidId)
 	if err != nil {
 		log.Fatal(err)
 		t.Fail()
@@ -1036,7 +1037,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 				return err
 			}
 
-			if auction.Id != yesterdayAuctionId || auction.WinningBidId != strconv.Itoa(mockSecondBidId) || auction.WinnerId != userId || auction.WinningAmount != secondLowestAmount {
+			if auction.Id != yesterdayAuctionId || auction.WinningBidId != strconv.Itoa(mockFirstLowestBidId) || auction.WinnerId != userId || auction.WinningAmount != secondLowestAmount {
 				return errors.New("returned auction is incorrect")
 			}
 

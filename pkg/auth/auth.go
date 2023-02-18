@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/PanGan21/pkg/entity"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/mitchellh/mapstructure"
 )
 
 type AuthService interface {
-	SignJWT(sessionId string, userId string, path string, roles ...string) (string, error)
+	SignJWT(sessionId string, user entity.PublicUser, path string, roles ...string) (string, error)
 	VerifyJWT(encoded string, route string) (AuthTokenData, error)
 }
 
@@ -20,7 +22,7 @@ func NewAuthService(secret []byte) AuthService {
 	return &authService{secret: secret}
 }
 
-func (s *authService) SignJWT(sessionId string, userId string, path string, roles ...string) (string, error) {
+func (s *authService) SignJWT(sessionId string, user entity.PublicUser, path string, roles ...string) (string, error) {
 	internalPath, _ := SplitPath(path)
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -28,7 +30,7 @@ func (s *authService) SignJWT(sessionId string, userId string, path string, role
 	claims["service"] = internalPath.Service
 	claims["route"] = internalPath.Route
 	claims["sessionId"] = sessionId
-	claims["userId"] = userId
+	claims["user"] = user
 	claims["roles"] = roles
 
 	tokenString, err := token.SignedString(s.secret)
@@ -40,11 +42,13 @@ func (s *authService) SignJWT(sessionId string, userId string, path string, role
 }
 
 func (s *authService) VerifyJWT(encoded string, route string) (AuthTokenData, error) {
+	var user entity.PublicUser
+
 	authTokenData := AuthTokenData{
 		Service:   "",
 		Route:     "",
 		SessionId: "",
-		UserId:    "",
+		User:      user,
 		Roles:     make([]string, 0),
 	}
 
@@ -62,7 +66,7 @@ func (s *authService) VerifyJWT(encoded string, route string) (AuthTokenData, er
 		authTokenData.Service = claims["service"].(string)
 		authTokenData.Route = claims["route"].(string)
 		authTokenData.SessionId = claims["sessionId"].(string)
-		authTokenData.UserId = claims["userId"].(string)
+		mapstructure.Decode(claims["user"], &authTokenData.User)
 		parsedRoles := claims["roles"].([]interface{})
 
 		for _, role := range parsedRoles {

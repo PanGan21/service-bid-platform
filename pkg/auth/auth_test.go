@@ -3,6 +3,8 @@ package auth
 import (
 	"errors"
 	"testing"
+
+	"github.com/PanGan21/pkg/entity"
 )
 
 var secret = "mockSecret"
@@ -10,14 +12,17 @@ var service = "mockService"
 var route = "/route/web"
 var path = "/" + service + route + "?query=something"
 var sessionId = "mockSessionId"
+
 var userId = "mockUserId"
+var username = "mockUsername"
+var user = &entity.PublicUser{Username: username, Id: userId}
 var roles = []string{"mockRole1", "mockRole2"}
-var mockJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJtb2NrUm9sZTEiLCJtb2NrUm9sZTIiXSwicm91dGUiOiIvcm91dGUvd2ViIiwic2VydmljZSI6Im1vY2tTZXJ2aWNlIiwic2Vzc2lvbklkIjoibW9ja1Nlc3Npb25JZCIsInVzZXJJZCI6Im1vY2tVc2VySWQifQ.KE0GOFD4fk4b3C0CSl7zxoAMAxl7v2FvkYS-LgUQmRs"
+var mockJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJtb2NrUm9sZTEiLCJtb2NrUm9sZTIiXSwicm91dGUiOiIvcm91dGUvd2ViIiwic2VydmljZSI6Im1vY2tTZXJ2aWNlIiwic2Vzc2lvbklkIjoibW9ja1Nlc3Npb25JZCIsInVzZXIiOnsiSWQiOiJtb2NrVXNlcklkIiwiVXNlcm5hbWUiOiJtb2NrVXNlcm5hbWUifX0.6kMJHS4OE9JAU3yU8DfqZYeZME7qQupD0EUy5E9ek04"
 
 func TestSingJWT(t *testing.T) {
 	authService := NewAuthService([]byte(secret))
 
-	token, err := authService.SignJWT(sessionId, userId, path, roles...)
+	token, err := authService.SignJWT(sessionId, *user, path, roles...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +39,7 @@ func TestVerifyJWT(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if authData.Service != service || authData.UserId != userId || authData.Route != route || authData.SessionId != sessionId {
+	if authData.Service != service || authData.User != *user || authData.Route != route || authData.SessionId != sessionId {
 		t.Fatal(errors.New("incorrect verification"))
 	}
 }

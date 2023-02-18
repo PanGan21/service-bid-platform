@@ -4,13 +4,15 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+
+	"github.com/PanGan21/pkg/entity"
 )
 
 type AuthTokenData struct {
 	Service   string
 	Route     string
 	SessionId string
-	UserId    string
+	User      entity.PublicUser
 	Roles     []string
 }
 

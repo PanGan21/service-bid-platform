@@ -3,9 +3,11 @@ module github.com/PanGan21/pkg/auth
 go 1.18
 
 require (
+	github.com/PanGan21/pkg/entity v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/utils v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/mitchellh/mapstructure v1.5.0
 )
 
 require (
@@ -29,4 +31,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/PanGan21/pkg/utils => ../utils
+replace (
+	github.com/PanGan21/pkg/entity => ../entity
+	github.com/PanGan21/pkg/utils => ../utils
+)

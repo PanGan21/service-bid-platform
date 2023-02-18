@@ -1,5 +1,3 @@
-import { Bid } from "./bid";
-
 export interface Auction {
   Id: string;
   Title: string;
@@ -9,6 +7,7 @@ export interface Auction {
   Deadline: number;
   Status: string;
   RejectionReason: string;
+  WinningBidId: string;
   WinnerId: string;
   WinningAmount: string;
 }
@@ -27,6 +26,7 @@ export interface FormattedAuction {
   Status: Auction["Status"];
   RejectionReason: Auction["RejectionReason"];
   WinnerId: Auction["WinnerId"];
+  WinningBidId: Auction["WinningBidId"];
   WinningAmount: Auction["WinningAmount"];
 }
 

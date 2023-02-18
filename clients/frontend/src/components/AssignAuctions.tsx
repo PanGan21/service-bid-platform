@@ -12,7 +12,8 @@ export const AssignAuction: React.FC<Props> = () => {
       <div className="card card-container">
         <img src={bid} alt="profile-img" className="profile-img-card" />
         <h3 style={{ textAlign: "center" }}>Winning bid</h3>
-        <h6>Bidder Id: {state.CreatorId}</h6>
+        <h6>Bidder Id: {state.WinnerId}</h6>
+        <h6>Bid Id: {state.WinningBidId}</h6>
         <h6>Auction Id: {state.Id}</h6>
         <h6>Amount: {state.WinningAmount} €</h6>
       </div>

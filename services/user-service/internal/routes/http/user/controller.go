@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/PanGan21/pkg/auth"
+	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
 	"github.com/PanGan21/user-service/internal/service"
 	"github.com/gin-gonic/contrib/sessions"
@@ -135,7 +136,7 @@ func (controller *userController) Authenticate(c *gin.Context) {
 	user, err := controller.userService.GetById(c.Request.Context(), parsedId)
 	if err != nil {
 		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "anauthorized"})
 		return
 	}
 
@@ -155,7 +156,9 @@ func (controller *userController) Authenticate(c *gin.Context) {
 		method = "GET"
 	}
 
-	token, err := controller.authService.SignJWT(userId.(string), strconv.Itoa(user.Id), uriHeader, user.Roles...)
+	publicUser := entity.PublicUser{Id: user.Id, Username: user.Username}
+
+	token, err := controller.authService.SignJWT(userId.(string), publicUser, uriHeader, user.Roles...)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT signing error"})
 	}
@@ -192,12 +195,12 @@ func (controller *userController) GetUserDetails(c *gin.Context) {
 	user, err := controller.userService.GetById(c.Request.Context(), parsedId)
 	if err != nil {
 		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "aunauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "anauthorized"})
 		return
 	}
 
 	userDetails := &UserDetails{
-		Id:       strconv.Itoa(user.Id),
+		Id:       user.Id,
 		Username: user.Username,
 		Roles:    user.Roles,
 	}

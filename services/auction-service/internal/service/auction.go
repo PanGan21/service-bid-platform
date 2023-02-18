@@ -124,15 +124,17 @@ func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Au
 
 	auction.WinningBidId = winningBidId
 	auction.Status = entity.Assigned
+	auction.WinnerId = winnerId
+	auction.WinningAmount = winningAmount
 
 	updatedAuction, err := s.auctionRepo.UpdateWinningBidIdAndStatusById(ctx, auction.Id, winningBidId, auction.Status, winnerId, winningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionRepo.UpdateWinningBidIdAndStatusById: %w", err)
 	}
 
-	err = s.auctionEvents.PublishAuctionUpdated(&auction)
+	err = s.auctionEvents.PublishAuctionUpdated(&updatedAuction)
 	if err != nil {
-		return auction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionEvents.PublishAuctionUpdated: %w", err)
+		return updatedAuction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionEvents.PublishAuctionUpdated: %w", err)
 	}
 
 	return updatedAuction, nil
