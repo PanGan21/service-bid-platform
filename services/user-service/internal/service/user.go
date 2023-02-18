@@ -37,7 +37,7 @@ func (s *userService) Login(ctx context.Context, username string, password strin
 		return "", fmt.Errorf("UserService - Login - s.userRepo.GetByUsernameAndPassword: %w", err)
 	}
 
-	return strconv.Itoa(user.Id), nil
+	return user.Id, nil
 }
 
 func (s *userService) Register(ctx context.Context, username string, password string) (string, error) {

@@ -835,7 +835,11 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	var yesterdayAuctionId = 0
 	var tomorrowAuctionId = 0
-	var mockBidId = 0
+
+	var mockFirstLowestBidId = 0
+	var mockSecondLowestBidId = 0
+	var firstLowestAmount = 50.0
+	var secondLowestAmount = 100.0
 
 	createReqeustPath := auctionApiPath + "/"
 
@@ -928,7 +932,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	)
 
 	createBidRoutePath := biddingApiPath + "/"
-	var mockBid = map[string]interface{}{"AuctionId": yesterdayAuctionId, "Amount": 100.0}
+	var mockBid = map[string]interface{}{"AuctionId": yesterdayAuctionId, "Amount": firstLowestAmount}
 	Test(t,
 		Description("bid; create; success"),
 		Post(createBidRoutePath),
@@ -943,13 +947,40 @@ func TestHTTPUpdateWinner(t *testing.T) {
 				return err
 			}
 
-			mockBidId = bid.Id
+			mockFirstLowestBidId = bid.Id
 
 			return nil
 		}),
 	)
 
-	err := waitUntilBidIsAvailableInAuction(50, mockBidId)
+	var mockSecondBid = map[string]interface{}{"AuctionId": yesterdayAuctionId, "Amount": secondLowestAmount}
+	Test(t,
+		Description("bid; create; success"),
+		Post(createBidRoutePath),
+		Send().Headers("Cookie").Add(nonAdminSessionCookie),
+		Send().Body().JSON(mockSecondBid),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var bid entity.Bid
+
+			err := hit.Response().Body().JSON().Decode(&bid)
+			if err != nil {
+				return err
+			}
+
+			mockSecondLowestBidId = bid.Id
+
+			return nil
+		}),
+	)
+
+	err := waitUntilBidIsAvailableInAuction(50, mockFirstLowestBidId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
+	err = waitUntilBidIsAvailableInAuction(50, mockSecondLowestBidId)
 	if err != nil {
 		log.Fatal(err)
 		t.Fail()
@@ -999,14 +1030,14 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		Send().Headers("Cookie").Add(adminSessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var bid entity.Bid
+			var auction entity.Auction
 
-			err := hit.Response().Body().JSON().Decode(&bid)
+			err := hit.Response().Body().JSON().Decode(&auction)
 			if err != nil {
 				return err
 			}
 
-			if bid.AuctionId != yesterdayAuctionId || bid.Id != mockBidId {
+			if auction.Id != yesterdayAuctionId || auction.WinningBidId != strconv.Itoa(mockFirstLowestBidId) || auction.WinnerId != userId || auction.WinningAmount != secondLowestAmount {
 				return errors.New("returned auction is incorrect")
 			}
 
@@ -1282,20 +1313,20 @@ func TestHTTPGetOwnAssignedAuctions(t *testing.T) {
 	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", basePath, limit10, page1)
 
 	Test(t,
-		Description("get own assigned extended auctions; success"),
+		Description("get own assigned auctions; success"),
 		Get(routePathAscendingOrder),
 		Send().Headers("Content-Type").Add("application/json"),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var ownBidPopulatedAuctions []entity.BidPopulatedAuction
+			var auctions []entity.Auction
 
-			err := hit.Response().Body().JSON().Decode(&ownBidPopulatedAuctions)
+			err := hit.Response().Body().JSON().Decode(&auctions)
 			if err != nil {
 				return err
 			}
 
-			if len(ownBidPopulatedAuctions) != 1 {
+			if len(auctions) != 1 {
 				return fmt.Errorf("auctions should be %d", 1)
 			}
 

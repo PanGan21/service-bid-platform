@@ -26,7 +26,7 @@ func (repo *userRepository) GetByUsernameAndPassword(ctx context.Context, userna
 	defer c.Release()
 
 	const query = `
-		SELECT Id, Username, PasswordHash, Roles FROM users
+		SELECT Id::varchar(255), Username, PasswordHash, Roles FROM users
 		WHERE Username=$1 AND PasswordHash=$2;
 	`
 
@@ -71,12 +71,11 @@ func (repo *userRepository) GetById(ctx context.Context, id int) (entity.User, e
 	defer c.Release()
 
 	const query = `
-		SELECT id, Username, PasswordHash, Roles FROM users
+		SELECT Id::varchar(255), Username, PasswordHash, Roles FROM users
 		WHERE Id=$1;
 	`
 
 	row := c.QueryRow(ctx, query, id)
-
 	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.Roles)
 	if err != nil {
 		return user, fmt.Errorf("UserRepo - GetById - row.Scan: %w", err)

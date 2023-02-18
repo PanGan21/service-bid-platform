@@ -23,7 +23,7 @@ func VerifyJWT(authService AuthService) gin.HandlerFunc {
 
 		c.Set("url", authTokenData.Route)
 		c.Set("jwt", jwt)
-		c.Set("userId", authTokenData.UserId)
+		c.Set("user", authTokenData.User)
 		c.Set("roles", authTokenData.Roles)
 
 		c.Next()

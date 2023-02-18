@@ -4,7 +4,7 @@ import { Pagination } from "../common/pagination";
 import { AppTable, Column } from "../common/table";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
 import { countOwnAssignments, getOwnAssignments } from "../services/auction";
-import { Assignment } from "../types/auction";
+import { Auction } from "../types/auction";
 import { User } from "../types/user";
 
 const columns: Column[] = [
@@ -33,12 +33,12 @@ const columns: Column[] = [
     accessor: "Status",
   },
   {
-    Header: "BidId",
-    accessor: "BidId",
+    Header: "WinningBidId",
+    accessor: "WinningBidId",
   },
   {
-    Header: "BidAmount",
-    accessor: "BidAmount",
+    Header: "WinningAmount",
+    accessor: "WinningAmount",
   },
 ];
 
@@ -48,7 +48,7 @@ const handleRowSelection = (auction: any) => {};
 
 export const Assignments: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
-    rowData: Assignment[];
+    rowData: Auction[];
     isLoading: boolean;
     totalAssignments: number;
   }>({

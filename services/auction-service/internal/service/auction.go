@@ -19,13 +19,13 @@ type AuctionService interface {
 	CountOwn(ctx context.Context, creatorId string) (int, error)
 	GetById(ctx context.Context, id int) (entity.Auction, error)
 	IsAllowedToResolve(ctx context.Context, auction entity.Auction) bool
-	UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string) (entity.Auction, error)
+	UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string, winnerId string, winningAmount float64) (entity.Auction, error)
 	GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedAuction, error)
 	CountAllOpenPastDeadline(ctx context.Context) (int, error)
 	UpdateStatusByAuctionId(ctx context.Context, status entity.AuctionStatus, id int) (entity.Auction, error)
 	GetAllByStatus(ctx context.Context, status entity.AuctionStatus, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountAllByStatus(ctx context.Context, status entity.AuctionStatus) (int, error)
-	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error)
+	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error)
 	RejectAuction(ctx context.Context, rejectionReason string, id int) (entity.Auction, error)
 	GetOwnRejected(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
@@ -47,8 +47,10 @@ func (s *auctionService) Create(ctx context.Context, creatorId, info, postcode, 
 	var defaultStatus = entity.New
 	var defaultWinnigBidId = ""
 	var defaultRejectionReason = ""
+	var defaultWinnerId = ""
+	var defaultWinningAmount = 0.0
 
-	auctionId, err := s.auctionRepo.Create(ctx, creatorId, info, postcode, title, deadline, defaultStatus, defaultWinnigBidId, defaultRejectionReason)
+	auctionId, err := s.auctionRepo.Create(ctx, creatorId, info, postcode, title, deadline, defaultStatus, defaultWinnigBidId, defaultRejectionReason, defaultWinnerId, defaultWinningAmount)
 	if err != nil {
 		return newAuction, fmt.Errorf("AuctionService - Create - s.auctionRepo.Create: %w", err)
 	}
@@ -115,25 +117,27 @@ func (s *auctionService) IsAllowedToResolve(ctx context.Context, auction entity.
 	return (time.Now().UTC().UnixMilli() >= auction.Deadline) && (auction.Status == entity.Open)
 }
 
-func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string) (entity.Auction, error) {
+func (s *auctionService) UpdateWinningBid(ctx context.Context, auction entity.Auction, winningBidId string, winnerId string, winningAmount float64) (entity.Auction, error) {
 	if winningBidId == "" {
 		return auction, fmt.Errorf("AuctionService - UpdateWinningBid: winningBid cannot be empty")
 	}
 
 	auction.WinningBidId = winningBidId
 	auction.Status = entity.Assigned
+	auction.WinnerId = winnerId
+	auction.WinningAmount = winningAmount
 
-	_, err := s.auctionRepo.UpdateWinningBidIdAndStatusById(ctx, auction.Id, winningBidId, auction.Status)
+	updatedAuction, err := s.auctionRepo.UpdateWinningBidIdAndStatusById(ctx, auction.Id, winningBidId, auction.Status, winnerId, winningAmount)
 	if err != nil {
 		return auction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionRepo.UpdateWinningBidIdAndStatusById: %w", err)
 	}
 
-	err = s.auctionEvents.PublishAuctionUpdated(&auction)
+	err = s.auctionEvents.PublishAuctionUpdated(&updatedAuction)
 	if err != nil {
-		return auction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionEvents.PublishAuctionUpdated: %w", err)
+		return updatedAuction, fmt.Errorf("AuctionService - UpdateWinningBid - s.auctionEvents.PublishAuctionUpdated: %w", err)
 	}
 
-	return auction, nil
+	return updatedAuction, nil
 }
 
 func (s *auctionService) GetAllOpenPastDeadline(ctx context.Context, pagination *pagination.Pagination) (*[]entity.ExtendedAuction, error) {
@@ -188,13 +192,13 @@ func (s *auctionService) CountAllByStatus(ctx context.Context, status entity.Auc
 	return count, nil
 }
 
-func (s *auctionService) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.BidPopulatedAuction, error) {
-	bidPopulatedAuctions, err := s.auctionRepo.GetOwnAssignedByStatuses(ctx, statuses, userId, pagination)
+func (s *auctionService) GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.Auction, error) {
+	auctions, err := s.auctionRepo.GetOwnAssignedByStatuses(ctx, statuses, userId, pagination)
 	if err != nil {
-		return bidPopulatedAuctions, fmt.Errorf("AuctionService - GetOwnAssignedByStatuses - s.auctionRepo.GetOwnAssignedByStatuses: %w", err)
+		return auctions, fmt.Errorf("AuctionService - GetOwnAssignedByStatuses - s.auctionRepo.GetOwnAssignedByStatuses: %w", err)
 	}
 
-	return bidPopulatedAuctions, nil
+	return auctions, nil
 }
 
 func (s *auctionService) CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error) {
