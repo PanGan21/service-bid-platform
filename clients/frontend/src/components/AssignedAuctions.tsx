@@ -83,7 +83,8 @@ export const AssignedAuctions: React.FC<Props> = () => {
   }, [currentPage, totalAuctions]);
 
   const handleRowSelection = (auction: any) => {
-    navigate("/update-auction-status", { state: auction });
+    const fullAuction = pageData.rowData.find((r) => r.Id === auction.Id);
+    navigate("/update-auction-status", { state: fullAuction });
   };
 
   return (

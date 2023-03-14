@@ -67,7 +67,7 @@ export const PendingAuctions: React.FC<Props> = () => {
     }));
 
     countOpenPastDeadlineAuctions().then((response) => {
-      if (response.data && response.data) {
+      if (response.data) {
         setTotalAuctions(response.data);
       }
     });
@@ -88,7 +88,7 @@ export const PendingAuctions: React.FC<Props> = () => {
     updateWinner(auction.Id)
       .then((response) => {
         if (response.data && response.data) {
-          navigate("/assign-auction", { state: response.data });
+          navigate("/assigned-auction", { state: response.data });
         }
       })
       .catch((error) => {

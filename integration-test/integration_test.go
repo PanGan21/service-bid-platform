@@ -33,8 +33,8 @@ var auctionApiPath = getBasePath(auctionService)
 var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
-	fmt.Println("Sleep for 30 seconds to allow services and kafka stabilize")
-	time.Sleep(30 * time.Second)
+	fmt.Println("Sleep for 40 seconds to allow services and kafka stabilize")
+	time.Sleep(40 * time.Second)
 	fmt.Println("Start integration tests")
 
 	err := healthCheck(Attempts, userService)
@@ -88,7 +88,7 @@ func TestHTTPDoRegister(t *testing.T) {
 }
 
 // HTTP GET: /user/
-func TestHTTPDoGetDetails(t *testing.T) {
+func TestHTTPDoGetLoggedInDetails(t *testing.T) {
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 	routePath := userApiPath + "/"
 
@@ -130,6 +130,54 @@ func TestHTTPDoGetDetails(t *testing.T) {
 		Send().Headers("Cookie").Add("s.id=123"),
 		Expect().Status().Equal(http.StatusUnauthorized),
 		Expect().Body().String().Contains("Invalid session token"),
+	)
+}
+
+// HTTP GET: /user/details
+func TestHTTPDoGetDetails(t *testing.T) {
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+	routePath := userApiPath + "/details?userId=" + userId
+
+	Test(t,
+		Description("get user details; success; user exists"),
+		Get(routePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var userDetails map[string]interface{}
+
+			err := hit.Response().Body().JSON().Decode(&userDetails)
+			if err != nil {
+				return err
+			}
+
+			if userDetails["Username"].(string) != testdata.MockUser["Username"].(string) {
+				return errors.New("username does not match")
+			}
+
+			if len(userDetails["Roles"].([]interface{})) != len(testdata.DefaultRoles) {
+				return errors.New("roles do not match")
+			}
+
+			id, ok := userDetails["Id"].(string)
+			if !ok {
+				return errors.New("id does not exist")
+			}
+
+			userId = id
+
+			return nil
+		}),
+	)
+
+	incorrectRoutePath := userApiPath + "/details?userId=" + "100000000"
+
+	Test(t,
+		Description("get user details; failure; user does not exists"),
+		Get(incorrectRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusUnauthorized),
+		Expect().Body().String().Contains("unauthorized"),
 	)
 }
 

@@ -75,17 +75,26 @@ export const Home: React.FC = () => {
         <h4>
           Username: <strong>{user.Username}</strong>
         </h4>
-        {user.Roles.length > 0 ? (
-          <div>
-            <strong>Roles:</strong>
-            <ul>
-              {user.Roles &&
-                user.Roles.map((role, index) => <li key={index}>{role}</li>)}
-            </ul>
-          </div>
-        ) : (
-          <></>
-        )}
+        <div>
+          <h6>
+            Email: <strong>{user.Email}</strong>
+          </h6>
+          <h6>
+            Phone: <strong>{user.Phone}</strong>
+          </h6>
+
+          {user.Roles.length > 0 ? (
+            <div>
+              <strong>Roles:</strong>
+              <ul>
+                {user.Roles &&
+                  user.Roles.map((role, index) => <li key={index}>{role}</li>)}
+              </ul>
+            </div>
+          ) : (
+            <></>
+          )}
+        </div>
       </div>
       <br />
       <div onClick={toggleMyAuctions} style={{ cursor: "pointer" }}>

@@ -17,7 +17,7 @@ var (
 
 type UserService interface {
 	Login(ctx context.Context, username string, password string) (string, error)
-	Register(ctx context.Context, username string, password string) (string, error)
+	Register(ctx context.Context, username string, email string, phone string, password string) (string, error)
 	GetById(ctx context.Context, id int) (entity.User, error)
 }
 type userService struct {
@@ -40,12 +40,12 @@ func (s *userService) Login(ctx context.Context, username string, password strin
 	return user.Id, nil
 }
 
-func (s *userService) Register(ctx context.Context, username string, password string) (string, error) {
+func (s *userService) Register(ctx context.Context, username string, email string, phone string, password string) (string, error) {
 	passwordHash := s.hashPassword(password)
 
 	var defaultRoles = []string{}
 
-	userId, err := s.userRepo.Create(ctx, username, passwordHash, defaultRoles)
+	userId, err := s.userRepo.Create(ctx, username, email, phone, passwordHash, defaultRoles)
 	if err != nil {
 		return "", fmt.Errorf("UserService - Register - s.userRepo.Create: %w", err)
 	}

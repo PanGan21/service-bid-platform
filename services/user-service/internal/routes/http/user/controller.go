@@ -16,8 +16,9 @@ type UserController interface {
 	Login(c *gin.Context)
 	Logout(c *gin.Context)
 	Register(c *gin.Context)
-	GetUserDetails(c *gin.Context)
+	GetLoggedInUserDetails(c *gin.Context)
 	Authenticate(c *gin.Context)
+	GetDetailsById(c *gin.Context)
 }
 
 type userController struct {
@@ -83,9 +84,14 @@ func (controller *userController) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
 
+type RegisterUserData struct {
+	UserData
+	entity.UserDetails
+}
+
 func (controller *userController) Register(c *gin.Context) {
-	var userData UserData
-	if err := c.BindJSON(&userData); err != nil {
+	var registerUserData RegisterUserData
+	if err := c.BindJSON(&registerUserData); err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
 		return
@@ -98,7 +104,7 @@ func (controller *userController) Register(c *gin.Context) {
 		return
 	}
 
-	userId, err := controller.userService.Register(c.Request.Context(), userData.Username, userData.Password)
+	userId, err := controller.userService.Register(c.Request.Context(), registerUserData.Username, registerUserData.Email, registerUserData.Phone, registerUserData.Password)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Registration failed"})
@@ -169,12 +175,14 @@ func (controller *userController) Authenticate(c *gin.Context) {
 }
 
 type UserDetails struct {
-	Id       string   `json:"Id"`
-	Username string   `json:"Username"`
+	Id       string   `json:"Id" db:"Id"`
+	Username string   `json:"Username" db:"Username"`
+	Email    string   `json:"Email" db:"Email"`
+	Phone    string   `json:"Phone" db:"Phone"`
 	Roles    []string `json:"Roles"`
 }
 
-func (controller *userController) GetUserDetails(c *gin.Context) {
+func (controller *userController) GetLoggedInUserDetails(c *gin.Context) {
 	session := sessions.Default(c)
 	userId := session.Get(userKey)
 	id, ok := userId.(string)
@@ -202,6 +210,35 @@ func (controller *userController) GetUserDetails(c *gin.Context) {
 	userDetails := &UserDetails{
 		Id:       user.Id,
 		Username: user.Username,
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Roles:    user.Roles,
+	}
+
+	c.JSON(http.StatusOK, userDetails)
+}
+
+func (controller *userController) GetDetailsById(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("userId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	user, err := controller.userService.GetById(c.Request.Context(), id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	userDetails := &UserDetails{
+		Id:       user.Id,
+		Username: user.Username,
+		Email:    user.Email,
+		Phone:    user.Phone,
 		Roles:    user.Roles,
 	}
 

@@ -21,11 +21,11 @@ func NewRouter(handler *gin.Engine, l logger.Interface, store sessions.RedisStor
 
 	// Cors
 	handler.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"POST", "GET", "OPTIONS"},
-		AllowHeaders:    []string{"DNT","X-CustomHeader","Keep-Alive","User-Agent","X-Requested-With","If-Modified-Since","Cache-Control","Content-Type"},
-		MaxAge: 12 * time.Hour,
-	  }))
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{"POST", "GET", "OPTIONS"},
+		AllowHeaders: []string{"DNT", "X-CustomHeader", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type"},
+		MaxAge:       12 * time.Hour,
+	}))
 
 	// K8s probe
 	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
@@ -34,9 +34,10 @@ func NewRouter(handler *gin.Engine, l logger.Interface, store sessions.RedisStor
 	handler.Use(sessions.Sessions("s.id", store))
 
 	// Routers
-	handler.GET("/", userController.GetUserDetails)
+	handler.GET("/", userController.GetLoggedInUserDetails)
 	handler.POST("/login", userController.Login)
 	handler.POST("/logout", userController.Logout)
 	handler.POST("/register", userController.Register)
 	handler.GET("/authenticate", userController.Authenticate)
+	handler.GET("/details", userController.GetDetailsById)
 }
