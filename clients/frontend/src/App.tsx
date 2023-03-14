@@ -19,7 +19,7 @@ import { CreateAuction } from "./components/CreateAuction";
 import { CreateBid } from "./components/CreateBid";
 import { Footer } from "./components/Footer";
 import { AdminBoard } from "./components/AdminBoard";
-import { AssignAuction } from "./components/AssignAuctions";
+import { AssignedAuction } from "./components/AssignedAuction";
 import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
 import { Assignments } from "./components/Assignments";
 import { NewAuctions } from "./components/NewAuctions";
@@ -130,7 +130,7 @@ const App: React.FC = () => {
           <Route path="/create-auction" element={<CreateAuction />} />
           <Route path="/new-bid" element={<CreateBid />} />
           <Route path="/admin" element={<AdminBoard />} />
-          <Route path="/assign-auction" element={<AssignAuction />} />
+          <Route path="/assigned-auction" element={<AssignedAuction />} />
           <Route
             path="/update-auction-status"
             element={<UpdateAuctionStatus />}

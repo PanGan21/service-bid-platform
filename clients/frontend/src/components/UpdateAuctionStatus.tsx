@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
 import auction from "../assets/auction.png";
 import { rejectAuction, updateAuctionStatus } from "../services/auction";
+import { getUserDetailsById } from "../services/auth";
 import { FormattedAuction } from "../types/auction";
+import { UserDetails } from "../types/user";
 
 type Props = {};
 
@@ -39,8 +41,16 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
   const { state }: { state: FormattedAuction } = useLocation();
+  const [winnerDetails, setWinnerDetails] = useState<UserDetails | undefined>(
+    undefined
+  );
 
   useEffect(() => {
+    getUserDetailsById(state.WinnerId).then((response) => {
+      if (response.data) {
+        setWinnerDetails(response.data);
+      }
+    });
     if (state.Status === "new") {
       setOptions(newStatusOptions);
     } else if (state.Status === "assigned" || state.Status === "in progress") {
@@ -48,7 +58,7 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
     } else {
       setOptions(allOptions);
     }
-  }, [state.Status]);
+  }, [state.Status, state.WinnerId]);
 
   const handleSubmit = async (formValue: {
     status: string;
@@ -89,11 +99,21 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
           {({ values }) => (
             <Form>
               <div className="form-group">
-                <div style={{ textAlign: "center" }}>
-                  Current status: {state.Status}
+                <div style={{ textAlign: "left" }}>
+                  <b>Current status:</b> {state.Status}
                   <br />
-                  Auction Id: {state.Id}
+                  <b>Auction Id:</b> {state.Id}
+                  <br />
                 </div>
+                {state.WinnerId && (
+                  <div>
+                    <b>Winner Username:</b> {winnerDetails?.Username}
+                    <br />
+                    <b>Winner Email:</b> {winnerDetails?.Email}
+                    <br />
+                    <b>Winner Phone:</b> {winnerDetails?.Phone}
+                  </div>
+                )}
                 <br />
                 <Field as="select" name="status" type="string">
                   <option value="">Select an option</option>

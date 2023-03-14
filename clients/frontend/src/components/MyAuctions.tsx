@@ -8,6 +8,7 @@ import {
   getMyAuctions,
 } from "../services/auction";
 import { FormattedAuction } from "../types/auction";
+import { useNavigate } from "react-router-dom";
 
 const columns: Column[] = [
   {
@@ -50,6 +51,7 @@ export const MyAuctions: React.FC<Props> = () => {
   });
   const [totalAuctions, setTotalAuctions] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setPageData((prevState) => ({
@@ -74,7 +76,10 @@ export const MyAuctions: React.FC<Props> = () => {
     });
   }, [currentPage, totalAuctions]);
 
-  const handleRowSelection = (auction: any) => {};
+  const handleRowSelection = (auction: any) => {
+    const fullAuction = pageData.rowData.find((r) => r.Id === auction.Id);
+    navigate("/assigned-auction", { state: fullAuction });
+  };
 
   return (
     <div>
