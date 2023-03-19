@@ -83,16 +83,19 @@ func (repo *bidRepository) FindSecondMinAmountByAuctionId(ctx context.Context, a
 	defer c.Release()
 
 	const query = `
-		SELECT t.Amount FROM bids t
-		JOIN (
-			SELECT Amount FROM bids
-			WHERE AuctionId = $1
-			ORDER BY Amount
-			OFFSET 1
-			LIMIT 1
-		) s
-		ON t.Amount = s.Amount
-		WHERE t.AuctionId = $1;
+		SELECT COALESCE(
+			(SELECT MIN(amount)
+				FROM bids
+				WHERE auctionId = $1
+				AND amount <> (
+					SELECT MIN(amount)
+					FROM bids
+					WHERE auctionId = $1)
+			),
+			(SELECT amount
+			FROM bids
+			WHERE auctionId = $1)
+		) AS second_best_bid;
 	`
 
 	err = c.QueryRow(ctx, query, auctionId).Scan(&secondMinAmount)
