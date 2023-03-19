@@ -13,4 +13,5 @@ use (
 	./services/auction-service
 	./services/user-service
 	./integration-test
+	./demo
 )
