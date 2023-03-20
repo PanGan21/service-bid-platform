@@ -11,9 +11,10 @@ import (
 	"github.com/PanGan21/pkg/postgres"
 )
 
-func getBasePath(service string) string {
-	var localHost = "localhost"
+var localHost = "localhost"
+var postgresUrl = "postgres://postgres:password@localhost:5432"
 
+func getBasePath(service string) string {
 	apiUrl, found := os.LookupEnv("API_URL")
 	if !found {
 		apiUrl = localHost
@@ -22,14 +23,25 @@ func getBasePath(service string) string {
 	return fmt.Sprintf(`http://%s/%s`, apiUrl, service)
 }
 
+func getPostgresUrl() string {
+	url, found := os.LookupEnv("POSTGRES_URL")
+	if !found {
+		url = postgresUrl
+	}
+
+	return url
+}
+
 func waitUntilAuctionIsAvailableInBidding(attempts int, auctionId int) error {
 	var err error
 	ctx := context.Background()
 
+	biddingDbUrl := getPostgresUrl() + "/bidding"
+
 	for attempts > 0 {
 		var auction entity.Auction
 
-		pg, err := postgres.New("postgres://postgres:password@localhost:5432/bidding", postgres.MaxPoolSize(2))
+		pg, err := postgres.New(biddingDbUrl, postgres.MaxPoolSize(2))
 		if err != nil {
 			fmt.Println("Error connecting with the db", err)
 			return err

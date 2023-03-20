@@ -1,0 +1,20 @@
+# Build stage
+FROM golang:1.20.2-alpine3.16 AS builder
+WORKDIR /pkg
+COPY /pkg .
+COPY ./demo/go.mod ./demo/go.sum /modules/
+WORKDIR /modules
+RUN go mod download
+
+# Run stage
+FROM golang:1.20.2-alpine3.16
+COPY --from=builder /pkg /pkg
+
+COPY ./demo /app
+WORKDIR /app
+
+RUN go env -w CGO_ENABLED=0
+RUN go env -w GOOS=linux
+RUN go env -w GOARCH=amd64
+
+CMD ["go", "run", "."]
