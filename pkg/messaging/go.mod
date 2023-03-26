@@ -1,6 +1,6 @@
 module github.com/PanGan21/pkg/messaging
 
-go 1.18
+go 1.20
 
 require github.com/segmentio/kafka-go v0.4.38
 

@@ -1,3 +1,3 @@
 module github.com/PanGan21/pkg/httpserver
 
-go 1.18
+go 1.20

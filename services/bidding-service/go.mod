@@ -1,6 +1,6 @@
 module github.com/PanGan21/bidding-service
 
-go 1.18
+go 1.20
 
 replace (
 	github.com/PanGan21/pkg/auth => ../../pkg/auth
