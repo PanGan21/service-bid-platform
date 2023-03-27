@@ -21,9 +21,10 @@ type (
 
 	// HTTP -.
 	HTTP struct {
-		Port          string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
-		SessionSecret string `env-required:"true" yaml:"session_secret" env:"SESSION_SECRET"`
-		AuthSecret    string `env-required:"true" yaml:"auth_secret" env:"AUTH_SECRET"`
+		Port          string   `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		SessionSecret string   `env-required:"true" yaml:"session_secret" env:"SESSION_SECRET"`
+		AuthSecret    string   `env-required:"true" yaml:"auth_secret" env:"AUTH_SECRET"`
+		CorsOrigins   []string `env-required:"true" yaml:"cors_origins" env:"CORS_ORIGINS"`
 	}
 
 	// Log -.

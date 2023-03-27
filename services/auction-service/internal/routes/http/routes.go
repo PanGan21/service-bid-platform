@@ -12,14 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *gin.Engine, l logger.Interface, authService auth.AuthService, auctionService service.AuctionService, bidService service.BidService) {
+func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, authService auth.AuthService, auctionService service.AuctionService, bidService service.BidService) {
 	auctionController := auctionController.NewAuctionController(l, auctionService, bidService)
 	// Options
 	handler.Use(gin.Recovery())
 
 	// Cors
 	handler.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"},
+		AllowOrigins: corsOrigins,
 		AllowMethods: []string{"POST", "GET", "OPTIONS"},
 		AllowHeaders: []string{"DNT", "X-CustomHeader", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type"},
 		MaxAge:       12 * time.Hour,

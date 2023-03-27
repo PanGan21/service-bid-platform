@@ -50,7 +50,7 @@ func Run(cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 	handler := gin.Default()
 
-	routes.NewRouter(handler, l, authService, auctionService, bidService)
+	routes.NewRouter(handler, l, cfg.CorsOrigins, authService, auctionService, bidService)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
