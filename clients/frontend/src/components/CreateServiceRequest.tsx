@@ -9,7 +9,7 @@ import { createAuction } from "../services/auction";
 
 type Props = {};
 
-export const CreateAuction: React.FC<Props> = () => {
+export const CreateServiceRequest: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -69,7 +69,7 @@ export const CreateAuction: React.FC<Props> = () => {
 
     try {
       await createAuction(auction);
-      navigate("/open-auctions");
+      navigate("/home");
       window.location.reload();
     } catch (error: any) {
       const resMessage =

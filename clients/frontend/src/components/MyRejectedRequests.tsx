@@ -43,7 +43,7 @@ const columns: Column[] = [
 
 type Props = {};
 
-export const MyRejectedAuctions: React.FC<Props> = () => {
+export const MyRejectedRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
     rowData: FormattedAuction[];
     isLoading: boolean;

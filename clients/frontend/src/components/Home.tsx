@@ -8,10 +8,12 @@ import { MyBids } from "./MyBids";
 import { ProfileImageBadge } from "./ProfileImageBadge";
 import { countOwnAssignments } from "../services/auction";
 import { useNavigate } from "react-router-dom";
-import { MyRejectedAuctions } from "./MyRejectedAuctions";
+import { MyRejectedRequests } from "./MyRejectedRequests";
+import { MyServiceRequests } from "./MyServiceRequests";
 
 export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
+  const [isMyServiceRequestsOpen, setMyServiceRequestsOpen] = useState(false);
   const [isMyAuctionsOpen, setMyAuctionsOpen] = useState(false);
   const [isMyBidsOpen, setMyBidsOpen] = useState(false);
   const [isRejectedAuctionsOpen, setIsRejectedAuctionsOpen] = useState(false);
@@ -42,6 +44,10 @@ export const Home: React.FC = () => {
       </div>
     );
   }
+
+  const toggleMyServiceRequests = () => {
+    setMyServiceRequestsOpen(!isMyServiceRequestsOpen);
+  };
 
   const toggleMyAuctions = () => {
     setMyAuctionsOpen(!isMyAuctionsOpen);
@@ -97,6 +103,20 @@ export const Home: React.FC = () => {
         </div>
       </div>
       <br />
+      <div onClick={toggleMyServiceRequests} style={{ cursor: "pointer" }}>
+        <img
+          style={{ width: "50px", height: "60px" }}
+          src={auction}
+          alt="auctions-img"
+        />
+        <span>
+          <strong>MyServiceRequests</strong>
+        </span>
+      </div>
+      <div style={{ display: isMyServiceRequestsOpen ? "block" : "none" }}>
+        <MyServiceRequests />
+      </div>
+      <br />
       <div onClick={toggleMyAuctions} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
@@ -132,11 +152,11 @@ export const Home: React.FC = () => {
           alt="profile-img"
         />
         <span>
-          <strong>My Rejected Auctions</strong>
+          <strong>My Rejected Requests</strong>
         </span>
       </div>
       <div style={{ display: isRejectedAuctionsOpen ? "block" : "none" }}>
-        <MyRejectedAuctions />
+        <MyRejectedRequests />
       </div>
     </div>
   );

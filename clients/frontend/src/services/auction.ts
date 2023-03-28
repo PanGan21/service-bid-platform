@@ -21,6 +21,19 @@ export const countMyAuctions = async () => {
   return axios.get(API_URL + "/auction/count/own", { withCredentials: true });
 };
 
+export const getMyServiceRequests = async (limit: number, page: number) => {
+  return axios.get(
+    API_URL + `/auction/own?limit=${limit}&page=${page}&asc=false`,
+    {
+      withCredentials: true,
+    }
+  );
+};
+
+export const countMyServiceRequests = async () => {
+  return axios.get(API_URL + "/auction/count/own", { withCredentials: true });
+};
+
 export const getOpenPastDeadlineAuctions = async (
   limit: number,
   page: number
@@ -115,10 +128,11 @@ export const rejectAuction = async (
 };
 
 export const getOwnRejectedAuctions = async (limit: number, page: number) => {
-  return axios.get( API_URL +
-    `/auction/own/rejected?limit=${limit}&page=${page}&asc=false`,
-  { withCredentials: true })
-}
+  return axios.get(
+    API_URL + `/auction/own/rejected?limit=${limit}&page=${page}&asc=false`,
+    { withCredentials: true }
+  );
+};
 
 export const countOwnRejectedAuctions = async () => {
   return axios.get(API_URL + "/auction/own/rejected/count", {

@@ -33,8 +33,8 @@ var auctionApiPath = getBasePath(auctionService)
 var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
-	fmt.Println("Sleep for 40 seconds to allow services and kafka stabilize")
-	time.Sleep(40 * time.Second)
+	fmt.Println("Sleep for 50 seconds to allow services and kafka stabilize")
+	time.Sleep(50 * time.Second)
 	fmt.Println("Start integration tests")
 
 	err := healthCheck(Attempts, userService)
