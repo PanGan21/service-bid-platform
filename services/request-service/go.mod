@@ -19,7 +19,6 @@ require (
 	github.com/PanGan21/pkg/httpserver v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/logger v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/messaging v0.0.0-00010101000000-000000000000
-	github.com/PanGan21/pkg/pagination v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/postgres v0.0.0-00010101000000-000000000000
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0

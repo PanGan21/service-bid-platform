@@ -263,7 +263,7 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CREATE_TOPICS: "auction-created:2:1,bid-created:2:1,auction-updated:2:1,request-created:2:1"
+      KAFKA_CREATE_TOPICS: "auction-created:2:1,bid-created:2:1,auction-updated:2:1,request-created:2:1,request-updated:2:1"
       KAFKA_CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000 # flush faster than normal
 
 volumes:

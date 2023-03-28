@@ -4,4 +4,5 @@ import "github.com/PanGan21/pkg/entity"
 
 type RequestEvents interface {
 	PublishRequestCreated(request *entity.Request) error
+	PublishRequestUpdated(auction *entity.Request) error
 }

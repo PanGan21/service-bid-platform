@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
@@ -12,6 +13,7 @@ import (
 
 type RequestController interface {
 	Create(c *gin.Context)
+	RejectRequest(c *gin.Context)
 }
 
 type requestController struct {
@@ -50,6 +52,36 @@ func (controller *requestController) Create(c *gin.Context) {
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, request)
+}
+
+type RejectRequestData struct {
+	RejectionReason string
+}
+
+func (controller *requestController) RejectRequest(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("requestId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	var rejectRequestData RejectRequestData
+	if err := c.BindJSON(&rejectRequestData); err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
+		return
+	}
+
+	request, err := controller.requestService.RejectRequest(context.Background(), rejectRequestData.RejectionReason, id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

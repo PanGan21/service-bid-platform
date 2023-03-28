@@ -58,3 +58,24 @@ func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.
 
 	return request, nil
 }
+
+func (repo *requestRepository) UpdateStatusAndRejectionReasonById(ctx context.Context, id int, status entity.RequestStatus, rejectionReason string) (entity.Request, error) {
+	var request entity.Request
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return request, err
+	}
+	defer c.Release()
+
+	const query = `
+		UPDATE requests SET Status=$1, RejectionReason=$2 WHERE Id=$3 RETURNING *;
+	`
+
+	err = c.QueryRow(ctx, query, status, rejectionReason, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.RejectionReason)
+	if err != nil {
+		return request, fmt.Errorf("RequestRepo - UpdateStatusAndRejectionReasonById - c.QueryRow: %w", err)
+	}
+
+	return request, nil
+}

@@ -11,6 +11,7 @@ import (
 
 type RequestService interface {
 	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
+	RejectRequest(ctx context.Context, rejectionReason string, id int) (entity.Request, error)
 }
 
 type requestService struct {
@@ -44,4 +45,18 @@ func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, 
 	}
 
 	return newRequest, nil
+}
+
+func (s *requestService) RejectRequest(ctx context.Context, rejectionReason string, id int) (entity.Request, error) {
+	request, err := s.requestRepo.UpdateStatusAndRejectionReasonById(ctx, id, entity.RejectedRequest, rejectionReason)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - RejectRequest - s.requestRepo.UpdateStatusAndRejectionReason: %w", err)
+	}
+
+	err = s.requestEvents.PublishRequestUpdated(&request)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - RejectRequest - s.requestEvents.PublishRequestUpdated: %w", err)
+	}
+
+	return request, nil
 }
