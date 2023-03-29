@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/PanGan21/pkg/entity"
+	"github.com/PanGan21/pkg/pagination"
 	requestEvents "github.com/PanGan21/request-service/internal/events/request"
 	requestRepo "github.com/PanGan21/request-service/internal/repository/request"
 )
@@ -12,6 +13,10 @@ import (
 type RequestService interface {
 	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
 	RejectRequest(ctx context.Context, rejectionReason string, id int) (entity.Request, error)
+	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
+	GetManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.Request, error)
+	CountManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string) (int, error)
 }
 
 type requestService struct {
@@ -59,4 +64,40 @@ func (s *requestService) RejectRequest(ctx context.Context, rejectionReason stri
 	}
 
 	return request, nil
+}
+
+func (s *requestService) GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	requests, err := s.requestRepo.GetAllByStatus(ctx, status, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("RequestService - GetAllByStatus - s.requestRepo.GetAllByStatus: %w", err)
+	}
+
+	return requests, nil
+}
+
+func (s *requestService) CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error) {
+	count, err := s.requestRepo.CountAllByStatus(ctx, status)
+	if err != nil {
+		return count, fmt.Errorf("RequestService - CountAllByStatus - s.requestRepo.CountAllByStatus: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *requestService) GetManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.Request, error) {
+	requests, err := s.requestRepo.GetManyByStatusByUserId(ctx, status, userId, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("RequestService - GetOwnByStatus - s.requestRepo.GetOwnByStatus: %w", err)
+	}
+
+	return requests, nil
+}
+
+func (s *requestService) CountManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string) (int, error) {
+	count, err := s.requestRepo.CountManyByStatusByUserId(ctx, status, userId)
+	if err != nil {
+		return count, fmt.Errorf("RequestService - CountManyByStatusByUserId - s.requestRepo.CountManyByStatusByUserId: %w", err)
+	}
+
+	return count, nil
 }

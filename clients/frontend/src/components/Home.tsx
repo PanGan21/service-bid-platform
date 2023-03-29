@@ -102,7 +102,6 @@ export const Home: React.FC = () => {
           )}
         </div>
       </div>
-      <br />
       <div onClick={toggleMyServiceRequests} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}

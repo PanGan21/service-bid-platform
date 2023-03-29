@@ -33,10 +33,3 @@ export interface FormattedAuction {
 export interface ExtendedFormattedAuction extends FormattedAuction {
   BidsCount: number;
 }
-
-export interface NewAuction {
-  Title: Auction["Title"];
-  Postcode: Auction["Postcode"];
-  Info: Auction["Info"];
-  Deadline: Auction["Deadline"];
-}

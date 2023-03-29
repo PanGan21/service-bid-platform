@@ -4,8 +4,8 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import auction from "../assets/auction.png";
 
-import { NewAuction } from "../types/auction";
-import { createAuction } from "../services/auction";
+import { NewRequest } from "../types/request";
+import { createRequest } from "../services/request";
 
 type Props = {};
 
@@ -57,7 +57,7 @@ export const CreateServiceRequest: React.FC<Props> = () => {
   }) => {
     const { title, postcode, info, deadline } = formValue;
 
-    const auction: NewAuction = {
+    const auction: NewRequest = {
       Title: title,
       Postcode: postcode,
       Info: info,
@@ -68,7 +68,7 @@ export const CreateServiceRequest: React.FC<Props> = () => {
     setLoading(true);
 
     try {
-      await createAuction(auction);
+      await createRequest(auction);
       navigate("/home");
       window.location.reload();
     } catch (error: any) {

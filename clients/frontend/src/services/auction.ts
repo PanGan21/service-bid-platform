@@ -4,7 +4,6 @@ import {
   ExtendedFormattedAuction,
   ExtendedAuction,
   FormattedAuction,
-  NewAuction,
   Auction,
 } from "../types/auction";
 
@@ -18,19 +17,6 @@ export const getMyAuctions = async (limit: number, page: number) => {
 };
 
 export const countMyAuctions = async () => {
-  return axios.get(API_URL + "/auction/count/own", { withCredentials: true });
-};
-
-export const getMyServiceRequests = async (limit: number, page: number) => {
-  return axios.get(
-    API_URL + `/auction/own?limit=${limit}&page=${page}&asc=false`,
-    {
-      withCredentials: true,
-    }
-  );
-};
-
-export const countMyServiceRequests = async () => {
   return axios.get(API_URL + "/auction/count/own", { withCredentials: true });
 };
 
@@ -92,12 +78,6 @@ export const updateAuctionStatus = async (
     },
     { withCredentials: true }
   );
-};
-
-export const createAuction = async (newAuction: NewAuction) => {
-  return axios.post(API_URL + "/auction/", newAuction, {
-    withCredentials: true,
-  });
 };
 
 export const getOwnAssignments = async (limit: number, page: number) => {

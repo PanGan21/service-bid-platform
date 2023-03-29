@@ -33,6 +33,10 @@ func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, au
 
 	// Routers
 	handler.POST("/", requestController.Create)
+	handler.GET("/status", requestController.GetByStatus)
+	handler.GET("/status/count", requestController.CountByStatus)
+	handler.GET("/status/own", requestController.GetOwnByStatus)
+	handler.GET("/status/own/count", requestController.CountOwnByStatus)
 
 	requireAdminRole := []string{"ADMIN"}
 	handler.POST("/reject", auth.AuthorizeEndpoint(requireAdminRole...), requestController.RejectRequest)

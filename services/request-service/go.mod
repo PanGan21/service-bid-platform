@@ -19,7 +19,9 @@ require (
 	github.com/PanGan21/pkg/httpserver v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/logger v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/messaging v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/pagination v0.0.0-00010101000000-000000000000
 	github.com/PanGan21/pkg/postgres v0.0.0-00010101000000-000000000000
+	github.com/PanGan21/pkg/utils v0.0.0-00010101000000-000000000000
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/ilyakaznacheev/cleanenv v1.4.2
@@ -28,7 +30,6 @@ require (
 require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
-	github.com/PanGan21/pkg/utils v0.0.0-00010101000000-000000000000 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect

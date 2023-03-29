@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { AppTable, Column } from "../common/table";
 import { Pagination } from "../common/pagination";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
+import { FormattedRequest } from "../types/request";
 import {
-  countMyServiceRequests,
-  formatAuctions,
-  getMyServiceRequests,
-} from "../services/auction";
-import { FormattedAuction } from "../types/auction";
+  countMyRequests,
+  formatRequests,
+  getMyRequests,
+} from "../services/request";
 
 const columns: Column[] = [
   {
@@ -40,7 +40,7 @@ type Props = {};
 
 export const MyServiceRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
-    rowData: FormattedAuction[];
+    rowData: FormattedRequest[];
     isLoading: boolean;
     totalServiceRequests: number;
   }>({
@@ -58,17 +58,17 @@ export const MyServiceRequests: React.FC<Props> = () => {
       isLoading: true,
     }));
 
-    countMyServiceRequests().then((response) => {
+    countMyRequests().then((response) => {
       if (response.data && response.data) {
         setTotalServiceRequests(response.data);
       }
     });
 
-    getMyServiceRequests(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
-      const auctions = response.data || [];
+    getMyRequests(ROWS_PER_TABLE_PAGE, currentPage).then((response) => {
+      const requests = response.data || [];
       setPageData({
         isLoading: false,
-        rowData: formatAuctions(auctions),
+        rowData: formatRequests(requests),
         totalServiceRequests: totalServiceRequests,
       });
     });
