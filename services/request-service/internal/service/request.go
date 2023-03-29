@@ -17,6 +17,7 @@ type RequestService interface {
 	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
 	GetManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string) (int, error)
+	ApproveRequestById(ctx context.Context, id int) (entity.Request, error)
 }
 
 type requestService struct {
@@ -44,11 +45,6 @@ func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, 
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.FindOneById: %w", err)
 	}
 
-	err = s.requestEvents.PublishRequestCreated(&newRequest)
-	if err != nil {
-		return newRequest, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestCreated: %w", err)
-	}
-
 	return newRequest, nil
 }
 
@@ -56,11 +52,6 @@ func (s *requestService) RejectRequest(ctx context.Context, rejectionReason stri
 	request, err := s.requestRepo.UpdateStatusAndRejectionReasonById(ctx, id, entity.RejectedRequest, rejectionReason)
 	if err != nil {
 		return request, fmt.Errorf("RequestService - RejectRequest - s.requestRepo.UpdateStatusAndRejectionReason: %w", err)
-	}
-
-	err = s.requestEvents.PublishRequestUpdated(&request)
-	if err != nil {
-		return request, fmt.Errorf("RequestService - RejectRequest - s.requestEvents.PublishRequestUpdated: %w", err)
 	}
 
 	return request, nil
@@ -100,4 +91,13 @@ func (s *requestService) CountManyByStatusByUserId(ctx context.Context, status e
 	}
 
 	return count, nil
+}
+
+func (s *requestService) ApproveRequestById(ctx context.Context, id int) (entity.Request, error) {
+	request, err := s.requestRepo.UpdateStatusById(ctx, id, entity.ApprovedRequest)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - ApproveRequestById - s.requestRepo.UpdateStatusById: %w", err)
+	}
+
+	return request, nil
 }

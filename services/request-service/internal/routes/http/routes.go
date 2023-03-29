@@ -40,4 +40,5 @@ func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, au
 
 	requireAdminRole := []string{"ADMIN"}
 	handler.POST("/reject", auth.AuthorizeEndpoint(requireAdminRole...), requestController.RejectRequest)
+	handler.POST("/approve", auth.AuthorizeEndpoint(requireAdminRole...), requestController.Approve)
 }

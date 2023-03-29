@@ -81,6 +81,27 @@ func (repo *requestRepository) UpdateStatusAndRejectionReasonById(ctx context.Co
 	return request, nil
 }
 
+func (repo *requestRepository) UpdateStatusById(ctx context.Context, id int, status entity.RequestStatus) (entity.Request, error) {
+	var request entity.Request
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return request, err
+	}
+	defer c.Release()
+
+	const query = `
+		UPDATE requests SET Status=$1 WHERE Id=$2 RETURNING *;
+	`
+
+	err = c.QueryRow(ctx, query, status, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.RejectionReason)
+	if err != nil {
+		return request, fmt.Errorf("RequestRepo - UpdateStatusById - c.QueryRow: %w", err)
+	}
+
+	return request, nil
+}
+
 func (repo *requestRepository) GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error) {
 	var requests []entity.Request
 

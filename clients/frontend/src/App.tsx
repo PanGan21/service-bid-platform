@@ -20,9 +20,10 @@ import { CreateBid } from "./components/CreateBid";
 import { Footer } from "./components/Footer";
 import { AdminBoard } from "./components/AdminBoard";
 import { AssignedAuction } from "./components/AssignedAuction";
-import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
 import { Assignments } from "./components/Assignments";
 import { NewServiceRequests } from "./components/NewServiceRequests";
+import { UpdateRequestStatus } from "./components/UpdateRequestStatus";
+import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
 
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
@@ -140,6 +141,10 @@ const App: React.FC = () => {
           <Route
             path="/update-auction-status"
             element={<UpdateAuctionStatus />}
+          />
+          <Route
+            path="/update-request-status"
+            element={<UpdateRequestStatus />}
           />
           <Route path="/assignments" element={<Assignments />} />
         </Routes>

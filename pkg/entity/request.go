@@ -15,5 +15,6 @@ type RequestStatus string
 
 const (
 	NewRequest      RequestStatus = "new"
+	ApprovedRequest RequestStatus = "approved"
 	RejectedRequest RequestStatus = "rejected"
 )

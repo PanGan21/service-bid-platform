@@ -1,11 +1,9 @@
 import { Formik, Form, Field } from "formik";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
 import auction from "../assets/auction.png";
-import { rejectAuction, updateAuctionStatus } from "../services/auction";
-import { getUserDetailsById } from "../services/auth";
-import { FormattedAuction } from "../types/auction";
-import { UserDetails } from "../types/user";
+import { approveRequest, rejectRequest } from "../services/request";
+import { FormattedRequest } from "../types/request";
 
 type Props = {};
 
@@ -14,21 +12,21 @@ type Option = {
   label: string;
 };
 
-const openStatusOptions: Option[] = [
-  { value: "closed", label: "closed" },
-  { value: "in progress", label: "in progress" },
+const options: Option[] = [
+  { value: "approved", label: "approved" },
+  { value: "rejected", label: "rejected" },
 ];
 
-const newStatusOptions: Option[] = [
-  { value: "open", label: "open" },
-  { value: "rejected", label: "reject" },
-];
+// const newStatusOptions: Option[] = [
+//   { value: "open", label: "open" },
+//   { value: "rejected", label: "reject" },
+// ];
 
-const allOptions: Option[] = [...openStatusOptions, ...newStatusOptions];
+// const allOptions: Option[] = [...openStatusOptions, ...newStatusOptions];
 
-export const UpdateAuctionStatus: React.FC<Props> = () => {
+export const UpdateRequestStatus: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
-  const [options, setOptions] = useState<Option[]>(openStatusOptions);
+  // const [options, setOptions] = useState<Option[]>(options);
 
   const initialValues: {
     status: string;
@@ -40,25 +38,17 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
-  const { state }: { state: FormattedAuction } = useLocation();
-  const [winnerDetails, setWinnerDetails] = useState<UserDetails | undefined>(
-    undefined
-  );
+  const { state }: { state: FormattedRequest } = useLocation();
 
-  useEffect(() => {
-    getUserDetailsById(state.WinnerId).then((response) => {
-      if (response.data) {
-        setWinnerDetails(response.data);
-      }
-    });
-    if (state.Status === "new") {
-      setOptions(newStatusOptions);
-    } else if (state.Status === "assigned" || state.Status === "in progress") {
-      setOptions(openStatusOptions);
-    } else {
-      setOptions(allOptions);
-    }
-  }, [state.Status, state.WinnerId]);
+  // useEffect(() => {
+  //   if (state.Status === "new") {
+  //     setOptions(newStatusOptions);
+  //   } else if (state.Status === "assigned" || state.Status === "in progress") {
+  //     setOptions(openStatusOptions);
+  //   } else {
+  //     setOptions(allOptions);
+  //   }
+  // }, [state.Status]);
 
   const handleSubmit = async (formValue: {
     status: string;
@@ -71,12 +61,12 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
 
     try {
       if (status === "rejected") {
-        await rejectAuction(state.Id, rejectionReason);
+        await rejectRequest(state.Id, rejectionReason);
       } else {
-        await updateAuctionStatus(state.Id, status);
+        await approveRequest(state.Id);
       }
 
-      navigate("/home");
+      navigate("/new-service-requests");
       window.location.reload();
     } catch (error: any) {
       const resMessage =
@@ -102,18 +92,9 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
                 <div style={{ textAlign: "left" }}>
                   <b>Current status:</b> {state.Status}
                   <br />
-                  <b>Auction Id:</b> {state.Id}
+                  <b>Request Id:</b> {state.Id}
                   <br />
                 </div>
-                {state.WinnerId && (
-                  <div>
-                    <b>Winner Username:</b> {winnerDetails?.Username}
-                    <br />
-                    <b>Winner Email:</b> {winnerDetails?.Email}
-                    <br />
-                    <b>Winner Phone:</b> {winnerDetails?.Phone}
-                  </div>
-                )}
                 <br />
                 <Field as="select" name="status" type="string">
                   <option value="">Select an option</option>

@@ -20,6 +20,7 @@ type RequestController interface {
 	CountByStatus(c *gin.Context)
 	GetOwnByStatus(c *gin.Context)
 	CountOwnByStatus(c *gin.Context)
+	Approve(c *gin.Context)
 }
 
 type requestController struct {
@@ -192,4 +193,23 @@ func (controller *requestController) CountOwnByStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, count)
+}
+
+func (controller *requestController) Approve(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("requestId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	request, err := controller.requestService.ApproveRequestById(context.Background(), id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, request)
 }

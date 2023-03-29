@@ -21,6 +21,14 @@ export const rejectRequest = async (
   );
 };
 
+export const approveRequest = async (requestId: string) => {
+  return axios.post(
+    API_URL + `/request/approve?requestId=${requestId}`,
+    {},
+    { withCredentials: true }
+  );
+};
+
 export const getMyRequests = async (limit: number, page: number) => {
   return axios.get(
     API_URL +
