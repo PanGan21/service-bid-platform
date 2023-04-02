@@ -40,64 +40,59 @@ func main() {
 		log.Fatal(err)
 	}
 
-	yesterdayAuctionNew, err := createAuction(resident1Session, data.YesterdatAuctionNew)
+	_, err = createRequest(resident1Session, data.YesterdayRequestNew)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = waitUntilAuctionIsAvailableInBidding(attempts, yesterdayAuctionNew.Id)
+	_, err = createRequest(resident1Session, data.TwoDaysAgoRequestNew)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	twoDaysAgoAuctionNew, err := createAuction(resident1Session, data.TwoDaysAgoAuctionNew)
+	twoDaysAgoRequestOpen, err := createRequest(resident2Session, data.TwoDaysAgoRequestOpen)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = waitUntilAuctionIsAvailableInBidding(attempts, twoDaysAgoAuctionNew.Id)
+	twoDaysAgoRequestAssigned, err := createRequest(resident2Session, data.TwoDaysAgoRequestAssigned)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	twoDaysAgoAuctionOpen, err := createAuction(resident2Session, data.TwoDaysAgoAuctionOpen)
+	err = approveRequest(superAdminSession, fmt.Sprint(twoDaysAgoRequestOpen.Id))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = waitUntilAuctionIsAvailableInBidding(attempts, twoDaysAgoAuctionOpen.Id)
+	err = approveRequest(superAdminSession, fmt.Sprint(twoDaysAgoRequestAssigned.Id))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	twoDaysAgoAuctionAssigned, err := createAuction(resident2Session, data.TwoDaysAgoAuctionAssigned)
+	err = waitUntilAuctionIsAvailableInAuction(attempts, twoDaysAgoRequestOpen.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = waitUntilAuctionIsAvailableInBidding(attempts, twoDaysAgoAuctionAssigned.Id)
+	err = waitUntilAuctionIsAvailableInBidding(attempts, twoDaysAgoRequestOpen.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = updateAuctionStatusToOpen(superAdminSession, fmt.Sprint(twoDaysAgoAuctionOpen.Id))
+	err = waitUntilAuctionIsAvailableInAuction(attempts, twoDaysAgoRequestAssigned.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = updateAuctionStatusToOpen(superAdminSession, fmt.Sprint(twoDaysAgoAuctionAssigned.Id))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = waitUntilAuctionIsOpenToBids(attempts, twoDaysAgoAuctionAssigned.Id)
+	err = waitUntilAuctionIsAvailableInBidding(attempts, twoDaysAgoRequestAssigned.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	bid100 := data.BidData{
 		Amount:    100.0,
-		AuctionId: twoDaysAgoAuctionAssigned.Id,
+		AuctionId: twoDaysAgoRequestAssigned.Id,
 	}
 	bid_100, err := createBid(bidder1Session, bid100)
 	if err != nil {
@@ -111,7 +106,7 @@ func main() {
 
 	bid200 := data.BidData{
 		Amount:    200.0,
-		AuctionId: twoDaysAgoAuctionAssigned.Id,
+		AuctionId: twoDaysAgoRequestAssigned.Id,
 	}
 	bid_200, err := createBid(bidder2Session, bid200)
 	if err != nil {
@@ -125,7 +120,7 @@ func main() {
 
 	bid300 := data.BidData{
 		Amount:    300.0,
-		AuctionId: twoDaysAgoAuctionAssigned.Id,
+		AuctionId: twoDaysAgoRequestAssigned.Id,
 	}
 	bid_300, err := createBid(bidder3Session, bid300)
 	if err != nil {
@@ -137,7 +132,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = updateAuctionWinner(superAdminSession, fmt.Sprint(twoDaysAgoAuctionAssigned.Id))
+	err = updateAuctionWinner(superAdminSession, fmt.Sprint(twoDaysAgoRequestAssigned.Id))
 	if err != nil {
 		log.Fatal(err)
 	}

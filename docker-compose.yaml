@@ -212,19 +212,19 @@ services:
       - kafka
     restart: on-failure
 
-  # demo:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.demo
-  #   container_name: demo
-  #   image: demo
-  #   environment:
-  #     API_URL: "api-gateway"
-  #     POSTGRES_URL: "postgres://postgres:password@postgres:5432"
-  #   depends_on:
-  #     integration:
-  #       condition: service_completed_successfully
-  #   restart: on-failure
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile.demo
+    container_name: demo
+    image: demo
+    environment:
+      API_URL: "api-gateway"
+      POSTGRES_URL: "postgres://postgres:password@postgres:5432"
+    depends_on:
+      integration:
+        condition: service_completed_successfully
+    restart: on-failure
 
   api-gateway:
     image: nginx
