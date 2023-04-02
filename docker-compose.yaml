@@ -67,6 +67,28 @@ services:
       - kafka
     restart: unless-stopped # Change for 'always' in production environment
 
+  request-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        service_name: request-service
+    container_name: request-service
+    image: request-service
+    environment:
+      APP_PORT: 8000
+      APP_DEBUG: "true"
+      APP_NAME: request-service
+      PG_URL: "postgres://postgres:password@postgres:5432/request"
+      CORS_ORIGINS: "http://localhost:3000,https://localhost:3000"
+    ports:
+      - "8003:8000"
+    depends_on:
+      - request-migration
+      - zookeeper
+      - kafka
+    restart: unless-stopped # Change for 'always' in production environment
+
   user-migration:
     image: migrate/migrate
     container_name: user-migration
@@ -78,6 +100,23 @@ services:
         "./migrations",
         "-database",
         "postgres://postgres:password@postgres:5432/user?sslmode=disable",
+        "up",
+      ]
+    depends_on:
+      - postgres
+    restart: on-failure
+
+  request-migration:
+    image: migrate/migrate
+    container_name: request-migration
+    volumes:
+      - ./services/request-service/migrations/:/migrations
+    command:
+      [
+        "-path",
+        "./migrations",
+        "-database",
+        "postgres://postgres:password@postgres:5432/request?sslmode=disable",
         "up",
       ]
     depends_on:
@@ -125,7 +164,7 @@ services:
       - ./scripts/db:/docker-entrypoint-initdb.d
       - pg-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_MULTIPLE_DATABASES=auction,bidding
+      - POSTGRES_MULTIPLE_DATABASES=auction,bidding,request
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=user
@@ -165,8 +204,10 @@ services:
       - auction-service
       - bidding-service
       - user-migration
+      - request-service
       - auction-migration
       - bidding-migration
+      - request-migration
       - zookeeper
       - kafka
     restart: on-failure
@@ -196,7 +237,6 @@ services:
       - ./api-gateway/api_proxy.conf:/etc/nginx/api_proxy.conf
       - ./ssl/cert.pem:/etc/ssl/cert.pem
       - ./ssl/key.pem:/etc/ssl/key.pem
-      - ./api-gateway/template-variables.conf:/etc/nginx/templates/10-variables.conf.template:ro
     environment:
       HTTPS: true
     restart: on-failure
@@ -204,6 +244,7 @@ services:
       - user-service
       - auction-service
       - bidding-service
+      - request-service
       - zookeeper
       - kafka
 
@@ -222,7 +263,7 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CREATE_TOPICS: "auction-created:2:1,bid-created:2:1,auction-updated:2:1"
+      KAFKA_CREATE_TOPICS: "request-approved:1:1,bid-created:1:1,auction-updated:1:1"
       KAFKA_CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000 # flush faster than normal
 
 volumes:

@@ -4,7 +4,6 @@ import {
   ExtendedFormattedAuction,
   ExtendedAuction,
   FormattedAuction,
-  NewAuction,
   Auction,
 } from "../types/auction";
 
@@ -81,12 +80,6 @@ export const updateAuctionStatus = async (
   );
 };
 
-export const createAuction = async (newAuction: NewAuction) => {
-  return axios.post(API_URL + "/auction/", newAuction, {
-    withCredentials: true,
-  });
-};
-
 export const getOwnAssignments = async (limit: number, page: number) => {
   return axios.get(
     API_URL +
@@ -115,10 +108,11 @@ export const rejectAuction = async (
 };
 
 export const getOwnRejectedAuctions = async (limit: number, page: number) => {
-  return axios.get( API_URL +
-    `/auction/own/rejected?limit=${limit}&page=${page}&asc=false`,
-  { withCredentials: true })
-}
+  return axios.get(
+    API_URL + `/auction/own/rejected?limit=${limit}&page=${page}&asc=false`,
+    { withCredentials: true }
+  );
+};
 
 export const countOwnRejectedAuctions = async () => {
   return axios.get(API_URL + "/auction/own/rejected/count", {

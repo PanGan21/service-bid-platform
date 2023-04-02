@@ -158,13 +158,52 @@ func waitUntilAuctionIsAvailableInBidding(attempts int, auctionId int) error {
 			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
 		if err == nil && auction.Id == auctionId {
-			fmt.Println("Auction available!", auction)
+			fmt.Println("Auction available in bidding service!", auction)
 			return nil
 		}
 
-		log.Printf("Integration tests: auction with id %d is not available, attempts left: %d", auctionId, attempts)
+		log.Printf("Integration tests: auction with id %d is not available in bidding service, attempts left: %d", auctionId, attempts)
+		time.Sleep(time.Second)
+
+		attempts--
+
+	}
+
+	return err
+}
+
+func waitUntilAuctionIsAvailableInAuction(attempts int, auctionId int) error {
+	var err error
+	ctx := context.Background()
+
+	for attempts > 0 {
+		var auction entity.Auction
+
+		pg, err := postgres.New("postgres://postgres:password@postgres:5432/auction", postgres.MaxPoolSize(2))
+		if err != nil {
+			fmt.Println("Error connecting with the db", err)
+			return err
+		}
+
+		c, err := pg.Pool.Acquire(ctx)
+		if err != nil {
+			return err
+		}
+		defer c.Release()
+
+		const query = `
+			SELECT * FROM auctions WHERE Id=$1;
+		`
+
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
+		if err == nil && auction.Id == auctionId {
+			fmt.Println("Auction available in auction service!", auction)
+			return nil
+		}
+
+		log.Printf("Integration tests: auction with id %d is not available in auction service, attempts left: %d", auctionId, attempts)
 		time.Sleep(time.Second)
 
 		attempts--
@@ -199,11 +238,11 @@ func waitUntilBidIsAvailableInAuction(attempts int, bidId int) error {
 
 		err = c.QueryRow(ctx, query, bidId).Scan(&bid.Id, &bid.Amount, &bid.CreatorId, &bid.AuctionId)
 		if err == nil && bid.Id == bidId {
-			fmt.Println("Bid available!", bid)
+			fmt.Println("Bid available in auction service!", bid)
 			return nil
 		}
 
-		log.Printf("Integration tests: bid with id %d is not available, attempts left: %d", bidId, attempts)
+		log.Printf("Integration tests: bid with id %d is not available in auction service, attempts left: %d", bidId, attempts)
 		time.Sleep(time.Second)
 
 		attempts--
@@ -236,7 +275,7 @@ func waitUntilAuctionIsOpenToBids(attempts int, auctionId int) error {
 			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
 		if err == nil && auction.Id == auctionId && auction.Status == entity.Open {
 			fmt.Println("Auction available and open to bids!", auction)
 			return nil

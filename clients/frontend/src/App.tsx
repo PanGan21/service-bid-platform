@@ -15,14 +15,15 @@ import { User } from "./types/user";
 import { Login } from "./components/Login";
 import { Home } from "./components/Home";
 import { OpenAuctions } from "./components/OpenAuctions";
-import { CreateAuction } from "./components/CreateAuction";
+import { CreateServiceRequest } from "./components/CreateServiceRequest";
 import { CreateBid } from "./components/CreateBid";
 import { Footer } from "./components/Footer";
 import { AdminBoard } from "./components/AdminBoard";
 import { AssignedAuction } from "./components/AssignedAuction";
-import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
 import { Assignments } from "./components/Assignments";
-import { NewAuctions } from "./components/NewAuctions";
+import { NewServiceRequests } from "./components/NewServiceRequests";
+import { UpdateRequestStatus } from "./components/UpdateRequestStatus";
+import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
 
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
@@ -79,8 +80,8 @@ const App: React.FC = () => {
           )}
           {allowRoles([showAdminBoard]) && (
             <li className="nav-item">
-              <Link to={"/new-auctions"} className="nav-link">
-                New Auctions
+              <Link to={"/new-service-requests"} className="nav-link">
+                New Service Requests
               </Link>
             </li>
           )}
@@ -97,8 +98,8 @@ const App: React.FC = () => {
             )}
             {allowRoles([showResidentBoard, showAdminBoard]) && (
               <li className="nav-item">
-                <a href="/create-auction" className="nav-link">
-                  Create Auction
+                <a href="/create-service-request" className="nav-link">
+                  Create Service Request
                 </a>
               </li>
             )}
@@ -126,14 +127,24 @@ const App: React.FC = () => {
 
           <Route path="/login" element={<Login />} />
           <Route path="/open-auctions" element={<OpenAuctions />} />
-          <Route path="/new-auctions" element={<NewAuctions />} />
-          <Route path="/create-auction" element={<CreateAuction />} />
+          <Route
+            path="/new-service-requests"
+            element={<NewServiceRequests />}
+          />
+          <Route
+            path="/create-service-request"
+            element={<CreateServiceRequest />}
+          />
           <Route path="/new-bid" element={<CreateBid />} />
           <Route path="/admin" element={<AdminBoard />} />
           <Route path="/assigned-auction" element={<AssignedAuction />} />
           <Route
             path="/update-auction-status"
             element={<UpdateAuctionStatus />}
+          />
+          <Route
+            path="/update-request-status"
+            element={<UpdateRequestStatus />}
           />
           <Route path="/assignments" element={<Assignments />} />
         </Routes>

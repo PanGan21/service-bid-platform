@@ -34,13 +34,10 @@ func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, au
 	// Routers
 	handler.GET("/", auctionController.GetAll)
 	handler.GET("/count", auctionController.CountAll)
-	handler.POST("/", auctionController.Create)
 	handler.GET("/count/own", auctionController.CountOwn)
 	handler.GET("/own", auctionController.GetOwn)
 	handler.GET("/own/assigned-bids", auctionController.GetOwnAssignedByStatuses)
 	handler.GET("/own/assigned-bids/count", auctionController.CountOwnAssignedByStatuses)
-	handler.GET("/own/rejected", auctionController.GetOwnRejected)
-	handler.GET("/own/rejected/count", auctionController.CountOwnRejected)
 	handler.GET("/status", auctionController.GetByStatus)
 	handler.GET("/status/count", auctionController.CountByStatus)
 
@@ -49,7 +46,6 @@ func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, au
 	handler.GET("/open/past-deadline/count", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.CountOpenPastDeadline)
 	handler.POST("/update/winner", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.UpdateWinnerByAuctionId)
 	handler.POST("/update/status", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.UpdateStatus)
-	handler.POST("/update/reject", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.RejectAuction)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

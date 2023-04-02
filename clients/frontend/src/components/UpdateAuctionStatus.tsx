@@ -76,7 +76,7 @@ export const UpdateAuctionStatus: React.FC<Props> = () => {
         await updateAuctionStatus(state.Id, status);
       }
 
-      navigate("/new-auctions");
+      navigate("/home");
       window.location.reload();
     } catch (error: any) {
       const resMessage =

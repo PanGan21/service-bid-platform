@@ -18,23 +18,26 @@ import (
 )
 
 var userService = "user"
+var requestService = "request"
 var auctionService = "auction"
 var biddingService = "bidding"
 
 var sessionId = ""
 var userId = ""
+var requestId = 0
 var auctionId = 0
 var bidId = 0
 
 var adminSessionId = ""
 
 var userApiPath = getBasePath(userService)
+var requestApiPath = getBasePath(requestService)
 var auctionApiPath = getBasePath(auctionService)
 var biddingApiPath = getBasePath(biddingService)
 
 func TestMain(m *testing.M) {
-	fmt.Println("Sleep for 40 seconds to allow services and kafka stabilize")
-	time.Sleep(40 * time.Second)
+	fmt.Println("Sleep for 50 seconds to allow services and kafka stabilize")
+	time.Sleep(50 * time.Second)
 	fmt.Println("Start integration tests")
 
 	err := healthCheck(Attempts, userService)
@@ -293,149 +296,126 @@ func TestHTTPDoHello(t *testing.T) {
 	)
 }
 
-// HTTP POST: /auction/
-func TestHTTPCreateAuction(t *testing.T) {
-	routePath := auctionApiPath + "/"
+// HTTP POST: /request/
+func TestHTTPCreateRequest(t *testing.T) {
+	routePath := requestApiPath + "/"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 
 	Test(t,
-		Description("auction; create; success"),
+		Description("request; create; success"),
 		Post(routePath),
 		Send().Headers("Cookie").Add(sessionCookie),
-		Send().Body().JSON(testdata.MockAuction),
+		Send().Body().JSON(testdata.MockRequest),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
+			var request entity.Request
 
-			err := hit.Response().Body().JSON().Decode(&auction)
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			if auction.Status != entity.New {
-				return fmt.Errorf("created auction status should be %s", entity.New)
+			if request.Status != entity.NewRequest {
+				return fmt.Errorf("created request status should be %s", entity.NewRequest)
 			}
 
-			auctionId = auction.Id
-
-			return nil
-		}),
-	)
-
-	err := waitUntilAuctionIsAvailableInBidding(50, auctionId)
-	if err != nil {
-		log.Fatal(err)
-		t.Fail()
-	}
-}
-
-// HTTP POST: /auction/update/status
-func TestHTTPUpdateAuctionStatusToOpen(t *testing.T) {
-	routePath := auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(auctionId)
-	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
-
-	var updateStatusBody = map[string]interface{}{"Status": entity.Open}
-
-	Test(
-		t,
-		Description("update auction status; open; success"),
-		Post(routePath),
-		Send().Body().JSON(updateStatusBody),
-		Send().Headers("Cookie").Add(adminSessionCookie),
-		Expect().Status().Equal(http.StatusOK),
-		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auction)
-			if err != nil {
-				return err
-			}
-
-			if auction.Status != entity.Open {
-				return fmt.Errorf("auction should have been update to status %s", entity.Open)
-			}
+			requestId = request.Id
+			auctionId = requestId
 
 			return nil
 		}),
 	)
 }
 
-// HTTP GET: /auction/
-func TestHTTPGetPaginatedAuctions(t *testing.T) {
-	createRoutePath := auctionApiPath + "/"
+// HTTP GET: /request/status
+func TestHTTPGetAllPaginatedRequestsByStatus(t *testing.T) {
+	createRoutePath := requestApiPath + "/"
+	getOwnRoutePath := requestApiPath + "/status"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 
 	for i := 2; i <= 10; i++ {
-		description := fmt.Sprintf("auction; create; success; no %d", i)
-		testAuction := testdata.MockAuction
-		testAuction["deadline"] = i
+		description := fmt.Sprintf("request; create; success; no %d", i)
+		testRequest := testdata.MockRequest
+		testRequest["deadline"] = i
 
 		Test(t,
 			Description(description),
 			Post(createRoutePath),
 			Send().Headers("Cookie").Add(sessionCookie),
-			Send().Body().JSON(testAuction),
+			Send().Body().JSON(testRequest),
 			Expect().Status().Equal(http.StatusOK),
 		)
-
 	}
 
 	limit10 := 10
 	page1 := 1
 
-	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", createRoutePath, limit10, page1)
+	routePathAscendingOrder := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=true", getOwnRoutePath, entity.NewRequest, limit10, page1)
 
 	Test(t,
-		Description("get auctions; success; ascending order"),
+		Description("get all requests by status; success; ascending order"),
 		Get(routePathAscendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auctions []entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auctions)
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
 			if err != nil {
 				return err
 			}
 
-			if len(auctions) != limit10 {
-				return fmt.Errorf("auctions should be %d", limit10)
+			for _, request := range requests {
+				if request.CreatorId != userId {
+					return fmt.Errorf("requests creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
 			}
 
-			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
-				return auctions[p].Deadline < auctions[q].Deadline
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
 			})
 
 			if !isAscendingOrder {
-				return errors.New("auctions are not in ascending order")
+				return errors.New("requests are not in ascending order")
 			}
 
 			return nil
 		}),
 	)
 
-	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", createRoutePath, limit10, page1)
+	routePathDescendingOrder := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=false", getOwnRoutePath, entity.NewRequest, limit10, page1)
 
 	Test(t,
-		Description("get auctions; success; descending order"),
+		Description("get all requests by status; success; ascending order"),
 		Get(routePathDescendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auctions []entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auctions)
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
 			if err != nil {
 				return err
 			}
 
-			if len(auctions) != limit10 {
-				return fmt.Errorf("auctions should be %d", limit10)
+			for _, request := range requests {
+				if request.CreatorId != userId {
+					return fmt.Errorf("requests creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
 			}
 
-			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
-				return auctions[p].Deadline < auctions[q].Deadline
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
 			})
 
 			if isAscendingOrder {
-				return errors.New("auctions are not in descending order")
+				return errors.New("requests are not in descending order")
 			}
 
 			return nil
@@ -443,16 +423,16 @@ func TestHTTPGetPaginatedAuctions(t *testing.T) {
 	)
 }
 
-// HTTP GET: /auction/count
-func TestHTTPCountAllAuctions(t *testing.T) {
-	countOwnRoutePath := auctionApiPath + "/count"
+// HTTP GET: /request/status/count
+func TestHTTPCounAllRequestsByStatus(t *testing.T) {
+	countAllByStatusRoutePath := requestApiPath + "/status/count" + "?status=" + string(entity.NewRequest)
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 
-	var allAuctions = 10
+	var ownedAuctions = 10
 
 	Test(t,
-		Description("count all auctions; success"),
-		Get(countOwnRoutePath),
+		Description("count all requests by status; success"),
+		Get(countAllByStatusRoutePath),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
@@ -462,12 +442,195 @@ func TestHTTPCountAllAuctions(t *testing.T) {
 				return err
 			}
 
-			if count != allAuctions {
-				return fmt.Errorf("auctions should be %d", allAuctions)
+			if count != ownedAuctions {
+				return fmt.Errorf("requests should be %d", ownedAuctions)
 			}
 
 			return nil
 		}))
+}
+
+// HTTP GET: /request/status/own
+func TestHTTPGetPaginatedOwnRequestsByStatus(t *testing.T) {
+	getOwnRoutePath := requestApiPath + "/status/own"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=true", getOwnRoutePath, entity.NewRequest, limit10, page1)
+
+	Test(t,
+		Description("get owned requests by status; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, request := range requests {
+				if request.CreatorId != userId {
+					return fmt.Errorf("requests creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("requests are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?status=%s&limit=%d&page=%d&asc=false", getOwnRoutePath, entity.NewRequest, limit10, page1)
+
+	Test(t,
+		Description("get owned requests by status; success; ascending order"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var requests []entity.Request
+			err := hit.Response().Body().JSON().Decode(&requests)
+			if err != nil {
+				return err
+			}
+
+			for _, request := range requests {
+				if request.CreatorId != userId {
+					return fmt.Errorf("requests creatorId: %s is not equal to the userId: %s", request.CreatorId, userId)
+				}
+			}
+
+			if len(requests) != limit10 {
+				return fmt.Errorf("requests should be %d", limit10)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
+				return requests[p].Deadline < requests[q].Deadline
+			})
+
+			if isAscendingOrder {
+				return errors.New("requests are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /request/status/own/count
+func TestHTTPCountOwnRequests(t *testing.T) {
+	countOwnByStatusRoutePath := requestApiPath + "/status/own/count" + "?status=" + string(entity.NewRequest)
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var ownedAuctions = 10
+
+	Test(t,
+		Description("count owned requests by status; success"),
+		Get(countOwnByStatusRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != ownedAuctions {
+				return fmt.Errorf("requests should be %d", ownedAuctions)
+			}
+
+			return nil
+		}))
+}
+
+// HTTP POST: /request/approve
+func TestHTTPApproveRequest(t *testing.T) {
+	routePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(requestId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	Test(
+		t,
+		Description("approve request; success"),
+		Post(routePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			if request.Status != entity.ApprovedRequest {
+				return fmt.Errorf("request should have been update to status %s", entity.ApprovedRequest)
+			}
+
+			return nil
+		}),
+	)
+
+	err := waitUntilAuctionIsAvailableInAuction(50, requestId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
+	err = waitUntilAuctionIsAvailableInBidding(50, requestId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+}
+
+// // HTTP POST: /request/reject
+func TestHTTPRejectAuction(t *testing.T) {
+	routePath := requestApiPath + "/reject?requestId=" + strconv.Itoa(requestId)
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+
+	Test(
+		t,
+		Description("reject request; success"),
+		Post(routePath),
+		Send().Body().JSON(testdata.MockRejectionReason),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var request entity.Request
+			err := hit.Response().Body().JSON().Decode(&request)
+			if err != nil {
+				return err
+			}
+
+			if request.Id != requestId {
+				return fmt.Errorf("incorrect request returned")
+			}
+
+			if request.Status != entity.RejectedRequest {
+				return fmt.Errorf("request should have been update to status %s", entity.RejectedRequest)
+			}
+
+			if request.RejectionReason != testdata.MockRejectionReason["RejectionReason"] {
+				return fmt.Errorf("incorrect rejection reason returned")
+			}
+
+			return nil
+		}),
+	)
 }
 
 // // HTTP GET: /auction/own
@@ -477,6 +640,8 @@ func TestHTTPGetPaginatedOwnAuctions(t *testing.T) {
 
 	limit10 := 10
 	page1 := 1
+
+	expectedAuctionsAmount := 1
 
 	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", getOwnRoutePath, limit10, page1)
 
@@ -498,8 +663,8 @@ func TestHTTPGetPaginatedOwnAuctions(t *testing.T) {
 				}
 			}
 
-			if len(auctions) != limit10 {
-				return fmt.Errorf("auctions should be %d", limit10)
+			if len(auctions) != expectedAuctionsAmount {
+				return fmt.Errorf("auctions should be %d", expectedAuctionsAmount)
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
@@ -517,7 +682,7 @@ func TestHTTPGetPaginatedOwnAuctions(t *testing.T) {
 	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", getOwnRoutePath, limit10, page1)
 
 	Test(t,
-		Description("get owned auctions; success; ascending order"),
+		Description("get owned auctions; success; descending order"),
 		Get(routePathDescendingOrder),
 		Send().Headers("Cookie").Add(sessionCookie),
 		Expect().Status().Equal(http.StatusOK),
@@ -534,15 +699,15 @@ func TestHTTPGetPaginatedOwnAuctions(t *testing.T) {
 				}
 			}
 
-			if len(auctions) != limit10 {
-				return fmt.Errorf("auctions should be %d", limit10)
+			if len(auctions) != expectedAuctionsAmount {
+				return fmt.Errorf("auctions should be %d", expectedAuctionsAmount)
 			}
 
-			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
-				return auctions[p].Deadline < auctions[q].Deadline
+			isDescending := sort.SliceIsSorted(auctions, func(p, q int) bool {
+				return auctions[p].Deadline > auctions[q].Deadline
 			})
 
-			if isAscendingOrder {
+			if !isDescending {
 				return errors.New("auctions are not in descending order")
 			}
 
@@ -556,7 +721,7 @@ func TestHTTPCountOwnAuctions(t *testing.T) {
 	countOwnRoutePath := auctionApiPath + "/count/own"
 	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
 
-	var ownedAuctions = 10
+	var ownedAuctions = 1
 
 	Test(t,
 		Description("count owned auctions; success"),
@@ -572,6 +737,104 @@ func TestHTTPCountOwnAuctions(t *testing.T) {
 
 			if count != ownedAuctions {
 				return fmt.Errorf("auctions should be %d", ownedAuctions)
+			}
+
+			return nil
+		}))
+}
+
+// HTTP GET: /auction/
+func TestHTTPGetPaginatedAuctions(t *testing.T) {
+	getAllRoutePath := auctionApiPath + "/"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	limit10 := 10
+	page1 := 1
+
+	expectedAuctions := 1
+
+	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", getAllRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get all auctions; success; ascending order"),
+		Get(routePathAscendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auctions []entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auctions)
+			if err != nil {
+				return err
+			}
+
+			if len(auctions) != expectedAuctions {
+				return fmt.Errorf("auctions should be %d", expectedAuctions)
+			}
+
+			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
+				return auctions[p].Deadline < auctions[q].Deadline
+			})
+
+			if !isAscendingOrder {
+				return errors.New("auctions are not in ascending order")
+			}
+
+			return nil
+		}),
+	)
+
+	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", getAllRoutePath, limit10, page1)
+
+	Test(t,
+		Description("get auctions; success; descending order"),
+		Get(routePathDescendingOrder),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auctions []entity.Auction
+			err := hit.Response().Body().JSON().Decode(&auctions)
+			if err != nil {
+				return err
+			}
+
+			if len(auctions) != expectedAuctions {
+				return fmt.Errorf("auctions should be %d", expectedAuctions)
+			}
+
+			isDescending := sort.SliceIsSorted(auctions, func(p, q int) bool {
+				return auctions[p].Deadline > auctions[q].Deadline
+			})
+
+			if !isDescending {
+				return errors.New("auctions are not in descending order")
+			}
+
+			return nil
+		}),
+	)
+}
+
+// HTTP GET: /auction/count
+func TestHTTPCountAllAuctions(t *testing.T) {
+	countOwnRoutePath := auctionApiPath + "/count"
+	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
+
+	var allAuctions = 1
+
+	Test(t,
+		Description("count all auctions; success"),
+		Get(countOwnRoutePath),
+		Send().Headers("Cookie").Add(sessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var count int
+			err := hit.Response().Body().JSON().Decode(&count)
+			if err != nil {
+				return err
+			}
+
+			if count != allAuctions {
+				return fmt.Errorf("auctions should be %d", allAuctions)
 			}
 
 			return nil
@@ -881,55 +1144,53 @@ func TestHTTPGetPaginatedBidsByAuctionId(t *testing.T) {
 // HTTP POST: /auction/update/winner
 func TestHTTPUpdateWinner(t *testing.T) {
 	nonAdminSessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
-	var yesterdayAuctionId = 0
-	var tomorrowAuctionId = 0
+	var yesterdayRequestd = 0
+	var tomorrowRequestId = 0
 
 	var mockFirstLowestBidId = 0
 	var mockSecondLowestBidId = 0
 	var firstLowestAmount = 50.0
 	var secondLowestAmount = 100.0
 
-	createReqeustPath := auctionApiPath + "/"
+	createReqeustPath := requestApiPath + "/"
 
 	Test(t,
-		Description("create auction with deadline yesterday; success"),
+		Description("create request with deadline yesterday; success"),
 		Post(createReqeustPath),
 		Send().Headers("Cookie").Add(nonAdminSessionCookie),
-		Send().Body().JSON(testdata.MockAuctionYesterday),
+		Send().Body().JSON(testdata.MockRequestYesterday),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
+			var request entity.Request
 
-			err := hit.Response().Body().JSON().Decode(&auction)
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			yesterdayAuctionId = auction.Id
+			yesterdayRequestd = request.Id
 
 			return nil
 		}),
 	)
 
-	updateStatusRoutePath := auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(yesterdayAuctionId)
-	var updateStatusBody = map[string]interface{}{"Status": entity.Open}
+	approveRequestRoutePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(yesterdayRequestd)
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 	Test(
 		t,
-		Description("update yesterday auction status; open; success"),
-		Post(updateStatusRoutePath),
-		Send().Body().JSON(updateStatusBody),
+		Description("approve yesterday request; success"),
+		Post(approveRequestRoutePath),
 		Send().Headers("Cookie").Add(adminSessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auction)
+			var request entity.Request
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			if auction.Status != entity.Open {
-				return fmt.Errorf("auction should have been update to status %s", entity.Open)
+			if request.Status != entity.ApprovedRequest {
+				return fmt.Errorf("request should have been update to status %s", entity.ApprovedRequest)
 			}
 
 			return nil
@@ -937,50 +1198,73 @@ func TestHTTPUpdateWinner(t *testing.T) {
 	)
 
 	Test(t,
-		Description("create auction with deadline tomorrow; success"),
+		Description("create request with deadline tomorrow; success"),
 		Post(createReqeustPath),
 		Send().Headers("Cookie").Add(nonAdminSessionCookie),
-		Send().Body().JSON(testdata.MockAuctionTomorrow),
+		Send().Body().JSON(testdata.MockRequestTomorrow),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
+			var request entity.Request
 
-			err := hit.Response().Body().JSON().Decode(&auction)
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			tomorrowAuctionId = auction.Id
+			tomorrowRequestId = request.Id
 
 			return nil
 		}),
 	)
 
-	updateStatusRoutePath = auctionApiPath + "/update/status?auctionId=" + strconv.Itoa(tomorrowAuctionId)
+	approveRequestRoutePath = requestApiPath + "/approve?requestId=" + strconv.Itoa(tomorrowRequestId)
 	Test(
 		t,
-		Description("update yesterday auction status; open; success"),
-		Post(updateStatusRoutePath),
-		Send().Body().JSON(updateStatusBody),
+		Description("approve tomorrow request; success"),
+		Post(approveRequestRoutePath),
 		Send().Headers("Cookie").Add(adminSessionCookie),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auction)
+			var request entity.Request
+			err := hit.Response().Body().JSON().Decode(&request)
 			if err != nil {
 				return err
 			}
 
-			if auction.Status != entity.Open {
-				return fmt.Errorf("auction should have been update to status %s", entity.Open)
+			if request.Status != entity.ApprovedRequest {
+				return fmt.Errorf("request should have been update to status %s", entity.ApprovedRequest)
 			}
 
 			return nil
 		}),
 	)
 
+	err := waitUntilAuctionIsAvailableInAuction(50, yesterdayRequestd)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
+	err = waitUntilAuctionIsAvailableInBidding(50, yesterdayRequestd)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
+	err = waitUntilAuctionIsAvailableInAuction(50, tomorrowRequestId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
+	err = waitUntilAuctionIsAvailableInBidding(50, tomorrowRequestId)
+	if err != nil {
+		log.Fatal(err)
+		t.Fail()
+	}
+
 	createBidRoutePath := biddingApiPath + "/"
-	var mockBid = map[string]interface{}{"AuctionId": yesterdayAuctionId, "Amount": firstLowestAmount}
+	var mockBid = map[string]interface{}{"AuctionId": yesterdayRequestd, "Amount": firstLowestAmount}
 	Test(t,
 		Description("bid; create; success"),
 		Post(createBidRoutePath),
@@ -1001,7 +1285,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
-	var mockSecondBid = map[string]interface{}{"AuctionId": yesterdayAuctionId, "Amount": secondLowestAmount}
+	var mockSecondBid = map[string]interface{}{"AuctionId": yesterdayRequestd, "Amount": secondLowestAmount}
 	Test(t,
 		Description("bid; create; success"),
 		Post(createBidRoutePath),
@@ -1022,7 +1306,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
-	err := waitUntilBidIsAvailableInAuction(50, mockFirstLowestBidId)
+	err = waitUntilBidIsAvailableInAuction(50, mockFirstLowestBidId)
 	if err != nil {
 		log.Fatal(err)
 		t.Fail()
@@ -1034,7 +1318,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		t.Fail()
 	}
 
-	routePath := auctionApiPath + "/update/winner?auctionId=" + strconv.Itoa(yesterdayAuctionId)
+	routePath := auctionApiPath + "/update/winner?auctionId=" + strconv.Itoa(yesterdayRequestd)
 
 	Test(t,
 		Description("non admin user; failure"),
@@ -1062,7 +1346,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		Expect().Body().String().Contains("Auction not found"),
 	)
 
-	notUpdateableRoutePath := auctionApiPath + "/update/winner?auctionId=" + strconv.Itoa(tomorrowAuctionId)
+	notUpdateableRoutePath := auctionApiPath + "/update/winner?auctionId=" + strconv.Itoa(tomorrowRequestId)
 	Test(t,
 		Description("admin user; auction cannot be update; deadline hasn't passed; failure"),
 		Post(notUpdateableRoutePath),
@@ -1085,7 +1369,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 				return err
 			}
 
-			if auction.Id != yesterdayAuctionId || auction.WinningBidId != strconv.Itoa(mockFirstLowestBidId) || auction.WinnerId != userId || auction.WinningAmount != secondLowestAmount {
+			if auction.Id != yesterdayRequestd || auction.WinningBidId != strconv.Itoa(mockFirstLowestBidId) || auction.WinnerId != userId || auction.WinningAmount != secondLowestAmount {
 				return errors.New("returned auction is incorrect")
 			}
 
@@ -1180,7 +1464,7 @@ func TestHTTPGetOpenPastDeadlineAuctions(t *testing.T) {
 	)
 }
 
-// HTTP GET: /auction/open/past-deadline
+// HTTP GET: /auction/open/past-deadline/count
 func TestHTTPCountOpenPastDeadlineAuctions(t *testing.T) {
 	routePath := auctionApiPath + "/open/past-deadline/count"
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
@@ -1402,142 +1686,6 @@ func TestHTTPCountOwnAssignedAuctions(t *testing.T) {
 
 			if count != 1 {
 				return fmt.Errorf("auctions should be %d", 1)
-			}
-
-			return nil
-		}))
-}
-
-// HTTP POST: /auction/update/reject
-func TestHTTPRejectAuction(t *testing.T) {
-	routePath := auctionApiPath + "/update/reject?auctionId=" + strconv.Itoa(auctionId)
-	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
-
-	Test(
-		t,
-		Description("reject auction; success"),
-		Post(routePath),
-		Send().Body().JSON(testdata.MockRejectionReason),
-		Send().Headers("Cookie").Add(adminSessionCookie),
-		Expect().Status().Equal(http.StatusOK),
-		Expect().Custom(func(hit Hit) error {
-			var auction entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auction)
-			if err != nil {
-				return err
-			}
-
-			if auction.Id != auctionId {
-				return fmt.Errorf("incorrect auction returned")
-			}
-
-			if auction.Status != entity.Rejected {
-				return fmt.Errorf("auction should have been update to status %s", entity.Rejected)
-			}
-
-			if auction.RejectionReason != testdata.MockRejectionReason["RejectionReason"] {
-				return fmt.Errorf("incorrect rejection reason returned")
-			}
-
-			return nil
-		}),
-	)
-}
-
-// HTTP POST: /auction/own/rejected
-func TestHTTPGetPaginatedOwnRejectedAuctions(t *testing.T) {
-	getOwnRoutePath := auctionApiPath + "/own/rejected"
-	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
-
-	limit10 := 10
-	page1 := 1
-
-	routePathAscendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=true", getOwnRoutePath, limit10, page1)
-
-	Test(t,
-		Description("get owned rejected auctions; success; ascending order"),
-		Get(routePathAscendingOrder),
-		Send().Headers("Cookie").Add(sessionCookie),
-		Expect().Status().Equal(http.StatusOK),
-		Expect().Custom(func(hit Hit) error {
-			var auctions []entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auctions)
-			if err != nil {
-				return err
-			}
-
-			for _, auction := range auctions {
-				if auction.CreatorId != userId {
-					return fmt.Errorf("auctions creatorId: %s is not equal to the userId: %s", auction.CreatorId, userId)
-				}
-			}
-
-			if len(auctions) != 1 {
-				return fmt.Errorf("auctions should be %d", 1)
-			}
-
-			isAscendingOrder := sort.SliceIsSorted(auctions, func(p, q int) bool {
-				return auctions[p].Deadline < auctions[q].Deadline
-			})
-
-			if !isAscendingOrder {
-				return errors.New("auctions are not in ascending order")
-			}
-
-			return nil
-		}),
-	)
-
-	routePathDescendingOrder := fmt.Sprintf("%s?limit=%d&page=%d&asc=false", getOwnRoutePath, limit10, page1)
-
-	Test(t,
-		Description("get owned rejected auctions; success; ascending order"),
-		Get(routePathDescendingOrder),
-		Send().Headers("Cookie").Add(sessionCookie),
-		Expect().Status().Equal(http.StatusOK),
-		Expect().Custom(func(hit Hit) error {
-			var auctions []entity.Auction
-			err := hit.Response().Body().JSON().Decode(&auctions)
-			if err != nil {
-				return err
-			}
-
-			for _, auction := range auctions {
-				if auction.CreatorId != userId {
-					return fmt.Errorf("auctions creatorId: %s is not equal to the userId: %s", auction.CreatorId, userId)
-				}
-			}
-
-			if len(auctions) != 1 {
-				return fmt.Errorf("auctions should be %d", 1)
-			}
-
-			return nil
-		}),
-	)
-}
-
-// HTTP POST: /auction/own/rejected/count
-func TestHTTPCountOwnRejectedAuctions(t *testing.T) {
-	countOwnRoutePath := auctionApiPath + "/own/rejected/count"
-	sessionCookie := fmt.Sprintf(`s.id=%s`, sessionId)
-
-	var ownedAuctions = 1
-
-	Test(t,
-		Description("count owned rejected auctions; success"),
-		Get(countOwnRoutePath),
-		Send().Headers("Cookie").Add(sessionCookie),
-		Expect().Status().Equal(http.StatusOK),
-		Expect().Custom(func(hit Hit) error {
-			var count int
-			err := hit.Response().Body().JSON().Decode(&count)
-			if err != nil {
-				return err
-			}
-
-			if count != ownedAuctions {
-				return fmt.Errorf("auctions should be %d", ownedAuctions)
 			}
 
 			return nil

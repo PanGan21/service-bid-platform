@@ -57,7 +57,7 @@ func waitUntilAuctionIsAvailableInBidding(attempts int, auctionId int) error {
 			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
 		if err == nil && auction.Id == auctionId {
 			fmt.Println("Auction available!", auction)
 			return nil
@@ -73,16 +73,16 @@ func waitUntilAuctionIsAvailableInBidding(attempts int, auctionId int) error {
 	return err
 }
 
-func waitUntilAuctionIsOpenToBids(attempts int, auctionId int) error {
+func waitUntilAuctionIsAvailableInAuction(attempts int, auctionId int) error {
 	var err error
 	ctx := context.Background()
 
-	biddingDbUrl := getPostgresUrl() + "/bidding"
+	auctionDbUrl := getPostgresUrl() + "/auction"
 
 	for attempts > 0 {
 		var auction entity.Auction
 
-		pg, err := postgres.New(biddingDbUrl, postgres.MaxPoolSize(2))
+		pg, err := postgres.New(auctionDbUrl, postgres.MaxPoolSize(2))
 		if err != nil {
 			fmt.Println("Error connecting with the db", err)
 			return err
@@ -98,13 +98,13 @@ func waitUntilAuctionIsOpenToBids(attempts int, auctionId int) error {
 			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.RejectionReason, &auction.WinnerId, &auction.WinningAmount)
-		if err == nil && auction.Id == auctionId && auction.Status == entity.Open {
-			fmt.Println("Auction available and open to bids!", auction)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
+		if err == nil && auction.Id == auctionId {
+			fmt.Println("Auction available!", auction)
 			return nil
 		}
 
-		log.Printf("Integration tests: auction with id %d is not available and open to bids, attempts left: %d", auctionId, attempts)
+		log.Printf("Demo: auction with id %d is not available, attempts left: %d", auctionId, attempts)
 		time.Sleep(time.Second)
 
 		attempts--
