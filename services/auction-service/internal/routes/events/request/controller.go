@@ -33,17 +33,16 @@ func (controller *requestController) Create(payload interface{}) error {
 	}
 
 	newAuction := entity.Auction{
-		Id:              request.Id,
-		Title:           request.Title,
-		Postcode:        request.Postcode,
-		Info:            request.Info,
-		CreatorId:       request.CreatorId,
-		Deadline:        request.Deadline,
-		Status:          entity.Open,
-		WinningBidId:    "",
-		RejectionReason: "",
-		WinnerId:        "",
-		WinningAmount:   0.0,
+		Id:            request.Id,
+		Title:         request.Title,
+		Postcode:      request.Postcode,
+		Info:          request.Info,
+		CreatorId:     request.CreatorId,
+		Deadline:      request.Deadline,
+		Status:        entity.Open,
+		WinningBidId:  "",
+		WinnerId:      "",
+		WinningAmount: 0.0,
 	}
 
 	_, err = controller.auctionService.Create(context.Background(), newAuction)

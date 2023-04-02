@@ -5,17 +5,16 @@ import (
 )
 
 type Auction struct {
-	Id              int           `json:"Id" db:"Id"`
-	Title           string        `json:"Title" db:"Title"`
-	Postcode        string        `json:"Postcode" db:"Postcode"`
-	Info            string        `json:"Info" db:"Info"`
-	CreatorId       string        `json:"CreatorId" db:"CreatorId"`
-	Deadline        int64         `json:"Deadline" db:"Deadline"`
-	Status          AuctionStatus `json:"Status" db:"Status"`
-	WinningBidId    string        `json:"WinningBidId" db:"WinningBidId"`
-	RejectionReason string        `json:"RejectionReason" db:"RejectionReason"`
-	WinnerId        string        `json:"WinnerId" db:"WinnerId"`
-	WinningAmount   float64       `json:"WinningAmount" db:"WinningAmount"`
+	Id            int           `json:"Id" db:"Id"`
+	Title         string        `json:"Title" db:"Title"`
+	Postcode      string        `json:"Postcode" db:"Postcode"`
+	Info          string        `json:"Info" db:"Info"`
+	CreatorId     string        `json:"CreatorId" db:"CreatorId"`
+	Deadline      int64         `json:"Deadline" db:"Deadline"`
+	Status        AuctionStatus `json:"Status" db:"Status"`
+	WinningBidId  string        `json:"WinningBidId" db:"WinningBidId"`
+	WinnerId      string        `json:"WinnerId" db:"WinnerId"`
+	WinningAmount float64       `json:"WinningAmount" db:"WinningAmount"`
 }
 
 type ExtendedAuction struct {
@@ -33,7 +32,6 @@ type ExtendedAuction struct {
 type AuctionStatus string
 
 const (
-	Rejected   AuctionStatus = "rejected"
 	Open       AuctionStatus = "open"
 	Assigned   AuctionStatus = "assigned"
 	InProgress AuctionStatus = "in progress"
@@ -89,18 +87,13 @@ func IsAuctionType(unknown interface{}) (Auction, error) {
 	status := AuctionStatus(s)
 
 	switch status {
-	case Open, Rejected, Assigned, InProgress, Closed:
+	case Open, Assigned, InProgress, Closed:
 		auction.Status = status
 	default:
 		return auction, ErrIncorrectAuctionType
 	}
 
 	auction.WinningBidId = unknownMap["WinningBidId"].(string)
-	if !ok {
-		return auction, ErrIncorrectAuctionType
-	}
-
-	auction.RejectionReason = unknownMap["RejectionReason"].(string)
 	if !ok {
 		return auction, ErrIncorrectAuctionType
 	}

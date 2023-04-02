@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS auctions(
     Deadline BIGINT,
     Status VARCHAR(255),
     WinningBidId VARCHAR(255),
-    RejectionReason VARCHAR(255),
     WinnerId VARCHAR(255),
     WinningAmount FLOAT
 );

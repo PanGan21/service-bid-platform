@@ -26,9 +26,6 @@ type AuctionController interface {
 	CountByStatus(c *gin.Context)
 	GetOwnAssignedByStatuses(c *gin.Context)
 	CountOwnAssignedByStatuses(c *gin.Context)
-	RejectAuction(c *gin.Context)
-	GetOwnRejected(c *gin.Context)
-	CountOwnRejected(c *gin.Context)
 }
 
 type auctionController struct {
@@ -294,72 +291,6 @@ func (controller *auctionController) CountOwnAssignedByStatuses(c *gin.Context) 
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	c.JSON(http.StatusOK, count)
-}
-
-type RejectAuctionData struct {
-	RejectionReason string
-}
-
-func (controller *auctionController) RejectAuction(c *gin.Context) {
-	idParam := c.Request.URL.Query().Get("auctionId")
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
-		return
-	}
-
-	var rejectAuctionData RejectAuctionData
-	if err := c.BindJSON(&rejectAuctionData); err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
-		return
-	}
-
-	auction, err := controller.auctionService.RejectAuction(context.Background(), rejectAuctionData.RejectionReason, id)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, auction)
-}
-
-func (controller *auctionController) GetOwnRejected(c *gin.Context) {
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
-	}
-
-	pagination := pagination.GeneratePaginationFromRequest(c)
-
-	auctions, err := controller.auctionService.GetOwnRejected(context.Background(), user.(entity.PublicUser).Id, &pagination)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, auctions)
-}
-
-func (controller *auctionController) CountOwnRejected(c *gin.Context) {
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
-	}
-
-	count, err := controller.auctionService.CountOwnRejected(context.Background(), user.(entity.PublicUser).Id)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
 	}
 
 	c.JSON(http.StatusOK, count)
