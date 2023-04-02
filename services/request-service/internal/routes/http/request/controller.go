@@ -97,7 +97,7 @@ func (controller *requestController) RejectRequest(c *gin.Context) {
 
 func (controller *requestController) GetByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+	allowedStatuses := []string{string(entity.NewRequest), string(entity.ApprovedRequest), string(entity.RejectedRequest)}
 
 	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})

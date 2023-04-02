@@ -33,7 +33,6 @@ type ExtendedAuction struct {
 type AuctionStatus string
 
 const (
-	New        AuctionStatus = "new"
 	Rejected   AuctionStatus = "rejected"
 	Open       AuctionStatus = "open"
 	Assigned   AuctionStatus = "assigned"
@@ -90,7 +89,7 @@ func IsAuctionType(unknown interface{}) (Auction, error) {
 	status := AuctionStatus(s)
 
 	switch status {
-	case Open, New, Rejected, Assigned, InProgress, Closed:
+	case Open, Rejected, Assigned, InProgress, Closed:
 		auction.Status = status
 	default:
 		return auction, ErrIncorrectAuctionType

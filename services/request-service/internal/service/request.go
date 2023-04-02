@@ -99,5 +99,10 @@ func (s *requestService) ApproveRequestById(ctx context.Context, id int) (entity
 		return request, fmt.Errorf("RequestService - ApproveRequestById - s.requestRepo.UpdateStatusById: %w", err)
 	}
 
+	err = s.requestEvents.PublishRequestApproved(&request)
+	if err != nil {
+		return request, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestApproved: %w", err)
+	}
+
 	return request, nil
 }

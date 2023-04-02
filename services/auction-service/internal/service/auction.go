@@ -12,7 +12,7 @@ import (
 )
 
 type AuctionService interface {
-	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Auction, error)
+	Create(ctx context.Context, auction entity.Auction) (entity.Auction, error)
 	GetAll(ctx context.Context, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountAll(ctx context.Context) (int, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
@@ -41,16 +41,10 @@ func NewAuctionService(rr auctionRepo.AuctionRepository, re auctionEvents.Auctio
 	return &auctionService{auctionRepo: rr, auctionEvents: re}
 }
 
-func (s *auctionService) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Auction, error) {
+func (s *auctionService) Create(ctx context.Context, auction entity.Auction) (entity.Auction, error) {
 	var newAuction entity.Auction
 
-	var defaultStatus = entity.New
-	var defaultWinnigBidId = ""
-	var defaultRejectionReason = ""
-	var defaultWinnerId = ""
-	var defaultWinningAmount = 0.0
-
-	auctionId, err := s.auctionRepo.Create(ctx, creatorId, info, postcode, title, deadline, defaultStatus, defaultWinnigBidId, defaultRejectionReason, defaultWinnerId, defaultWinningAmount)
+	auctionId, err := s.auctionRepo.Create(ctx, auction)
 	if err != nil {
 		return newAuction, fmt.Errorf("AuctionService - Create - s.auctionRepo.Create: %w", err)
 	}
@@ -58,11 +52,6 @@ func (s *auctionService) Create(ctx context.Context, creatorId, info, postcode, 
 	newAuction, err = s.auctionRepo.FindOneById(ctx, auctionId)
 	if err != nil {
 		return newAuction, fmt.Errorf("AuctionService - Create - s.auctionRepo.FindOneById: %w", err)
-	}
-
-	err = s.auctionEvents.PublishAuctionCreated(&newAuction)
-	if err != nil {
-		return newAuction, fmt.Errorf("AuctionService - Create - s.auctionEvents.PublishAuctionCreated: %w", err)
 	}
 
 	return newAuction, nil

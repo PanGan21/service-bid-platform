@@ -16,8 +16,7 @@ type auctionRepository struct {
 func NewAuctionRepository(db postgres.Postgres) *auctionRepository {
 	return &auctionRepository{db: db}
 }
-
-func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.AuctionStatus, winningBidId string, rejectionReason string, winnerId string, winningAmount float64) (int, error) {
+func (repo *auctionRepository) Create(ctx context.Context, auction entity.Auction) (int, error) {
 	var auctionId int
 
 	c, err := repo.db.Pool.Acquire(ctx)
@@ -27,13 +26,13 @@ func (repo *auctionRepository) Create(ctx context.Context, creatorId, info, post
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO auctions (CreatorId, Info, Postcode, Title, Deadline, Status, WinningBidId, RejectionReason, WinnerId, WinningAmount) 
-  		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING Id;
+  		INSERT INTO auctions (Id, CreatorId, Info, Postcode, Title, Deadline, Status, WinningBidId, RejectionReason, WinnerId, WinningAmount) 
+  		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING Id;
 	`
 
-	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, status, winningBidId, rejectionReason, winnerId, winningAmount).Scan(&auctionId)
+	c.QueryRow(ctx, query, auction.Id, auction.CreatorId, auction.Info, auction.Postcode, auction.Title, auction.Deadline, auction.Status, auction.WinningBidId, auction.RejectionReason, auction.WinnerId, auction.WinningAmount).Scan(&auctionId)
 	if err != nil {
-		return auctionId, fmt.Errorf("AuctionRepo - Create - c.QueryRow: %w", err)
+		return auctionId, fmt.Errorf("AuctionRepo - Create - c.Exec: %w", err)
 	}
 
 	return auctionId, nil

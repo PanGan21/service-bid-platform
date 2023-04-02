@@ -14,7 +14,6 @@ import (
 )
 
 type AuctionController interface {
-	Create(c *gin.Context)
 	GetAll(c *gin.Context)
 	CountAll(c *gin.Context)
 	GetOwn(c *gin.Context)
@@ -44,36 +43,6 @@ func NewAuctionController(logger logger.Interface, auctionServ service.AuctionSe
 		auctionService: auctionServ,
 		bidService:     bidServ,
 	}
-}
-
-type AuctionData struct {
-	Title    string `json:"Title"`
-	Postcode string `json:"Postcode"`
-	Info     string `json:"Info"`
-	Deadline int64  `json:"Deadline"`
-}
-
-func (controller *auctionController) Create(c *gin.Context) {
-	var auctionData AuctionData
-	if err := c.BindJSON(&auctionData); err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
-		return
-	}
-
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
-	}
-
-	auction, err := controller.auctionService.Create(context.Background(), user.(entity.PublicUser).Id, auctionData.Info, auctionData.Postcode, auctionData.Title, auctionData.Deadline)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
-		return
-	}
-
-	c.JSON(http.StatusOK, auction)
 }
 
 func (controller *auctionController) GetAll(c *gin.Context) {
@@ -228,7 +197,7 @@ func (controller *auctionController) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+	allowedStatuses := []string{string(entity.Open), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
 
 	var updateStatusData UpdateStatusData
 	if err := c.BindJSON(&updateStatusData); err != nil || !utils.Contains(allowedStatuses, string(updateStatusData.Status)) {
@@ -250,7 +219,7 @@ func (controller *auctionController) UpdateStatus(c *gin.Context) {
 
 func (controller *auctionController) GetByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+	allowedStatuses := []string{string(entity.Open), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
 
 	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
@@ -273,7 +242,7 @@ func (controller *auctionController) GetByStatus(c *gin.Context) {
 
 func (controller *auctionController) CountByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	allowedStatuses := []string{string(entity.Open), string(entity.New), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
+	allowedStatuses := []string{string(entity.Open), string(entity.InProgress), string(entity.Assigned), string(entity.Closed)}
 
 	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})

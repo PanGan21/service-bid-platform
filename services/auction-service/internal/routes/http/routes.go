@@ -34,7 +34,6 @@ func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, au
 	// Routers
 	handler.GET("/", auctionController.GetAll)
 	handler.GET("/count", auctionController.CountAll)
-	handler.POST("/", auctionController.Create)
 	handler.GET("/count/own", auctionController.CountOwn)
 	handler.GET("/own", auctionController.GetOwn)
 	handler.GET("/own/assigned-bids", auctionController.GetOwnAssignedByStatuses)
