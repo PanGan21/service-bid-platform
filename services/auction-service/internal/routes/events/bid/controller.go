@@ -7,10 +7,11 @@ import (
 	"github.com/PanGan21/auction-service/internal/service"
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
+	"github.com/PanGan21/pkg/messaging"
 )
 
 type BidController interface {
-	Create(payload interface{}) error
+	Create(msg messaging.Message) error
 }
 
 type bidController struct {
@@ -25,8 +26,8 @@ func NewBidController(logger logger.Interface, bidServ service.BidService) BidCo
 	}
 }
 
-func (controller *bidController) Create(payload interface{}) error {
-	bid, err := entity.IsBidType(payload)
+func (controller *bidController) Create(msg messaging.Message) error {
+	bid, err := entity.IsBidType(msg.Payload)
 	if err != nil {
 		controller.logger.Error(err)
 		log.Fatal(err)

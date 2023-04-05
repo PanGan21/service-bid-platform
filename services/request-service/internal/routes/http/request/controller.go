@@ -39,7 +39,6 @@ type RequestData struct {
 	Title    string `json:"Title"`
 	Postcode string `json:"Postcode"`
 	Info     string `json:"Info"`
-	Deadline int64  `json:"Deadline"`
 }
 
 func (controller *requestController) Create(c *gin.Context) {
@@ -55,7 +54,7 @@ func (controller *requestController) Create(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
 
-	request, err := controller.requestService.Create(context.Background(), user.(entity.PublicUser).Id, requestData.Info, requestData.Postcode, requestData.Title, requestData.Deadline)
+	request, err := controller.requestService.Create(context.Background(), user.(entity.PublicUser).Id, requestData.Info, requestData.Postcode, requestData.Title)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})

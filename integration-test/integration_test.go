@@ -375,7 +375,7 @@ func TestHTTPGetAllPaginatedRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if !isAscendingOrder {
@@ -411,7 +411,7 @@ func TestHTTPGetAllPaginatedRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if isAscendingOrder {
@@ -483,7 +483,7 @@ func TestHTTPGetPaginatedOwnRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if !isAscendingOrder {
@@ -519,7 +519,7 @@ func TestHTTPGetPaginatedOwnRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if isAscendingOrder {

@@ -1,6 +1,8 @@
 package request
 
 import (
+	"time"
+
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/messaging"
 )
@@ -19,8 +21,11 @@ func NewRequestEvents(pub messaging.Publisher) *requestEvents {
 }
 
 func (events *requestEvents) PublishRequestApproved(request *entity.Request) error {
+	timestamp := time.Now().UTC().UnixMilli()
+
 	msg := messaging.Message{
-		Payload: request,
+		Payload:   request,
+		Timestamp: timestamp,
 	}
 
 	err := events.pub.Publish(REQUEST_APPROVED_TOPIC, msg)

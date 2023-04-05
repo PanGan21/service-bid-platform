@@ -21,7 +21,6 @@ services:
     depends_on:
       - user-migration
       - user-cache
-      
 
   auction-service:
     build:
@@ -237,8 +236,6 @@ services:
       - ./api-gateway/api_proxy.conf:/etc/nginx/api_proxy.conf
       - ./ssl/cert.pem:/etc/ssl/cert.pem
       - ./ssl/key.pem:/etc/ssl/key.pem
-    environment:
-      HTTPS: true
     restart: on-failure
     depends_on:
       - user-service

@@ -7,11 +7,12 @@ import (
 	"github.com/PanGan21/bidding-service/internal/service"
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
+	"github.com/PanGan21/pkg/messaging"
 )
 
 type AuctionController interface {
-	Create(payload interface{}) error
-	Update(payload interface{}) error
+	Create(msg messaging.Message) error
+	Update(msg messaging.Message) error
 }
 
 type auctionController struct {
@@ -26,8 +27,8 @@ func NewAuctionController(logger logger.Interface, auctionServ service.AuctionSe
 	}
 }
 
-func (controller *auctionController) Create(payload interface{}) error {
-	auction, err := entity.IsAuctionType(payload)
+func (controller *auctionController) Create(msg messaging.Message) error {
+	auction, err := entity.IsAuctionType(msg.Payload)
 	if err != nil {
 		controller.logger.Error(err)
 		log.Fatal(err)
@@ -42,8 +43,8 @@ func (controller *auctionController) Create(payload interface{}) error {
 	return nil
 }
 
-func (controller *auctionController) Update(payload interface{}) error {
-	auction, err := entity.IsAuctionType(payload)
+func (controller *auctionController) Update(msg messaging.Message) error {
+	auction, err := entity.IsAuctionType(msg.Payload)
 	if err != nil {
 		controller.logger.Error(err)
 		log.Fatal(err)

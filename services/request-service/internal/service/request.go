@@ -11,7 +11,7 @@ import (
 )
 
 type RequestService interface {
-	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
+	Create(ctx context.Context, creatorId, info, postcode, title string) (entity.Request, error)
 	RejectRequest(ctx context.Context, rejectionReason string, id int) (entity.Request, error)
 	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
@@ -29,13 +29,13 @@ func NewRequestService(rr requestRepo.RequestRepository, re requestEvents.Reques
 	return &requestService{requestRepo: rr, requestEvents: re}
 }
 
-func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error) {
+func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, title string) (entity.Request, error) {
 	var newRequest entity.Request
 
 	var defaultStatus = entity.NewRequest
 	var defaultRejectionReason = ""
 
-	requestId, err := s.requestRepo.Create(ctx, creatorId, info, postcode, title, deadline, defaultStatus, defaultRejectionReason)
+	requestId, err := s.requestRepo.Create(ctx, creatorId, info, postcode, title, defaultStatus, defaultRejectionReason)
 	if err != nil {
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.Create: %w", err)
 	}
