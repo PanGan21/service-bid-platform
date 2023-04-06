@@ -3,12 +3,11 @@ import { Column } from "react-table";
 import { Pagination } from "../common/pagination";
 import { AppTable } from "../common/table";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
-import { formatRequests } from "../services/request";
 import {
   countOwnRejectedRequests,
   getOwnRejectedRequests,
 } from "../services/request";
-import { FormattedRequest } from "../types/request";
+import { Request } from "../types/request";
 
 const columns: Column[] = [
   {
@@ -28,10 +27,6 @@ const columns: Column[] = [
     accessor: "Info",
   },
   {
-    Header: "Deadline",
-    accessor: "Deadline",
-  },
-  {
     Header: "Status",
     accessor: "Status",
   },
@@ -45,7 +40,7 @@ type Props = {};
 
 export const MyRejectedRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
-    rowData: FormattedRequest[];
+    rowData: Request[];
     isLoading: boolean;
     totalRequest: number;
   }>({
@@ -75,7 +70,7 @@ export const MyRejectedRequests: React.FC<Props> = () => {
         const requests = response.data || [];
         setPageData({
           isLoading: false,
-          rowData: formatRequests(requests),
+          rowData: requests,
           totalRequest: totalRequest,
         });
       }

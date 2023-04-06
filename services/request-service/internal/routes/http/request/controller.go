@@ -203,7 +203,15 @@ func (controller *requestController) Approve(c *gin.Context) {
 		return
 	}
 
-	request, err := controller.requestService.ApproveRequestById(context.Background(), id)
+	daysParam := c.Request.URL.Query().Get("days")
+	days, err := strconv.Atoi(daysParam)
+	if err != nil || days < 0 {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	request, err := controller.requestService.ApproveRequestById(context.Background(), id, days)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

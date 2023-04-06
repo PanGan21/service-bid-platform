@@ -23,12 +23,10 @@ export const CreateServiceRequest: React.FC<Props> = () => {
     title: string;
     postcode: string;
     info: string;
-    deadline: string;
   } = {
     title: "",
     postcode: "",
     info: "",
-    deadline: tomorrow.toLocaleDateString("en-US"),
   };
 
   const validationSchema = Yup.object().shape({
@@ -37,31 +35,19 @@ export const CreateServiceRequest: React.FC<Props> = () => {
       .matches(/^[0-9]{5}$/, "Invalid postcode")
       .required("This field is required!"),
     info: Yup.string().required("This field is required!"),
-    deadline: Yup.date()
-      .required("This field is required!")
-      .test(
-        "checkFutureDate",
-        "Date should not be in the past!",
-        (value: Date | undefined) => {
-          if (!value) return false;
-          return value > new Date();
-        }
-      ),
   });
 
   const handleSubmit = async (formValue: {
     title: string;
     postcode: string;
     info: string;
-    deadline: string;
   }) => {
-    const { title, postcode, info, deadline } = formValue;
+    const { title, postcode, info } = formValue;
 
     const auction: NewRequest = {
       Title: title,
       Postcode: postcode,
       Info: info,
-      Deadline: Date.parse(deadline),
     };
 
     setMessage("");
@@ -119,16 +105,6 @@ export const CreateServiceRequest: React.FC<Props> = () => {
               <Field name="info" type="info" className="form-control" />
               <ErrorMessage
                 name="info"
-                component="div"
-                className="alert alert-danger"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="deadline">Deadline</label>
-              <Field name="deadline" type="deadline" className="form-control" />
-              <ErrorMessage
-                name="deadline"
                 component="div"
                 className="alert alert-danger"
               />

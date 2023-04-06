@@ -1,16 +1,10 @@
 package data
 
-import "time"
-
 type RequestData struct {
 	Title    string
 	Postcode string
 	Info     string
 }
-
-var today = time.Now()
-var twoDaysAgo = today.AddDate(0, 0, -2).UTC().UnixMilli()
-var yesterday = today.AddDate(0, 0, -1).UTC().UnixMilli()
 
 var YesterdayRequestNew = RequestData{
 	Title:    "Καθαρισμός οικοπέδου",

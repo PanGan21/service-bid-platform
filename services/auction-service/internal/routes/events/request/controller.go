@@ -39,7 +39,7 @@ func (controller *requestController) Create(msg messaging.Message) error {
 		Postcode:      request.Postcode,
 		Info:          request.Info,
 		CreatorId:     request.CreatorId,
-		Deadline:      0,
+		Deadline:      msg.Timestamp,
 		Status:        entity.Open,
 		WinningBidId:  "",
 		WinnerId:      "",

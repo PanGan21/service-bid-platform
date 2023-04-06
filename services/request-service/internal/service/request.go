@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
@@ -17,7 +18,7 @@ type RequestService interface {
 	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
 	GetManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string) (int, error)
-	ApproveRequestById(ctx context.Context, id int) (entity.Request, error)
+	ApproveRequestById(ctx context.Context, id int, deadlineBufferDays int) (entity.Request, error)
 }
 
 type requestService struct {
@@ -93,13 +94,16 @@ func (s *requestService) CountManyByStatusByUserId(ctx context.Context, status e
 	return count, nil
 }
 
-func (s *requestService) ApproveRequestById(ctx context.Context, id int) (entity.Request, error) {
+func (s *requestService) ApproveRequestById(ctx context.Context, id int, deadlineBufferDays int) (entity.Request, error) {
 	request, err := s.requestRepo.UpdateStatusById(ctx, id, entity.ApprovedRequest)
 	if err != nil {
 		return request, fmt.Errorf("RequestService - ApproveRequestById - s.requestRepo.UpdateStatusById: %w", err)
 	}
 
-	err = s.requestEvents.PublishRequestApproved(&request)
+	today := time.Now()
+	deadline := today.AddDate(0, 0, deadlineBufferDays).UTC().UnixMilli()
+
+	err = s.requestEvents.PublishRequestApproved(&request, deadline)
 	if err != nil {
 		return request, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestApproved: %w", err)
 	}

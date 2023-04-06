@@ -1,9 +1,10 @@
 import { Formik, Form, Field } from "formik";
 import { useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
+import { number } from "yup";
 import auction from "../assets/auction.png";
 import { approveRequest, rejectRequest } from "../services/request";
-import { FormattedRequest } from "../types/request";
+import { Request } from "../types/request";
 
 type Props = {};
 
@@ -17,44 +18,29 @@ const options: Option[] = [
   { value: "rejected", label: "rejected" },
 ];
 
-// const newStatusOptions: Option[] = [
-//   { value: "open", label: "open" },
-//   { value: "rejected", label: "reject" },
-// ];
-
-// const allOptions: Option[] = [...openStatusOptions, ...newStatusOptions];
-
 export const UpdateRequestStatus: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
-  // const [options, setOptions] = useState<Option[]>(options);
 
   const initialValues: {
     status: string;
     rejectionReason: string;
+    days: number;
   } = {
     status: "",
     rejectionReason: "",
+    days: 0,
   };
 
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
-  const { state }: { state: FormattedRequest } = useLocation();
-
-  // useEffect(() => {
-  //   if (state.Status === "new") {
-  //     setOptions(newStatusOptions);
-  //   } else if (state.Status === "assigned" || state.Status === "in progress") {
-  //     setOptions(openStatusOptions);
-  //   } else {
-  //     setOptions(allOptions);
-  //   }
-  // }, [state.Status]);
+  const { state }: { state: Request } = useLocation();
 
   const handleSubmit = async (formValue: {
     status: string;
     rejectionReason: string;
+    days: number;
   }) => {
-    const { status, rejectionReason } = formValue;
+    const { status, rejectionReason, days } = formValue;
 
     setMessage("");
     setLoading(true);
@@ -63,7 +49,7 @@ export const UpdateRequestStatus: React.FC<Props> = () => {
       if (status === "rejected") {
         await rejectRequest(state.Id, rejectionReason);
       } else {
-        await approveRequest(state.Id);
+        await approveRequest(state.Id, days);
       }
 
       navigate("/new-service-requests");
@@ -111,6 +97,19 @@ export const UpdateRequestStatus: React.FC<Props> = () => {
                       name="rejectionReason"
                       type="text"
                       placeholder="Enter reason for rejection"
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                )}
+                {values.status === "approved" && (
+                  <div>
+                    <br />
+                    <Field
+                      name="days"
+                      type="number"
+                      placeholder="Enter number of days to keep Auction open"
+                      min="0"
+                      max="30"
                       style={{ width: "100%" }}
                     />
                   </div>

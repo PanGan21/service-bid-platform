@@ -2,12 +2,8 @@ import { useState, useEffect } from "react";
 import { AppTable, Column } from "../common/table";
 import { Pagination } from "../common/pagination";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
-import { FormattedRequest } from "../types/request";
-import {
-  countMyRequests,
-  formatRequests,
-  getMyRequests,
-} from "../services/request";
+import { countMyRequests, getMyRequests } from "../services/request";
+import { Request } from "../types/request";
 
 const columns: Column[] = [
   {
@@ -40,7 +36,7 @@ type Props = {};
 
 export const MyServiceRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
-    rowData: FormattedRequest[];
+    rowData: Request[];
     isLoading: boolean;
     totalServiceRequests: number;
   }>({
@@ -68,7 +64,7 @@ export const MyServiceRequests: React.FC<Props> = () => {
       const requests = response.data || [];
       setPageData({
         isLoading: false,
-        rowData: formatRequests(requests),
+        rowData: requests,
         totalServiceRequests: totalServiceRequests,
       });
     });

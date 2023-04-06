@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"strconv"
 
 	"github.com/PanGan21/demo/data"
 	"github.com/PanGan21/pkg/entity"
@@ -68,8 +69,8 @@ func createRequest(session string, requestData data.RequestData) (entity.Request
 	return request, nil
 }
 
-func approveRequest(session string, requestId string) error {
-	updateRequestPath := requestApi + "/approve?requestId=" + requestId
+func approveRequest(session string, requestId string, days int) error {
+	updateRequestPath := requestApi + "/approve?requestId=" + requestId + "&days=" + strconv.Itoa(days)
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {

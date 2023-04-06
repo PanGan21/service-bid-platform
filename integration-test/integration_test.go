@@ -560,7 +560,7 @@ func TestHTTPCountOwnRequests(t *testing.T) {
 
 // HTTP POST: /request/approve
 func TestHTTPApproveRequest(t *testing.T) {
-	routePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(requestId)
+	routePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(requestId) + "&days=0"
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 
 	Test(
@@ -1174,7 +1174,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
-	approveRequestRoutePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(yesterdayRequestd)
+	approveRequestRoutePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(yesterdayRequestd) + "&days=0"
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 	Test(
 		t,
@@ -1217,7 +1217,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
-	approveRequestRoutePath = requestApiPath + "/approve?requestId=" + strconv.Itoa(tomorrowRequestId)
+	approveRequestRoutePath = requestApiPath + "/approve?requestId=" + strconv.Itoa(tomorrowRequestId) + "&days=1"
 	Test(
 		t,
 		Description("approve tomorrow request; success"),
