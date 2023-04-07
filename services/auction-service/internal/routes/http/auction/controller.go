@@ -20,6 +20,7 @@ type AuctionController interface {
 	CountOwn(c *gin.Context)
 	UpdateWinnerByAuctionId(c *gin.Context)
 	GetOpenPastDeadline(c *gin.Context)
+	ExtendDeadline(c *gin.Context)
 	CountOpenPastDeadline(c *gin.Context)
 	UpdateStatus(c *gin.Context)
 	GetByStatus(c *gin.Context)
@@ -294,4 +295,31 @@ func (controller *auctionController) CountOwnAssignedByStatuses(c *gin.Context) 
 	}
 
 	c.JSON(http.StatusOK, count)
+}
+
+func (controller *auctionController) ExtendDeadline(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("auctionId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	daysParam := c.Request.URL.Query().Get("days")
+	days, err := strconv.Atoi(daysParam)
+	if err != nil || days < 0 {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	auction, err := controller.auctionService.UpdateDeadlineByAuctionId(context.Background(), days, id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, auction)
 }

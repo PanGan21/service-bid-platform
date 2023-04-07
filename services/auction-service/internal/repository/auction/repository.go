@@ -24,4 +24,5 @@ type AuctionRepository interface {
 	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error)
 	FindByCreatorIdAndStatus(ctx context.Context, creatorId string, status entity.AuctionStatus, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountByCreatorIdAndStatus(ctx context.Context, creatorId string, status entity.AuctionStatus) (int, error)
+	UpdateDeadlineByAuctionId(ctx context.Context, deadline int64, id int) (entity.Auction, error)
 }

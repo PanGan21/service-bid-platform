@@ -27,6 +27,7 @@ var userId = ""
 var requestId = 0
 var auctionId = 0
 var bidId = 0
+var secondTestableAuctionId = 0
 
 var adminSessionId = ""
 
@@ -1212,6 +1213,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 			}
 
 			tomorrowRequestId = request.Id
+			secondTestableAuctionId = request.Id
 
 			return nil
 		}),
@@ -1385,6 +1387,40 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		Expect().Status().Equal(http.StatusUnauthorized),
 		Expect().Body().String().Contains("Auction not allowed to be resolved"),
 	)
+}
+
+// HTTP POST: /auction/update/deadline
+func TestHTTPUpdateDeadline(t *testing.T) {
+	daysToExtend := 5
+
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+	extendAuctionDeadlinePath := auctionApiPath + "/update/deadline?auctionId=" + strconv.Itoa(secondTestableAuctionId) + "&days=" + strconv.Itoa(daysToExtend)
+
+	Test(t,
+		Description("extend auction deadline; success"),
+		Post(extendAuctionDeadlinePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auction entity.Auction
+
+			err := hit.Response().Body().JSON().Decode(&auction)
+			if err != nil {
+				return err
+			}
+
+			newDeadline := time.UnixMilli(auction.Deadline)
+			today := time.Now().Day()
+			newDeadlineDay := newDeadline.Day()
+
+			if (newDeadlineDay - today) < daysToExtend {
+				return fmt.Errorf("New deadline day is not extended by %d days\n", daysToExtend)
+			}
+
+			return nil
+		}),
+	)
+
 }
 
 // HTTP GET: /auction/open/past-deadline

@@ -27,6 +27,7 @@ type AuctionService interface {
 	CountAllByStatus(ctx context.Context, status entity.AuctionStatus) (int, error)
 	GetOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string, pagination *pagination.Pagination) (*[]entity.Auction, error)
 	CountOwnAssignedByStatuses(ctx context.Context, statuses []entity.AuctionStatus, userId string) (int, error)
+	UpdateDeadlineByAuctionId(ctx context.Context, days int, id int) (entity.Auction, error)
 }
 
 type auctionService struct {
@@ -194,4 +195,28 @@ func (s *auctionService) CountOwnAssignedByStatuses(ctx context.Context, statuse
 	}
 
 	return count, nil
+}
+
+func (s *auctionService) UpdateDeadlineByAuctionId(ctx context.Context, days int, id int) (entity.Auction, error) {
+	var auction entity.Auction
+
+	oldAuction, err := s.auctionRepo.FindOneById(ctx, id)
+	if err != nil {
+		return auction, fmt.Errorf("AuctionService - UpdateDeadlineByAuctionId - s.auctionRepo.FindOneById: %w", err)
+	}
+
+	currentTimedDeadline := time.UnixMilli(oldAuction.Deadline)
+	newDeadline := currentTimedDeadline.AddDate(0, 0, days).UTC().UnixMilli()
+
+	newAuction, err := s.auctionRepo.UpdateDeadlineByAuctionId(ctx, newDeadline, id)
+	if err != nil {
+		return auction, fmt.Errorf("AuctionService - UpdateDeadlineByAuctionId - s.auctionRepo.UpdateDeadlineByAuctionId: %w", err)
+	}
+
+	err = s.auctionEvents.PublishAuctionUpdated(&newAuction)
+	if err != nil {
+		return newAuction, fmt.Errorf("AuctionService - UpdateDeadlineByAuctionId - s.auctionEvents.PublishAuctionUpdated: %w", err)
+	}
+
+	return newAuction, nil
 }
