@@ -129,6 +129,10 @@ export const formatAuctions = (auctions: Auction[]): FormattedAuction[] => {
   });
 };
 
+export const updateAuctionDeadline =async (id: string, days: number) => {
+  return axios.post(API_URL + `/auction/update/deadline?auctionId=${id}&days=${days}`, {}, {withCredentials: true});
+};
+
 export const formatExtendedAuctions = (
   auctions: ExtendedAuction[]
 ): ExtendedFormattedAuction[] => {

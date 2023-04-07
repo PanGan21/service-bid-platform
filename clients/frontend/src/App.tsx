@@ -24,6 +24,7 @@ import { Assignments } from "./components/Assignments";
 import { NewServiceRequests } from "./components/NewServiceRequests";
 import { UpdateRequestStatus } from "./components/UpdateRequestStatus";
 import { UpdateAuctionStatus } from "./components/UpdateAuctionStatus";
+import { UpdatePendingAuction } from "./components/UpdatePendingAuction";
 
 const App: React.FC = () => {
   let navigate: NavigateFunction = useNavigate();
@@ -147,6 +148,10 @@ const App: React.FC = () => {
             element={<UpdateRequestStatus />}
           />
           <Route path="/assignments" element={<Assignments />} />
+          <Route
+            path="/update-pending-auction"
+            element={<UpdatePendingAuction />}
+          />
         </Routes>
       </div>
       <Footer />

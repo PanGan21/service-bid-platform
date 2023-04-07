@@ -23,10 +23,6 @@ const columns: Column[] = [
     accessor: "Info",
   },
   {
-    Header: "Deadline",
-    accessor: "Deadline",
-  },
-  {
     Header: "Status",
     accessor: "Status",
   },

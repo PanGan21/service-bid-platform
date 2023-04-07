@@ -8,7 +8,6 @@ import {
   countOpenPastDeadlineAuctions,
   formatExtendedAuctions,
   getOpenPastDeadlineAuctions,
-  updateWinner,
 } from "../services/auction";
 import { ExtendedFormattedAuction } from "../types/auction";
 
@@ -85,17 +84,8 @@ export const PendingAuctions: React.FC<Props> = () => {
   }, [currentPage, totalAuctions]);
 
   const handleRowSelection = (auction: any) => {
-    updateWinner(auction.Id)
-      .then((response) => {
-        if (response.data && response.data) {
-          navigate("/assigned-auction", { state: response.data });
-        }
-      })
-      .catch((error) => {
-        if (error.response.data.error === "Could not find winning bid") {
-          alert("Bids not found for this auction!");
-        }
-      });
+    const fullAuction = pageData.rowData.find((r) => r.Id === auction.Id);
+    navigate("/update-pending-auction", { state: fullAuction });
   };
 
   return (

@@ -2,8 +2,8 @@ import { Formik, Form, Field } from "formik";
 import { useState } from "react";
 import { NavigateFunction, useLocation, useNavigate } from "react-router-dom";
 import auction from "../assets/auction.png";
-import { approveRequest, rejectRequest } from "../services/request";
-import { Request } from "../types/request";
+import { updateAuctionDeadline, updateWinner } from "../services/auction";
+import { FormattedAuction } from "../types/auction";
 
 type Props = {};
 
@@ -13,46 +13,52 @@ type Option = {
 };
 
 const options: Option[] = [
-  { value: "approved", label: "approved" },
-  { value: "rejected", label: "rejected" },
+  { value: "assign", label: "assign winner" },
+  { value: "extend", label: "extend deadline" },
 ];
 
-export const UpdateRequestStatus: React.FC<Props> = () => {
+export const UpdatePendingAuction: React.FC<Props> = () => {
   const navigate: NavigateFunction = useNavigate();
 
   const initialValues: {
-    status: string;
-    rejectionReason: string;
+    action: string;
     days: number;
   } = {
-    status: "",
-    rejectionReason: "",
+    action: "",
     days: 0,
   };
 
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
-  const { state }: { state: Request } = useLocation();
+  const { state }: { state: FormattedAuction } = useLocation();
 
-  const handleSubmit = async (formValue: {
-    status: string;
-    rejectionReason: string;
-    days: number;
-  }) => {
-    const { status, rejectionReason, days } = formValue;
+  const handleSubmit = async (formValue: { action: string; days: number }) => {
+    const { action, days } = formValue;
 
     setMessage("");
     setLoading(true);
 
     try {
-      if (status === "rejected") {
-        await rejectRequest(state.Id, rejectionReason);
+      if (action === "assign") {
+        updateWinner(state.Id)
+          .then((response) => {
+            if (response.data && response.data) {
+              navigate("/assigned-auction", { state: response.data });
+            }
+          })
+          .catch((error) => {
+            if (error.response.data.error === "Could not find winning bid") {
+              alert("Bids not found for this auction!");
+              window.location.reload();
+            }
+          });
       } else {
-        await approveRequest(state.Id, days);
+        updateAuctionDeadline(state.Id, days).then((response) => {
+          if (response.data && response.data) {
+            navigate("/open-auctions", { state: response.data });
+          }
+        });
       }
-
-      navigate("/new-service-requests");
-      window.location.reload();
     } catch (error: any) {
       const resMessage =
         (error.response &&
@@ -75,13 +81,15 @@ export const UpdateRequestStatus: React.FC<Props> = () => {
             <Form>
               <div className="form-group">
                 <div style={{ textAlign: "left" }}>
+                  <b>Auction Id:</b> {state.Id}
+                  <br />
                   <b>Current status:</b> {state.Status}
                   <br />
-                  <b>Request Id:</b> {state.Id}
+                  <b>Deadline:</b> {state.Deadline}
                   <br />
                 </div>
                 <br />
-                <Field as="select" name="status" type="string">
+                <Field as="select" name="action" type="string">
                   <option value="">Select an option</option>
                   {options.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -89,21 +97,10 @@ export const UpdateRequestStatus: React.FC<Props> = () => {
                     </option>
                   ))}
                 </Field>
-                {values.status === "rejected" && (
+                {values.action === "extend" && (
                   <div>
                     <br />
-                    Enter reason for rejection
-                    <Field
-                      name="rejectionReason"
-                      type="text"
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-                )}
-                {values.status === "approved" && (
-                  <div>
-                    <br />
-                    Enter number of days to keep Auction open
+                    Enter number of days to extend Auction
                     <Field
                       name="days"
                       type="number"
