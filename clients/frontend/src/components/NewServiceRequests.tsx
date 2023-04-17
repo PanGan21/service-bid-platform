@@ -6,10 +6,9 @@ import { AppTable } from "../common/table";
 import { ROWS_PER_TABLE_PAGE } from "../constants";
 import {
   countRequestsByStatus,
-  formatRequests,
   getRequestsByStatus,
 } from "../services/request";
-import { FormattedRequest } from "../types/request";
+import { Request } from "../types/request";
 
 const columns: Column[] = [
   {
@@ -29,10 +28,6 @@ const columns: Column[] = [
     accessor: "Info",
   },
   {
-    Header: "Deadline",
-    accessor: "Deadline",
-  },
-  {
     Header: "Status",
     accessor: "Status",
   },
@@ -44,7 +39,7 @@ const STATUS = "new";
 
 export const NewServiceRequests: React.FC<Props> = () => {
   const [pageData, setPageData] = useState<{
-    rowData: FormattedRequest[];
+    rowData: Request[];
     isLoading: boolean;
     totalRequests: number;
   }>({
@@ -74,7 +69,7 @@ export const NewServiceRequests: React.FC<Props> = () => {
         const requests = response.data || [];
         setPageData({
           isLoading: false,
-          rowData: formatRequests(requests),
+          rowData: requests,
           totalRequests: totalRequests,
         });
       }

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_URL } from "../constants";
-import { FormattedRequest, NewRequest, Request } from "../types/request";
+import { NewRequest } from "../types/request";
 
 export const createRequest = async (newRequest: NewRequest) => {
   return axios.post(API_URL + "/request/", newRequest, {
@@ -21,9 +21,9 @@ export const rejectRequest = async (
   );
 };
 
-export const approveRequest = async (requestId: string) => {
+export const approveRequest = async (requestId: string, days: number) => {
   return axios.post(
-    API_URL + `/request/approve?requestId=${requestId}`,
+    API_URL + `/request/approve?requestId=${requestId}&days=${days}`,
     {},
     { withCredentials: true }
   );
@@ -74,14 +74,5 @@ export const getRequestsByStatus = async (
 export const countOwnRejectedRequests = async () => {
   return axios.get(API_URL + "/request/status/own/count?status=rejected", {
     withCredentials: true,
-  });
-};
-
-export const formatRequests = (requests: Request[]): FormattedRequest[] => {
-  return requests.map((r) => {
-    return {
-      ...r,
-      Deadline: new Date(r.Deadline).toLocaleDateString("en-US"),
-    };
   });
 };

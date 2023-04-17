@@ -18,9 +18,10 @@ func NewRequestEvents(pub messaging.Publisher) *requestEvents {
 	return &requestEvents{pub: pub}
 }
 
-func (events *requestEvents) PublishRequestApproved(request *entity.Request) error {
+func (events *requestEvents) PublishRequestApproved(request *entity.Request, timestamp int64) error {
 	msg := messaging.Message{
-		Payload: request,
+		Payload:   request,
+		Timestamp: timestamp,
 	}
 
 	err := events.pub.Publish(REQUEST_APPROVED_TOPIC, msg)

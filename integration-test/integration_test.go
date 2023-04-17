@@ -27,6 +27,7 @@ var userId = ""
 var requestId = 0
 var auctionId = 0
 var bidId = 0
+var secondTestableAuctionId = 0
 
 var adminSessionId = ""
 
@@ -375,7 +376,7 @@ func TestHTTPGetAllPaginatedRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if !isAscendingOrder {
@@ -411,7 +412,7 @@ func TestHTTPGetAllPaginatedRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if isAscendingOrder {
@@ -483,7 +484,7 @@ func TestHTTPGetPaginatedOwnRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if !isAscendingOrder {
@@ -519,7 +520,7 @@ func TestHTTPGetPaginatedOwnRequestsByStatus(t *testing.T) {
 			}
 
 			isAscendingOrder := sort.SliceIsSorted(requests, func(p, q int) bool {
-				return requests[p].Deadline < requests[q].Deadline
+				return requests[p].Id < requests[q].Id
 			})
 
 			if isAscendingOrder {
@@ -560,7 +561,7 @@ func TestHTTPCountOwnRequests(t *testing.T) {
 
 // HTTP POST: /request/approve
 func TestHTTPApproveRequest(t *testing.T) {
-	routePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(requestId)
+	routePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(requestId) + "&days=0"
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 
 	Test(
@@ -1174,7 +1175,7 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		}),
 	)
 
-	approveRequestRoutePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(yesterdayRequestd)
+	approveRequestRoutePath := requestApiPath + "/approve?requestId=" + strconv.Itoa(yesterdayRequestd) + "&days=0"
 	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
 	Test(
 		t,
@@ -1212,12 +1213,13 @@ func TestHTTPUpdateWinner(t *testing.T) {
 			}
 
 			tomorrowRequestId = request.Id
+			secondTestableAuctionId = request.Id
 
 			return nil
 		}),
 	)
 
-	approveRequestRoutePath = requestApiPath + "/approve?requestId=" + strconv.Itoa(tomorrowRequestId)
+	approveRequestRoutePath = requestApiPath + "/approve?requestId=" + strconv.Itoa(tomorrowRequestId) + "&days=1"
 	Test(
 		t,
 		Description("approve tomorrow request; success"),
@@ -1385,6 +1387,40 @@ func TestHTTPUpdateWinner(t *testing.T) {
 		Expect().Status().Equal(http.StatusUnauthorized),
 		Expect().Body().String().Contains("Auction not allowed to be resolved"),
 	)
+}
+
+// HTTP POST: /auction/update/deadline
+func TestHTTPUpdateDeadline(t *testing.T) {
+	daysToExtend := 5
+
+	adminSessionCookie := fmt.Sprintf(`s.id=%s`, adminSessionId)
+	extendAuctionDeadlinePath := auctionApiPath + "/update/deadline?auctionId=" + strconv.Itoa(secondTestableAuctionId) + "&days=" + strconv.Itoa(daysToExtend)
+
+	Test(t,
+		Description("extend auction deadline; success"),
+		Post(extendAuctionDeadlinePath),
+		Send().Headers("Cookie").Add(adminSessionCookie),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Custom(func(hit Hit) error {
+			var auction entity.Auction
+
+			err := hit.Response().Body().JSON().Decode(&auction)
+			if err != nil {
+				return err
+			}
+
+			newDeadline := time.UnixMilli(auction.Deadline)
+			today := time.Now().Day()
+			newDeadlineDay := newDeadline.Day()
+
+			if (newDeadlineDay - today) < daysToExtend {
+				return fmt.Errorf("New deadline day is not extended by %d days\n", daysToExtend)
+			}
+
+			return nil
+		}),
+	)
+
 }
 
 // HTTP GET: /auction/open/past-deadline

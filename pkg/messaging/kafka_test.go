@@ -6,32 +6,32 @@ import (
 	"testing"
 )
 
-func logHandler1(payload interface{}) error {
-	fmt.Println("logHandler1: payload:", payload)
+func logHandler1(msg Message) error {
+	fmt.Println("logHandler1: payload:", msg.Payload)
 
 	return nil
 }
 
-func logHandler2(payload interface{}) error {
-	fmt.Println("logHandler2: payload:", payload)
+func logHandler2(msg Message) error {
+	fmt.Println("logHandler2: payload:", msg.Payload)
 
 	return nil
 }
 
-func logHandler3(payload interface{}) error {
-	fmt.Println("logHandler3: payload:", payload)
+func logHandler3(msg Message) error {
+	fmt.Println("logHandler3: payload:", msg.Payload)
 
 	return nil
 }
 
-func logHandler4(payload interface{}) error {
-	fmt.Println("logHandler4: payload:", payload)
+func logHandler4(msg Message) error {
+	fmt.Println("logHandler4: payload:", msg.Payload)
 
 	return nil
 }
 
-func logHandler5(payload interface{}) error {
-	fmt.Println("logHandler5: payload:", payload)
+func logHandler5(msg Message) error {
+	fmt.Println("logHandler5: payload:", msg.Payload)
 
 	return nil
 }

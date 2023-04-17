@@ -1,5 +1,6 @@
 package messaging
 
 type Message struct {
-	Payload interface{}
+	Payload   interface{}
+	Timestamp int64
 }

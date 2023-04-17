@@ -46,6 +46,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, corsOrigins []string, au
 	handler.GET("/open/past-deadline/count", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.CountOpenPastDeadline)
 	handler.POST("/update/winner", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.UpdateWinnerByAuctionId)
 	handler.POST("/update/status", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.UpdateStatus)
+	handler.POST("/update/deadline", auth.AuthorizeEndpoint(requireAdminRole...), auctionController.ExtendDeadline)
 
 	var requiredRoles []string
 	handler.GET("/hello", auth.AuthorizeEndpoint(requiredRoles...), func(c *gin.Context) { c.Status(http.StatusOK) })

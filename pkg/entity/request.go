@@ -8,7 +8,6 @@ type Request struct {
 	Postcode        string        `json:"Postcode" db:"Postcode"`
 	Info            string        `json:"Info" db:"Info"`
 	CreatorId       string        `json:"CreatorId" db:"CreatorId"`
-	Deadline        int64         `json:"Deadline" db:"Deadline"`
 	Status          RequestStatus `json:"Status" db:"Status"`
 	RejectionReason string        `json:"RejectionReason" db:"RejectionReason"`
 }
@@ -56,12 +55,6 @@ func IsRequestType(unknown interface{}) (Request, error) {
 		return request, ErrIncorrectRequestType
 	}
 	request.Id = int(floatId)
-
-	floatDeadline, ok := unknownMap["Deadline"].(float64)
-	if !ok {
-		return request, ErrIncorrectRequestType
-	}
-	request.Deadline = int64(floatDeadline)
 
 	s, ok := unknownMap["Status"].(string)
 	if !ok {

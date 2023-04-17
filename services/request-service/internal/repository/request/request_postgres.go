@@ -17,7 +17,7 @@ func NewRequestRepository(db postgres.Postgres) *requestRepository {
 	return &requestRepository{db: db}
 }
 
-func (repo *requestRepository) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64, status entity.RequestStatus, rejectionReason string) (int, error) {
+func (repo *requestRepository) Create(ctx context.Context, creatorId, info, postcode, title string, status entity.RequestStatus, rejectionReason string) (int, error) {
 	var requestId int
 
 	c, err := repo.db.Pool.Acquire(ctx)
@@ -27,11 +27,11 @@ func (repo *requestRepository) Create(ctx context.Context, creatorId, info, post
 	defer c.Release()
 
 	const query = `
-  		INSERT INTO requests (CreatorId, Info, Postcode, Title, Deadline, Status, RejectionReason) 
-  		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING Id;
+  		INSERT INTO requests (CreatorId, Info, Postcode, Title, Status, RejectionReason) 
+  		VALUES ($1, $2, $3, $4, $5, $6) RETURNING Id;
 	`
 
-	c.QueryRow(ctx, query, creatorId, info, postcode, title, deadline, status, rejectionReason).Scan(&requestId)
+	c.QueryRow(ctx, query, creatorId, info, postcode, title, status, rejectionReason).Scan(&requestId)
 	if err != nil {
 		return requestId, fmt.Errorf("RequestRepo - Create - c.QueryRow: %w", err)
 	}
@@ -52,7 +52,7 @@ func (repo *requestRepository) FindOneById(ctx context.Context, id int) (entity.
 		SELECT * FROM requests WHERE Id=$1;
 	`
 
-	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.RejectionReason)
+	err = c.QueryRow(ctx, query, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Status, &request.RejectionReason)
 	if err != nil {
 		return request, fmt.Errorf("RequestRepo - FindOneById - c.QueryRow: %w", err)
 	}
@@ -73,7 +73,7 @@ func (repo *requestRepository) UpdateStatusAndRejectionReasonById(ctx context.Co
 		UPDATE requests SET Status=$1, RejectionReason=$2 WHERE Id=$3 RETURNING *;
 	`
 
-	err = c.QueryRow(ctx, query, status, rejectionReason, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.RejectionReason)
+	err = c.QueryRow(ctx, query, status, rejectionReason, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Status, &request.RejectionReason)
 	if err != nil {
 		return request, fmt.Errorf("RequestRepo - UpdateStatusAndRejectionReasonById - c.QueryRow: %w", err)
 	}
@@ -94,7 +94,7 @@ func (repo *requestRepository) UpdateStatusById(ctx context.Context, id int, sta
 		UPDATE requests SET Status=$1 WHERE Id=$2 RETURNING *;
 	`
 
-	err = c.QueryRow(ctx, query, status, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.RejectionReason)
+	err = c.QueryRow(ctx, query, status, id).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Status, &request.RejectionReason)
 	if err != nil {
 		return request, fmt.Errorf("RequestRepo - UpdateStatusById - c.QueryRow: %w", err)
 	}
@@ -118,7 +118,7 @@ func (repo *requestRepository) GetAllByStatus(ctx context.Context, status entity
 		order = "desc"
 	}
 
-	query := fmt.Sprintf("SELECT * FROM requests WHERE Status=$1 ORDER BY Deadline %s LIMIT $2 OFFSET $3;", order)
+	query := fmt.Sprintf("SELECT * FROM requests WHERE Status=$1 ORDER BY Id %s LIMIT $2 OFFSET $3;", order)
 
 	rows, err := c.Query(ctx, query, status, pagination.Limit, offset)
 	if err != nil {
@@ -128,7 +128,7 @@ func (repo *requestRepository) GetAllByStatus(ctx context.Context, status entity
 
 	for rows.Next() {
 		var r entity.Request
-		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.RejectionReason)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Status, &r.RejectionReason)
 		if err != nil {
 			return nil, fmt.Errorf("RequestRepo - GetAllByStatus - rows.Scan: %w", err)
 		}
@@ -182,7 +182,7 @@ func (repo *requestRepository) GetManyByStatusByUserId(ctx context.Context, stat
 	query := fmt.Sprintf(`
 		SELECT * FROM requests
 		WHERE CreatorId=$1 AND Status=$2
-		ORDER BY deadline %s LIMIT $3 OFFSET $4;
+		ORDER BY Id %s LIMIT $3 OFFSET $4;
 	`, order)
 
 	rows, err := c.Query(ctx, query, userId, status, pagination.Limit, offset)
@@ -193,7 +193,7 @@ func (repo *requestRepository) GetManyByStatusByUserId(ctx context.Context, stat
 
 	for rows.Next() {
 		var r entity.Request
-		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Deadline, &r.Status, &r.RejectionReason)
+		err := rows.Scan(&r.Id, &r.Title, &r.Postcode, &r.Info, &r.CreatorId, &r.Status, &r.RejectionReason)
 		if err != nil {
 			return nil, fmt.Errorf("RequestRepo - GetManyByStatusByUserId - rows.Scan: %w", err)
 		}

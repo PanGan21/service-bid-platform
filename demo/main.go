@@ -60,12 +60,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = approveRequest(superAdminSession, fmt.Sprint(twoDaysAgoRequestOpen.Id))
+	err = approveRequest(superAdminSession, fmt.Sprint(twoDaysAgoRequestOpen.Id), 0)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = approveRequest(superAdminSession, fmt.Sprint(twoDaysAgoRequestAssigned.Id))
+	err = approveRequest(superAdminSession, fmt.Sprint(twoDaysAgoRequestAssigned.Id), 0)
 	if err != nil {
 		log.Fatal(err)
 	}

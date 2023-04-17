@@ -479,3 +479,24 @@ func (repo *auctionRepository) CountByCreatorIdAndStatus(ctx context.Context, cr
 
 	return count, nil
 }
+
+func (repo *auctionRepository) UpdateDeadlineByAuctionId(ctx context.Context, deadline int64, id int) (entity.Auction, error) {
+	var auction entity.Auction
+
+	c, err := repo.db.Pool.Acquire(ctx)
+	if err != nil {
+		return auction, err
+	}
+	defer c.Release()
+
+	const query = `
+		UPDATE auctions SET Deadline=$1 WHERE Id=$2 RETURNING *;
+	`
+
+	err = c.QueryRow(ctx, query, deadline, id).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
+	if err != nil {
+		return auction, fmt.Errorf("AuctionRepo - UpdateDeadlineByAuctionId - c.QueryRow: %w", err)
+	}
+
+	return auction, nil
+}

@@ -19,7 +19,7 @@ type kafkaSubscriber struct {
 	groupId string
 }
 
-type fnHandler func(payload interface{}) error
+type fnHandler func(msg Message) error
 
 func NewSubscriber(url string, groupId string) Subscriber {
 	return &kafkaSubscriber{broker: url, groupId: groupId}
@@ -55,9 +55,9 @@ func (k kafkaSubscriber) Subscribe(topic string, fn fnHandler) {
 			break
 		}
 
-		fmt.Printf("SUBSCRIBER: Topic: %s - Partition: %d - Offset: %d - Key: %s - Payload: %v\n", m.Topic, m.Partition, m.Offset, string(m.Key), deserialized.Payload)
+		fmt.Printf("SUBSCRIBER: Topic: %s - Partition: %d - Offset: %d - Key: %s - Payload: %v - Timestamp: %d\n", m.Topic, m.Partition, m.Offset, string(m.Key), deserialized.Payload, deserialized.Timestamp)
 
-		err = fn(deserialized.Payload)
+		err = fn(deserialized)
 		if err != nil {
 			fmt.Println(err)
 		}

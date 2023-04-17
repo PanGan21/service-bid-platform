@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/pagination"
@@ -11,13 +12,13 @@ import (
 )
 
 type RequestService interface {
-	Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error)
+	Create(ctx context.Context, creatorId, info, postcode, title string) (entity.Request, error)
 	RejectRequest(ctx context.Context, rejectionReason string, id int) (entity.Request, error)
 	GetAllByStatus(ctx context.Context, status entity.RequestStatus, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountAllByStatus(ctx context.Context, status entity.RequestStatus) (int, error)
 	GetManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string, pagination *pagination.Pagination) (*[]entity.Request, error)
 	CountManyByStatusByUserId(ctx context.Context, status entity.RequestStatus, userId string) (int, error)
-	ApproveRequestById(ctx context.Context, id int) (entity.Request, error)
+	ApproveRequestById(ctx context.Context, id int, deadlineBufferDays int) (entity.Request, error)
 }
 
 type requestService struct {
@@ -29,13 +30,13 @@ func NewRequestService(rr requestRepo.RequestRepository, re requestEvents.Reques
 	return &requestService{requestRepo: rr, requestEvents: re}
 }
 
-func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, title string, deadline int64) (entity.Request, error) {
+func (s *requestService) Create(ctx context.Context, creatorId, info, postcode, title string) (entity.Request, error) {
 	var newRequest entity.Request
 
 	var defaultStatus = entity.NewRequest
 	var defaultRejectionReason = ""
 
-	requestId, err := s.requestRepo.Create(ctx, creatorId, info, postcode, title, deadline, defaultStatus, defaultRejectionReason)
+	requestId, err := s.requestRepo.Create(ctx, creatorId, info, postcode, title, defaultStatus, defaultRejectionReason)
 	if err != nil {
 		return newRequest, fmt.Errorf("RequestService - Create - s.requestRepo.Create: %w", err)
 	}
@@ -93,13 +94,16 @@ func (s *requestService) CountManyByStatusByUserId(ctx context.Context, status e
 	return count, nil
 }
 
-func (s *requestService) ApproveRequestById(ctx context.Context, id int) (entity.Request, error) {
+func (s *requestService) ApproveRequestById(ctx context.Context, id int, deadlineBufferDays int) (entity.Request, error) {
 	request, err := s.requestRepo.UpdateStatusById(ctx, id, entity.ApprovedRequest)
 	if err != nil {
 		return request, fmt.Errorf("RequestService - ApproveRequestById - s.requestRepo.UpdateStatusById: %w", err)
 	}
 
-	err = s.requestEvents.PublishRequestApproved(&request)
+	today := time.Now()
+	deadline := today.AddDate(0, 0, deadlineBufferDays).UTC().UnixMilli()
+
+	err = s.requestEvents.PublishRequestApproved(&request, deadline)
 	if err != nil {
 		return request, fmt.Errorf("RequestService - Create - s.requestEvents.PublishRequestApproved: %w", err)
 	}
