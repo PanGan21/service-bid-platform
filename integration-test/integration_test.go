@@ -1409,11 +1409,18 @@ func TestHTTPUpdateDeadline(t *testing.T) {
 				return err
 			}
 
-			newDeadline := time.UnixMilli(auction.Deadline)
-			today := time.Now().Day()
-			newDeadlineDay := newDeadline.Day()
+			// Convert timestamps to time.Time objects
+			newDeadlineTime := time.Unix(0, auction.Deadline*int64(time.Millisecond))
+			nowTime := time.Now()
+			// time2 := time.Unix(0, timestamp2*int64(time.Millisecond))
 
-			if (newDeadlineDay - today) < daysToExtend {
+			// Calculate duration between timestamps
+			duration := newDeadlineTime.Sub(nowTime)
+
+			// Calculate the number of days
+			days := int(duration.Hours() / 24)
+
+			if days < daysToExtend {
 				return fmt.Errorf("New deadline day is not extended by %d days\n", daysToExtend)
 			}
 
