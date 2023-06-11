@@ -1,5 +1,5 @@
 # Step 1: Modules caching
-FROM golang:1.19-alpine3.16 AS modules
+FROM golang:1.20.2-alpine3.16 AS modules
 WORKDIR /pkg
 COPY /pkg .
 ARG service_name
@@ -8,7 +8,7 @@ WORKDIR /modules
 RUN go mod download
 
 # Step 2: Builder
-FROM golang:1.19-alpine3.16 as builder
+FROM golang:1.20.2-alpine3.16 as builder
 COPY --from=modules /pkg /pkg
 COPY --from=modules /go/pkg /go/pkg
 ARG service_name
@@ -22,7 +22,6 @@ FROM scratch
 COPY --from=builder /app/config /config
 COPY --from=builder /app/migrations /migrations
 COPY --from=builder /bin/app /app
-# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 CMD ["/app"]
 
 

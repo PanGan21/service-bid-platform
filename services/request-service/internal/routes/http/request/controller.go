@@ -8,37 +8,30 @@ import (
 	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
 	"github.com/PanGan21/pkg/pagination"
+	"github.com/PanGan21/pkg/utils"
 	"github.com/PanGan21/request-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 type RequestController interface {
 	Create(c *gin.Context)
-	GetAll(c *gin.Context)
-	CountAll(c *gin.Context)
-	GetOwn(c *gin.Context)
-	CountOwn(c *gin.Context)
-	UpdateWinnerByRequestId(c *gin.Context)
-	GetOpenPastDeadline(c *gin.Context)
-	CountOpenPastDeadline(c *gin.Context)
-	UpdateStatus(c *gin.Context)
+	RejectRequest(c *gin.Context)
 	GetByStatus(c *gin.Context)
 	CountByStatus(c *gin.Context)
-	GetOwnAssignedByStatuses(c *gin.Context)
-	CountOwnAssignedByStatuses(c *gin.Context)
+	GetOwnByStatus(c *gin.Context)
+	CountOwnByStatus(c *gin.Context)
+	Approve(c *gin.Context)
 }
 
 type requestController struct {
 	logger         logger.Interface
 	requestService service.RequestService
-	bidService     service.BidService
 }
 
-func NewRequestController(logger logger.Interface, requestServ service.RequestService, bidServ service.BidService) RequestController {
+func NewRequestController(logger logger.Interface, requestServ service.RequestService) RequestController {
 	return &requestController{
 		logger:         logger,
 		requestService: requestServ,
-		bidService:     bidServ,
 	}
 }
 
@@ -46,7 +39,6 @@ type RequestData struct {
 	Title    string `json:"Title"`
 	Postcode string `json:"Postcode"`
 	Info     string `json:"Info"`
-	Deadline int64  `json:"Deadline"`
 }
 
 func (controller *requestController) Create(c *gin.Context) {
@@ -57,12 +49,12 @@ func (controller *requestController) Create(c *gin.Context) {
 		return
 	}
 
-	userId, exists := c.Get("userId")
+	user, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
 
-	request, err := controller.requestService.Create(context.Background(), userId.(string), requestData.Info, requestData.Postcode, requestData.Title, requestData.Deadline)
+	request, err := controller.requestService.Create(context.Background(), user.(entity.PublicUser).Id, requestData.Info, requestData.Postcode, requestData.Title)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
@@ -72,69 +64,11 @@ func (controller *requestController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, request)
 }
 
-func (controller *requestController) GetAll(c *gin.Context) {
-	pagination := pagination.GeneratePaginationFromRequest(c)
-
-	requests, err := controller.requestService.GetAll(context.Background(), &pagination)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, requests)
+type RejectRequestData struct {
+	RejectionReason string
 }
 
-func (controller *requestController) CountAll(c *gin.Context) {
-	count, err := controller.requestService.CountAll(context.Background())
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, count)
-}
-
-func (controller *requestController) GetOwn(c *gin.Context) {
-	userId, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
-	}
-
-	pagination := pagination.GeneratePaginationFromRequest(c)
-
-	requests, err := controller.requestService.GetOwn(context.Background(), userId.(string), &pagination)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, requests)
-}
-
-func (controller *requestController) CountOwn(c *gin.Context) {
-	userId, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
-	}
-
-	count, err := controller.requestService.CountOwn(context.Background(), userId.(string))
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, count)
-}
-
-func (controller *requestController) UpdateWinnerByRequestId(c *gin.Context) {
+func (controller *requestController) RejectRequest(c *gin.Context) {
 	idParam := c.Request.URL.Query().Get("requestId")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
@@ -143,96 +77,28 @@ func (controller *requestController) UpdateWinnerByRequestId(c *gin.Context) {
 		return
 	}
 
-	request, err := controller.requestService.GetById(context.Background(), id)
-	if err != nil {
+	var rejectRequestData RejectRequestData
+	if err := c.BindJSON(&rejectRequestData); err != nil {
 		controller.logger.Error(err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Request not found"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Validation error"})
 		return
 	}
 
-	isAllowedToResolve := controller.requestService.IsAllowedToResolve(context.Background(), request)
-	if !isAllowedToResolve {
-		controller.logger.Error(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Request not allowed to be resolved"})
-		return
-	}
-
-	winnignBid, err := controller.bidService.FindWinningBidByRequestId(context.Background(), idParam)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Could not find winning bid"})
-		return
-	}
-
-	_, err = controller.requestService.UpdateWinningBid(context.Background(), request, strconv.Itoa(winnignBid.Id))
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Could not update request"})
-		return
-	}
-
-	c.JSON(http.StatusOK, winnignBid)
-}
-
-func (controller *requestController) GetOpenPastDeadline(c *gin.Context) {
-	pagination := pagination.GeneratePaginationFromRequest(c)
-
-	requests, err := controller.requestService.GetAllOpenPastDeadline(context.Background(), &pagination)
+	request, err := controller.requestService.RejectRequest(context.Background(), rejectRequestData.RejectionReason, id)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, requests)
-}
-
-func (controller *requestController) CountOpenPastDeadline(c *gin.Context) {
-	count, err := controller.requestService.CountAllOpenPastDeadline(context.Background())
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, count)
-}
-
-type UpdateStatusData struct {
-	Status entity.RequestStatus `json:"Status"`
-}
-
-func (controller *requestController) UpdateStatus(c *gin.Context) {
-	idParam := c.Request.URL.Query().Get("requestId")
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
-		return
-	}
-
-	var updateStatusData UpdateStatusData
-	if err := c.BindJSON(&updateStatusData); err != nil || (updateStatusData.Status != entity.InProgress && updateStatusData.Status != entity.Closed) {
-		controller.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
-		return
-	}
-
-	updatedRequest, err := controller.requestService.UpdateStatusByRequestId(context.Background(), updateStatusData.Status, id)
-	if err != nil {
-		controller.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-
-	}
-
-	c.JSON(http.StatusOK, updatedRequest)
+	c.JSON(http.StatusOK, request)
 }
 
 func (controller *requestController) GetByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	if statusParam == "" || (statusParam != string(entity.Open) && statusParam != string(entity.Assigned) && statusParam != string(entity.Closed) && statusParam != string(entity.InProgress)) {
+	allowedStatuses := []string{string(entity.NewRequest), string(entity.ApprovedRequest), string(entity.RejectedRequest)}
+
+	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
@@ -253,7 +119,9 @@ func (controller *requestController) GetByStatus(c *gin.Context) {
 
 func (controller *requestController) CountByStatus(c *gin.Context) {
 	statusParam := c.Request.URL.Query().Get("status")
-	if statusParam == "" || (statusParam != string(entity.Open) && statusParam != string(entity.Assigned) && statusParam != string(entity.Closed) && statusParam != string(entity.InProgress)) {
+	allowedStatuses := []string{string(entity.Open), string(entity.NewRequest), string(entity.RejectedRequest)}
+
+	if !utils.Contains(allowedStatuses, statusParam) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
 		return
 	}
@@ -270,40 +138,85 @@ func (controller *requestController) CountByStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, count)
 }
 
-func (controller *requestController) GetOwnAssignedByStatuses(c *gin.Context) {
-	userId, exists := c.Get("userId")
+func (controller *requestController) GetOwnByStatus(c *gin.Context) {
+	user, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
+
+	statusParam := c.Request.URL.Query().Get("status")
+	allowedStatuses := []string{string(entity.Open), string(entity.NewRequest), string(entity.RejectedRequest)}
+
+	if !utils.Contains(allowedStatuses, statusParam) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	status := entity.RequestStatus(statusParam)
 
 	pagination := pagination.GeneratePaginationFromRequest(c)
 
-	statuses := []entity.RequestStatus{entity.Assigned, entity.InProgress}
-
-	populatedRequests, err := controller.requestService.GetOwnAssignedByStatuses(context.Background(), statuses, userId.(string), &pagination)
+	requests, err := controller.requestService.GetManyByStatusByUserId(context.Background(), status, user.(entity.PublicUser).Id, &pagination)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+
 	}
 
-	c.JSON(http.StatusOK, populatedRequests)
+	c.JSON(http.StatusOK, requests)
 }
 
-func (controller *requestController) CountOwnAssignedByStatuses(c *gin.Context) {
-	userId, exists := c.Get("userId")
+func (controller *requestController) CountOwnByStatus(c *gin.Context) {
+	user, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
 
-	statuses := []entity.RequestStatus{entity.Assigned, entity.InProgress}
+	statusParam := c.Request.URL.Query().Get("status")
+	allowedStatuses := []string{string(entity.Open), string(entity.NewRequest), string(entity.RejectedRequest)}
 
-	count, err := controller.requestService.CountOwnAssignedByStatuses(context.Background(), statuses, userId.(string))
+	if !utils.Contains(allowedStatuses, statusParam) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	status := entity.RequestStatus(statusParam)
+
+	count, err := controller.requestService.CountManyByStatusByUserId(context.Background(), status, user.(entity.PublicUser).Id)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, count)
+}
+
+func (controller *requestController) Approve(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("requestId")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	daysParam := c.Request.URL.Query().Get("days")
+	days, err := strconv.Atoi(daysParam)
+	if err != nil || days < 0 {
+		controller.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
+		return
+	}
+
+	request, err := controller.requestService.ApproveRequestById(context.Background(), id, days)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, count)
+	c.JSON(http.StatusOK, request)
 }

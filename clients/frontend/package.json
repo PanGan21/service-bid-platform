@@ -28,7 +28,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start-https": "REACT_APP_API_URL=https://localhost HTTPS=true SSL_CRT_FILE=../../ssl/cert.pem SSL_KEY_FILE=../../ssl/key.pem yarn start"
   },
   "eslintConfig": {
     "extends": [

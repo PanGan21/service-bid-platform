@@ -1,6 +1,7 @@
 package events
 
 import (
+	auctionController "github.com/PanGan21/bidding-service/internal/routes/events/auction"
 	requestController "github.com/PanGan21/bidding-service/internal/routes/events/request"
 	"github.com/PanGan21/bidding-service/internal/service"
 	"github.com/PanGan21/pkg/logger"
@@ -8,13 +9,14 @@ import (
 )
 
 const (
-	REQUEST_CREATED_TOPIC = "request-created"
-	REQUEST_UPDATED_TOPIC = "request-updated"
+	REQUEST_APPROVED_TOPIC = "request-approved"
+	AUCTION_UPDATED_TOPIC  = "auction-updated"
 )
 
-func NewEventsClient(subscriber messaging.Subscriber, l logger.Interface, requestService service.RequestService) {
-	requestController := requestController.NewRequestController(l, requestService)
+func NewEventsClient(subscriber messaging.Subscriber, l logger.Interface, auctionService service.AuctionService) {
+	auctionController := auctionController.NewAuctionController(l, auctionService)
+	requestController := requestController.NewRequestController(l, auctionService)
 
-	go subscriber.Subscribe(REQUEST_CREATED_TOPIC, requestController.Create)
-	go subscriber.Subscribe(REQUEST_UPDATED_TOPIC, requestController.Update)
+	go subscriber.Subscribe(REQUEST_APPROVED_TOPIC, requestController.Create)
+	go subscriber.Subscribe(AUCTION_UPDATED_TOPIC, auctionController.Update)
 }

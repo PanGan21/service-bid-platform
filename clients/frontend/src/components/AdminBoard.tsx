@@ -1,94 +1,94 @@
 import { useState } from "react";
-import request from "../assets/request.png";
-import { AssignedRequests } from "./AssignedRequests";
-import { ClosedRequests } from "./ClosedRequests";
-import { InProgressRequests } from "./InProgressRequests";
-import { PendingRequests } from "./PendingRequests";
+import auction from "../assets/auction.png";
+import { AssignedAuctions } from "./AssignedAuctions";
+import { ClosedAuctions } from "./ClosedAuctions";
+import { InProgressAuctions } from "./InProgressAuctions";
+import { PendingAuctions } from "./PendingAuctions";
 
 type Props = {};
 
 export const AdminBoard: React.FC<Props> = () => {
-  const [isPendingRequestsOpen, setPendingRequestsOpen] = useState(false);
-  const [isAssignedRequestsOpen, setAssignedOpen] = useState(false);
-  const [isInProgressRequestsOpen, setInProgressOpen] = useState(false);
-  const [isClosedRequestsOpen, setClosedOpen] = useState(false);
+  const [isPendingAuctionsOpen, setPendingAuctionsOpen] = useState(false);
+  const [isAssignedAuctionsOpen, setAssignedOpen] = useState(false);
+  const [isInProgressAuctionsOpen, setInProgressOpen] = useState(false);
+  const [isClosedAuctionsOpen, setClosedOpen] = useState(false);
 
-  const togglePendingRequests = () => {
-    setPendingRequestsOpen(!isPendingRequestsOpen);
+  const togglePendingAuctions = () => {
+    setPendingAuctionsOpen(!isPendingAuctionsOpen);
   };
 
   const toggleAssigned = () => {
-    setAssignedOpen(!isAssignedRequestsOpen);
+    setAssignedOpen(!isAssignedAuctionsOpen);
   };
 
   const toggleInProgress = () => {
-    setInProgressOpen(!isInProgressRequestsOpen);
+    setInProgressOpen(!isInProgressAuctionsOpen);
   };
 
   const toggleClosed = () => {
-    setClosedOpen(!isClosedRequestsOpen);
+    setClosedOpen(!isClosedAuctionsOpen);
   };
 
   return (
     <div className="container">
-      <div onClick={togglePendingRequests} style={{ cursor: "pointer" }}>
+      <div onClick={togglePendingAuctions} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
-          src={request}
+          src={auction}
           alt="profile-img"
         />
         <span>
-          <strong>Pending Requests</strong>
+          <strong>Pending Auctions</strong>
         </span>
       </div>
-      <div style={{ display: isPendingRequestsOpen ? "block" : "none" }}>
-        Choose a request to resolve the winning bid!
-        <PendingRequests />
+      <div style={{ display: isPendingAuctionsOpen ? "block" : "none" }}>
+        Choose an auction to resolve the winning bid!
+        <PendingAuctions />
       </div>
       <br />
       <div onClick={toggleAssigned} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
-          src={request}
+          src={auction}
           alt="profile-img"
         />
         <span>
-          <strong>Assigned Requests</strong>
+          <strong>Assigned Auctions</strong>
         </span>
       </div>
-      <div style={{ display: isAssignedRequestsOpen ? "block" : "none" }}>
-        Choose a request to update the status!
-        <AssignedRequests />
+      <div style={{ display: isAssignedAuctionsOpen ? "block" : "none" }}>
+        Choose an auction to update the status!
+        <AssignedAuctions />
       </div>
       <br />
       <div onClick={toggleInProgress} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
-          src={request}
+          src={auction}
           alt="profile-img"
         />
         <span>
-          <strong>In Progress Requests</strong>
+          <strong>In Progress Auctions</strong>
         </span>
       </div>
-      <div style={{ display: isInProgressRequestsOpen ? "block" : "none" }}>
-        Choose a request to close it!
-        <InProgressRequests />
+      <div style={{ display: isInProgressAuctionsOpen ? "block" : "none" }}>
+        Choose an auction to close it!
+        <InProgressAuctions />
       </div>
       <br />
       <div onClick={toggleClosed} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
-          src={request}
+          src={auction}
           alt="profile-img"
         />
         <span>
-          <strong>Closed Requests</strong>
+          <strong>Closed Auctions</strong>
         </span>
       </div>
-      <div style={{ display: isClosedRequestsOpen ? "block" : "none" }}>
-        All the closed request from residents!
-        <ClosedRequests />
+      <div style={{ display: isClosedAuctionsOpen ? "block" : "none" }}>
+        All the closed auction from residents!
+        <ClosedAuctions />
       </div>
     </div>
   );

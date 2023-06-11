@@ -1,51 +1,23 @@
 package entity
 
-import (
-	"errors"
-)
+import "errors"
 
 type Request struct {
-	Id           int           `json:"Id" db:"Id"`
-	Title        string        `json:"Title" db:"Title"`
-	Postcode     string        `json:"Postcode" db:"Postcode"`
-	Info         string        `json:"Info" db:"Info"`
-	CreatorId    string        `json:"CreatorId" db:"CreatorId"`
-	Deadline     int64         `json:"Deadline" db:"Deadline"`
-	Status       RequestStatus `json:"Status" db:"Status"`
-	WinningBidId string        `json:"WinningBidId" db:"WinningBidId"`
-}
-
-type ExtendedRequest struct {
-	Id           int           `json:"Id" db:"Id"`
-	Title        string        `json:"Title" db:"Title"`
-	Postcode     string        `json:"Postcode" db:"Postcode"`
-	Info         string        `json:"Info" db:"Info"`
-	CreatorId    string        `json:"CreatorId" db:"CreatorId"`
-	Deadline     int64         `json:"Deadline" db:"Deadline"`
-	Status       RequestStatus `json:"Status" db:"Status"`
-	WinningBidId string        `json:"WinningBidId" db:"WinningBidId"`
-	BidsCount    int           `json:"BidsCount" db:"BidsCount"`
-}
-
-type BidPopulatedRequest struct {
-	Id        int           `json:"Id" db:"Id"`
-	Title     string        `json:"Title" db:"Title"`
-	Postcode  string        `json:"Postcode" db:"Postcode"`
-	Info      string        `json:"Info" db:"Info"`
-	CreatorId string        `json:"CreatorId" db:"CreatorId"`
-	Deadline  int64         `json:"Deadline" db:"Deadline"`
-	Status    RequestStatus `json:"Status" db:"Status"`
-	BidId     int           `json:"BidId" db:"BidId"`
-	BidAmount float64       `json:"BidAmount" db:"BidAmount"`
+	Id              int           `json:"Id" db:"Id"`
+	Title           string        `json:"Title" db:"Title"`
+	Postcode        string        `json:"Postcode" db:"Postcode"`
+	Info            string        `json:"Info" db:"Info"`
+	CreatorId       string        `json:"CreatorId" db:"CreatorId"`
+	Status          RequestStatus `json:"Status" db:"Status"`
+	RejectionReason string        `json:"RejectionReason" db:"RejectionReason"`
 }
 
 type RequestStatus string
 
 const (
-	Open       RequestStatus = "open"
-	Assigned   RequestStatus = "assigned"
-	InProgress RequestStatus = "in progress"
-	Closed     RequestStatus = "closed"
+	NewRequest      RequestStatus = "new"
+	ApprovedRequest RequestStatus = "approved"
+	RejectedRequest RequestStatus = "rejected"
 )
 
 var ErrIncorrectRequestType = errors.New("incorrect request type")
@@ -84,12 +56,6 @@ func IsRequestType(unknown interface{}) (Request, error) {
 	}
 	request.Id = int(floatId)
 
-	floatDeadline, ok := unknownMap["Deadline"].(float64)
-	if !ok {
-		return request, ErrIncorrectRequestType
-	}
-	request.Deadline = int64(floatDeadline)
-
 	s, ok := unknownMap["Status"].(string)
 	if !ok {
 		return request, ErrIncorrectRequestType
@@ -97,13 +63,13 @@ func IsRequestType(unknown interface{}) (Request, error) {
 	status := RequestStatus(s)
 
 	switch status {
-	case Open, Assigned, InProgress, Closed:
+	case NewRequest, ApprovedRequest, RejectedRequest:
 		request.Status = status
 	default:
 		return request, ErrIncorrectRequestType
 	}
 
-	request.WinningBidId = unknownMap["WinningBidId"].(string)
+	request.RejectionReason = unknownMap["RejectionReason"].(string)
 	if !ok {
 		return request, ErrIncorrectRequestType
 	}

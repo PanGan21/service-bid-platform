@@ -1,6 +1,6 @@
 module github.com/PanGan21/pkg/pagination
 
-go 1.18
+go 1.20
 
 require github.com/gin-gonic/gin v1.8.1
 

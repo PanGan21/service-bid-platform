@@ -135,12 +135,12 @@ func getBasePath(service string) string {
 	return fmt.Sprintf(`http://%s:%s%s`, host, port, pathService)
 }
 
-func waitUntilRequestIsAvailableInBidding(attempts int, requestId int) error {
+func waitUntilAuctionIsAvailableInBidding(attempts int, auctionId int) error {
 	var err error
 	ctx := context.Background()
 
 	for attempts > 0 {
-		var request entity.Request
+		var auction entity.Auction
 
 		pg, err := postgres.New("postgres://postgres:password@postgres:5432/bidding", postgres.MaxPoolSize(2))
 		if err != nil {
@@ -155,16 +155,16 @@ func waitUntilRequestIsAvailableInBidding(attempts int, requestId int) error {
 		defer c.Release()
 
 		const query = `
-			SELECT * FROM requests WHERE Id=$1;
+			SELECT * FROM auctions WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, requestId).Scan(&request.Id, &request.Title, &request.Postcode, &request.Info, &request.CreatorId, &request.Deadline, &request.Status, &request.WinningBidId)
-		if err == nil && request.Id == requestId {
-			fmt.Println("Request available!", request)
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
+		if err == nil && auction.Id == auctionId {
+			fmt.Println("Auction available in bidding service!", auction)
 			return nil
 		}
 
-		log.Printf("Integration tests: request with id %d is not available, attempts left: %d", requestId, attempts)
+		log.Printf("Integration tests: auction with id %d is not available in bidding service, attempts left: %d", auctionId, attempts)
 		time.Sleep(time.Second)
 
 		attempts--
@@ -174,14 +174,53 @@ func waitUntilRequestIsAvailableInBidding(attempts int, requestId int) error {
 	return err
 }
 
-func waitUntilBidIsAvailableInRequest(attempts int, bidId int) error {
+func waitUntilAuctionIsAvailableInAuction(attempts int, auctionId int) error {
+	var err error
+	ctx := context.Background()
+
+	for attempts > 0 {
+		var auction entity.Auction
+
+		pg, err := postgres.New("postgres://postgres:password@postgres:5432/auction", postgres.MaxPoolSize(2))
+		if err != nil {
+			fmt.Println("Error connecting with the db", err)
+			return err
+		}
+
+		c, err := pg.Pool.Acquire(ctx)
+		if err != nil {
+			return err
+		}
+		defer c.Release()
+
+		const query = `
+			SELECT * FROM auctions WHERE Id=$1;
+		`
+
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
+		if err == nil && auction.Id == auctionId {
+			fmt.Println("Auction available in auction service!", auction)
+			return nil
+		}
+
+		log.Printf("Integration tests: auction with id %d is not available in auction service, attempts left: %d", auctionId, attempts)
+		time.Sleep(time.Second)
+
+		attempts--
+
+	}
+
+	return err
+}
+
+func waitUntilBidIsAvailableInAuction(attempts int, bidId int) error {
 	var err error
 	ctx := context.Background()
 
 	for attempts > 0 {
 		var bid entity.Bid
 
-		pg, err := postgres.New("postgres://postgres:password@postgres:5432/request", postgres.MaxPoolSize(2))
+		pg, err := postgres.New("postgres://postgres:password@postgres:5432/auction", postgres.MaxPoolSize(2))
 		if err != nil {
 			fmt.Println("Error connecting with the db", err)
 			return err
@@ -197,13 +236,52 @@ func waitUntilBidIsAvailableInRequest(attempts int, bidId int) error {
 			SELECT * FROM bids WHERE Id=$1;
 		`
 
-		err = c.QueryRow(ctx, query, bidId).Scan(&bid.Id, &bid.Amount, &bid.CreatorId, &bid.RequestId)
+		err = c.QueryRow(ctx, query, bidId).Scan(&bid.Id, &bid.Amount, &bid.CreatorId, &bid.AuctionId)
 		if err == nil && bid.Id == bidId {
-			fmt.Println("Bid available!", bid)
+			fmt.Println("Bid available in auction service!", bid)
 			return nil
 		}
 
-		log.Printf("Integration tests: bid with id %d is not available, attempts left: %d", bidId, attempts)
+		log.Printf("Integration tests: bid with id %d is not available in auction service, attempts left: %d", bidId, attempts)
+		time.Sleep(time.Second)
+
+		attempts--
+
+	}
+
+	return err
+}
+
+func waitUntilAuctionIsOpenToBids(attempts int, auctionId int) error {
+	var err error
+	ctx := context.Background()
+
+	for attempts > 0 {
+		var auction entity.Auction
+
+		pg, err := postgres.New("postgres://postgres:password@postgres:5432/bidding", postgres.MaxPoolSize(2))
+		if err != nil {
+			fmt.Println("Error connecting with the db", err)
+			return err
+		}
+
+		c, err := pg.Pool.Acquire(ctx)
+		if err != nil {
+			return err
+		}
+		defer c.Release()
+
+		const query = `
+			SELECT * FROM auctions WHERE Id=$1;
+		`
+
+		err = c.QueryRow(ctx, query, auctionId).Scan(&auction.Id, &auction.Title, &auction.Postcode, &auction.Info, &auction.CreatorId, &auction.Deadline, &auction.Status, &auction.WinningBidId, &auction.WinnerId, &auction.WinningAmount)
+		if err == nil && auction.Id == auctionId && auction.Status == entity.Open {
+			fmt.Println("Auction available and open to bids!", auction)
+			return nil
+		}
+
+		log.Printf("Integration tests: auction with id %d is not available and open to bids, attempts left: %d", auctionId, attempts)
 		time.Sleep(time.Second)
 
 		attempts--

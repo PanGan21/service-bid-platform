@@ -11,9 +11,9 @@ import (
 )
 
 type BidService interface {
-	Create(ctx context.Context, creatorId string, requestId int, amount float64) (entity.Bid, error)
+	Create(ctx context.Context, creatorId string, auctionId int, amount float64) (entity.Bid, error)
 	FindOneById(ctx context.Context, id int) (entity.Bid, error)
-	GetManyByRequestId(ctx context.Context, requestId int, pagination *pagination.Pagination) (*[]entity.Bid, error)
+	GetManyByAuctionId(ctx context.Context, auctionId int, pagination *pagination.Pagination) (*[]entity.Bid, error)
 	GetOwn(ctx context.Context, creatorId string, pagination *pagination.Pagination) (*[]entity.Bid, error)
 	CountOwn(ctx context.Context, creatorId string) (int, error)
 }
@@ -27,10 +27,10 @@ func NewBidService(br bidRepo.BidRepository, be bidEvents.BidEvents) BidService 
 	return &bidService{bidRepo: br, bidEvents: be}
 }
 
-func (s *bidService) Create(ctx context.Context, creatorId string, requestId int, amount float64) (entity.Bid, error) {
+func (s *bidService) Create(ctx context.Context, creatorId string, auctionId int, amount float64) (entity.Bid, error) {
 	var newBid entity.Bid
 
-	bidId, err := s.bidRepo.Create(ctx, creatorId, requestId, amount)
+	bidId, err := s.bidRepo.Create(ctx, creatorId, auctionId, amount)
 	if err != nil {
 		return newBid, fmt.Errorf("BidService - Create - s.bidRepo.Create: %w", err)
 	}
@@ -59,10 +59,10 @@ func (s *bidService) FindOneById(ctx context.Context, id int) (entity.Bid, error
 	return bid, nil
 }
 
-func (s *bidService) GetManyByRequestId(ctx context.Context, requestId int, pagination *pagination.Pagination) (*[]entity.Bid, error) {
-	bids, err := s.bidRepo.FindByRequestId(ctx, requestId, pagination)
+func (s *bidService) GetManyByAuctionId(ctx context.Context, auctionId int, pagination *pagination.Pagination) (*[]entity.Bid, error) {
+	bids, err := s.bidRepo.FindByAuctionId(ctx, auctionId, pagination)
 	if err != nil {
-		return nil, fmt.Errorf("BidService - GetManyByRequestId - s.bidRepo.FindByRequestId: %w", err)
+		return nil, fmt.Errorf("BidService - GetManyByAuctionId - s.bidRepo.FindByAuctionId: %w", err)
 	}
 
 	return bids, nil

@@ -30,6 +30,12 @@ export const getCurrentUser = (): User | undefined => {
   }
 };
 
+export const getUserDetailsById = async (id: string) => {
+  return axios.get(API_URL + "/user/details?userId=" + id, {
+    withCredentials: true,
+  });
+};
+
 const clearCookies = () => {
   document.cookie.split(";").forEach((c) => {
     document.cookie = c

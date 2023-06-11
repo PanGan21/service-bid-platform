@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/PanGan21/bidding-service/internal/service"
+	"github.com/PanGan21/pkg/entity"
 	"github.com/PanGan21/pkg/logger"
 	"github.com/PanGan21/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,7 @@ import (
 type BidController interface {
 	Create(c *gin.Context)
 	GetOneById(c *gin.Context)
-	GetManyByRequestId(c *gin.Context)
+	GetManyByAuctionId(c *gin.Context)
 	GetOwn(c *gin.Context)
 	CountOwn(c *gin.Context)
 }
@@ -22,20 +23,20 @@ type BidController interface {
 type bidController struct {
 	logger        logger.Interface
 	bidService    service.BidService
-	requestServce service.RequestService
+	auctionServce service.AuctionService
 }
 
-func NewBidController(logger logger.Interface, bidServ service.BidService, reqServ service.RequestService) BidController {
+func NewBidController(logger logger.Interface, bidServ service.BidService, reqServ service.AuctionService) BidController {
 	return &bidController{
 		logger:        logger,
 		bidService:    bidServ,
-		requestServce: reqServ,
+		auctionServce: reqServ,
 	}
 }
 
 type BidData struct {
 	Amount    float64 `json:"Amount"`
-	RequestId int     `json:"RequestId"`
+	AuctionId int     `json:"AuctionId"`
 }
 
 func (controller *bidController) Create(c *gin.Context) {
@@ -46,19 +47,19 @@ func (controller *bidController) Create(c *gin.Context) {
 		return
 	}
 
-	userId, exists := c.Get("userId")
+	user, exists := c.Get("user")
 	if !exists {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 		return
 	}
 
-	isAllowedToBeCreated := controller.requestServce.IsOpenToBidByRequestId(context.Background(), bidData.RequestId)
+	isAllowedToBeCreated := controller.auctionServce.IsOpenToBidByAuctionId(context.Background(), bidData.AuctionId)
 	if !isAllowedToBeCreated {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Request doesn't receive bids"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Auction doesn't receive bids"})
 		return
 	}
 
-	bid, err := controller.bidService.Create(context.Background(), userId.(string), bidData.RequestId, bidData.Amount)
+	bid, err := controller.bidService.Create(context.Background(), user.(entity.PublicUser).Id, bidData.AuctionId, bidData.Amount)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Creation failed"})
@@ -86,8 +87,8 @@ func (controller *bidController) GetOneById(c *gin.Context) {
 	c.JSON(http.StatusOK, bid)
 }
 
-func (controller *bidController) GetManyByRequestId(c *gin.Context) {
-	idParam := c.Request.URL.Query().Get("requestId")
+func (controller *bidController) GetManyByAuctionId(c *gin.Context) {
+	idParam := c.Request.URL.Query().Get("auctionId")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation error"})
@@ -96,7 +97,7 @@ func (controller *bidController) GetManyByRequestId(c *gin.Context) {
 
 	pagination := pagination.GeneratePaginationFromRequest(c)
 
-	bids, err := controller.bidService.GetManyByRequestId(c.Request.Context(), id, &pagination)
+	bids, err := controller.bidService.GetManyByAuctionId(c.Request.Context(), id, &pagination)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -108,14 +109,14 @@ func (controller *bidController) GetManyByRequestId(c *gin.Context) {
 }
 
 func (controller *bidController) GetOwn(c *gin.Context) {
-	userId, exists := c.Get("userId")
+	user, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
 
 	pagination := pagination.GeneratePaginationFromRequest(c)
 
-	bids, err := controller.bidService.GetOwn(c.Request.Context(), userId.(string), &pagination)
+	bids, err := controller.bidService.GetOwn(c.Request.Context(), user.(entity.PublicUser).Id, &pagination)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -127,12 +128,12 @@ func (controller *bidController) GetOwn(c *gin.Context) {
 }
 
 func (controller *bidController) CountOwn(c *gin.Context) {
-	userId, exists := c.Get("userId")
+	user, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Creator does not exist; Authentication error"})
 	}
 
-	count, err := controller.bidService.CountOwn(context.Background(), userId.(string))
+	count, err := controller.bidService.CountOwn(context.Background(), user.(entity.PublicUser).Id)
 	if err != nil {
 		controller.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS auctions;
+
+DROP TABLE IF EXISTS bids;

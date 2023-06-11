@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Loader } from "../common/loader/Loader";
 import { User } from "../types/user";
-import { MyRequests } from "./MyRequests";
-import request from "../assets/request.png";
+import { MyAuctions } from "./MyAuctions";
+import auction from "../assets/auction.png";
 import bid from "../assets/bid.png";
 import { MyBids } from "./MyBids";
 import { ProfileImageBadge } from "./ProfileImageBadge";
-import { countOwnAssignments } from "../services/request";
+import { countOwnAssignments } from "../services/auction";
 import { useNavigate } from "react-router-dom";
+import { MyRejectedRequests } from "./MyRejectedRequests";
+import { MyServiceRequests } from "./MyServiceRequests";
 
 export const Home: React.FC = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
-  const [isMyRequestsOpen, setMyRequestsOpen] = useState(false);
+  const [isMyServiceRequestsOpen, setMyServiceRequestsOpen] = useState(false);
+  const [isMyAuctionsOpen, setMyAuctionsOpen] = useState(false);
   const [isMyBidsOpen, setMyBidsOpen] = useState(false);
+  const [isRejectedAuctionsOpen, setIsRejectedAuctionsOpen] = useState(false);
   const [badgeNumber, setBadgeNumber] = useState(0);
   const navigate = useNavigate();
 
@@ -41,12 +45,20 @@ export const Home: React.FC = () => {
     );
   }
 
-  const toggleMyRequests = () => {
-    setMyRequestsOpen(!isMyRequestsOpen);
+  const toggleMyServiceRequests = () => {
+    setMyServiceRequestsOpen(!isMyServiceRequestsOpen);
+  };
+
+  const toggleMyAuctions = () => {
+    setMyAuctionsOpen(!isMyAuctionsOpen);
   };
 
   const toggleMyBids = () => {
     setMyBidsOpen(!isMyBidsOpen);
+  };
+
+  const toggleRejectedAuctions = () => {
+    setIsRejectedAuctionsOpen(!isRejectedAuctionsOpen);
   };
 
   const handleBadgeClick = () => {
@@ -69,31 +81,53 @@ export const Home: React.FC = () => {
         <h4>
           Username: <strong>{user.Username}</strong>
         </h4>
-        {user.Roles.length > 0 ? (
-          <div>
-            <strong>Authorities:</strong>
-            <ul>
-              {user.Roles &&
-                user.Roles.map((role, index) => <li key={index}>{role}</li>)}
-            </ul>
-          </div>
-        ) : (
-          <></>
-        )}
+        <div>
+          <h6>
+            Email: <strong>{user.Email}</strong>
+          </h6>
+          <h6>
+            Phone: <strong>{user.Phone}</strong>
+          </h6>
+
+          {user.Roles.length > 0 ? (
+            <div>
+              <strong>Roles:</strong>
+              <ul>
+                {user.Roles &&
+                  user.Roles.map((role, index) => <li key={index}>{role}</li>)}
+              </ul>
+            </div>
+          ) : (
+            <></>
+          )}
+        </div>
       </div>
-      <br />
-      <div onClick={toggleMyRequests} style={{ cursor: "pointer" }}>
+      <div onClick={toggleMyServiceRequests} style={{ cursor: "pointer" }}>
         <img
           style={{ width: "50px", height: "60px" }}
-          src={request}
-          alt="requests-img"
+          src={auction}
+          alt="auctions-img"
         />
         <span>
-          <strong>MyRequests</strong>
+          <strong>MyServiceRequests</strong>
         </span>
       </div>
-      <div style={{ display: isMyRequestsOpen ? "block" : "none" }}>
-        <MyRequests />
+      <div style={{ display: isMyServiceRequestsOpen ? "block" : "none" }}>
+        <MyServiceRequests />
+      </div>
+      <br />
+      <div onClick={toggleMyAuctions} style={{ cursor: "pointer" }}>
+        <img
+          style={{ width: "50px", height: "60px" }}
+          src={auction}
+          alt="auctions-img"
+        />
+        <span>
+          <strong>MyAuctions</strong>
+        </span>
+      </div>
+      <div style={{ display: isMyAuctionsOpen ? "block" : "none" }}>
+        <MyAuctions />
       </div>
       <br />
       <div onClick={toggleMyBids} style={{ cursor: "pointer" }}>
@@ -108,6 +142,20 @@ export const Home: React.FC = () => {
       </div>
       <div style={{ display: isMyBidsOpen ? "block" : "none" }}>
         <MyBids />
+      </div>
+      <br />
+      <div onClick={toggleRejectedAuctions} style={{ cursor: "pointer" }}>
+        <img
+          style={{ width: "50px", height: "60px" }}
+          src={auction}
+          alt="profile-img"
+        />
+        <span>
+          <strong>My Rejected Requests</strong>
+        </span>
+      </div>
+      <div style={{ display: isRejectedAuctionsOpen ? "block" : "none" }}>
+        <MyRejectedRequests />
       </div>
     </div>
   );

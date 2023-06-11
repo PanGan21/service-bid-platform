@@ -2,10 +2,10 @@ export interface Bid {
   Id: number;
   Amount: number;
   CreatorId: string;
-  RequestId: string;
+  AuctionId: string;
 }
 
 export interface NewBid {
   Amount: Bid["Amount"];
-  RequestId: Bid["RequestId"];
+  AuctionId: Bid["AuctionId"];
 }

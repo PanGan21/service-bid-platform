@@ -14,31 +14,32 @@ services:
       APP_NAME: user-service
       REDIS_URL: "user-cache:6379"
       PG_URL: "postgres://postgres:password@postgres:5432/user"
+      CORS_ORIGINS: "http://localhost:3000,https://localhost:3000"
     ports:
       - "8000:8000"
     restart: unless-stopped # Change for 'always' in production environment
     depends_on:
       - user-migration
       - user-cache
-      
 
-  request-service:
+  auction-service:
     build:
       context: .
       dockerfile: Dockerfile.service
       args:
-        service_name: request-service
-    container_name: request-service
-    image: request-service
+        service_name: auction-service
+    container_name: auction-service
+    image: auction-service
     environment:
       APP_PORT: 8000
       APP_DEBUG: "true"
-      APP_NAME: request-service
-      PG_URL: "postgres://postgres:password@postgres:5432/request"
+      APP_NAME: auction-service
+      PG_URL: "postgres://postgres:password@postgres:5432/auction"
+      CORS_ORIGINS: "http://localhost:3000,https://localhost:3000"
     ports:
       - "8001:8000"
     depends_on:
-      - request-migration
+      - auction-migration
       - zookeeper
       - kafka
     restart: unless-stopped # Change for 'always' in production environment
@@ -56,10 +57,33 @@ services:
       APP_DEBUG: "true"
       APP_NAME: bidding-service
       PG_URL: "postgres://postgres:password@postgres:5432/bidding"
+      CORS_ORIGINS: "http://localhost:3000,https://localhost:3000"
     ports:
       - "8002:8000"
     depends_on:
       - bidding-migration
+      - zookeeper
+      - kafka
+    restart: unless-stopped # Change for 'always' in production environment
+
+  request-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        service_name: request-service
+    container_name: request-service
+    image: request-service
+    environment:
+      APP_PORT: 8000
+      APP_DEBUG: "true"
+      APP_NAME: request-service
+      PG_URL: "postgres://postgres:password@postgres:5432/request"
+      CORS_ORIGINS: "http://localhost:3000,https://localhost:3000"
+    ports:
+      - "8003:8000"
+    depends_on:
+      - request-migration
       - zookeeper
       - kafka
     restart: unless-stopped # Change for 'always' in production environment
@@ -98,6 +122,23 @@ services:
       - postgres
     restart: on-failure
 
+  auction-migration:
+    image: migrate/migrate
+    container_name: auction-migration
+    volumes:
+      - ./services/auction-service/migrations/:/migrations
+    command:
+      [
+        "-path",
+        "./migrations",
+        "-database",
+        "postgres://postgres:password@postgres:5432/auction?sslmode=disable",
+        "up",
+      ]
+    depends_on:
+      - postgres
+    restart: on-failure
+
   bidding-migration:
     image: migrate/migrate
     container_name: bidding-migration
@@ -122,7 +163,7 @@ services:
       - ./scripts/db:/docker-entrypoint-initdb.d
       - pg-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_MULTIPLE_DATABASES=request,bidding
+      - POSTGRES_MULTIPLE_DATABASES=auction,bidding,request
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=user
@@ -159,13 +200,29 @@ services:
     depends_on:
       - api-gateway
       - user-service
-      - request-service
+      - auction-service
       - bidding-service
       - user-migration
-      - request-migration
+      - request-service
+      - auction-migration
       - bidding-migration
+      - request-migration
       - zookeeper
       - kafka
+    restart: on-failure
+
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile.demo
+    container_name: demo
+    image: demo
+    environment:
+      API_URL: "api-gateway"
+      POSTGRES_URL: "postgres://postgres:password@postgres:5432"
+    depends_on:
+      integration:
+        condition: service_completed_successfully
     restart: on-failure
 
   api-gateway:
@@ -173,14 +230,18 @@ services:
     container_name: api-gateway
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf
       - ./api-gateway/api_proxy.conf:/etc/nginx/api_proxy.conf
+      - ./ssl/cert.pem:/etc/ssl/cert.pem
+      - ./ssl/key.pem:/etc/ssl/key.pem
     restart: on-failure
     depends_on:
       - user-service
-      - request-service
+      - auction-service
       - bidding-service
+      - request-service
       - zookeeper
       - kafka
 
@@ -199,7 +260,7 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CREATE_TOPICS: "request-created:2:1,bid-created:2:1,request-updated:2:1"
+      KAFKA_CREATE_TOPICS: "request-approved:1:1,bid-created:1:1,auction-updated:1:1"
       KAFKA_CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000 # flush faster than normal
 
 volumes:

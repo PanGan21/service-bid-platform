@@ -1,3 +1,3 @@
 module github.com/PanGan21/pkg/entity
 
-go 1.18
+go 1.20
