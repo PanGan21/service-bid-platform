@@ -9,7 +9,7 @@ The platform leverages microservices architecture to achieve scalability, mainta
 ## Getting Started
 
 Run the Backend<br />
-`docker-compose up --build`
+`docker-compose up --build`<br />
 Run the Frontend<br />
 
 ```
@@ -22,14 +22,14 @@ Navigate to http://localhost:3000 to access the web frontend.
 
 ## Project Structure
 
-`pkg`: Contains reusable packages shared across microservices.
-`api-gateway`: Configuration for the API gateway.
-clients: Houses different clients, with the current implementation being a React web frontend.
-`demo`: Includes demo data for testing purposes.
-`integration-tests`: Integration tests executed through Docker compose.
-`scripts`: Utility scripts for the project.
-`services`: Microservices, including user authentication, request handling, auction authorization, and bid management.
-`ssl`: Testing SSL certificates used during development.
+- `pkg`: Contains reusable packages shared across microservices.
+- `api-gateway`: Configuration for the API gateway.
+  clients: Houses different clients, with the current implementation being a React web frontend.
+- `demo`: Includes demo data for testing purposes.
+- `integration-tests`: Integration tests executed through Docker compose.
+- `scripts`: Utility scripts for the project.
+- `services`: Microservices, including user authentication, request handling, auction authorization, and bid management.
+- `ssl`: Testing SSL certificates used during development.
 
 ## Auction Mechanism
 
